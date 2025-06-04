@@ -5,6 +5,7 @@ import { Doughnut, Bar } from 'react-chartjs-2';
 import Login from './components/Login';
 import Register from './components/Register';
 import Receitas from './components/Receitas';
+import Despesas from './components/Despesas';
 
 // Registrar os componentes necessários do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
@@ -15,8 +16,9 @@ function App() {
   const [paginaAtual, setPaginaAtual] = useState('dashboard');
   const [dadosFinanceiros, setDadosFinanceiros] = useState({
     totalReceitas: 0,
-    totalDespesas: 5350, // Por enquanto mantemos fixo até implementar as despesas
-    saldoAtual: 0
+    totalDespesas: 0,
+    saldoAtual: 0,
+    despesasPorCategoria: {}
   });
 
   useEffect(() => {
@@ -32,15 +34,28 @@ function App() {
     
     // Busca as receitas do usuário atual do localStorage
     const receitas = JSON.parse(localStorage.getItem(`receitas_${usuario.id}`)) || [];
+    const despesas = JSON.parse(localStorage.getItem(`despesas_${usuario.id}`)) || [];
     
-    // Calcula o total de receitas
+    // Calcula o total de receitas e despesas
     const totalReceitas = receitas.reduce((total, receita) => total + parseFloat(receita.valor), 0);
+    const totalDespesas = despesas.reduce((total, despesa) => total + parseFloat(despesa.valor), 0);
     
+    // Calcula as despesas por categoria
+    const despesasPorCategoria = despesas.reduce((acc, despesa) => {
+      const categoria = despesa.categoria;
+      if (!acc[categoria]) {
+        acc[categoria] = 0;
+      }
+      acc[categoria] += parseFloat(despesa.valor);
+      return acc;
+    }, {});
+
     // Atualiza os dados financeiros
     setDadosFinanceiros({
       totalReceitas,
-      totalDespesas: 5350, // Mantemos fixo por enquanto
-      saldoAtual: totalReceitas - 5350
+      totalDespesas,
+      saldoAtual: totalReceitas - totalDespesas,
+      despesasPorCategoria
     });
   }, [usuario]);
 
@@ -66,15 +81,18 @@ function App() {
 
   // Dados para o gráfico de rosca (despesas por categoria)
   const doughnutData = {
-    labels: ['Educação', 'Casa', 'Alimentação', 'Outros'],
+    labels: Object.keys(dadosFinanceiros.despesasPorCategoria),
     datasets: [
       {
-        data: [865, 1275, 1220, 1990],
+        data: Object.values(dadosFinanceiros.despesasPorCategoria),
         backgroundColor: [
           '#6c5ce7',
           '#00b894',
           '#ffeaa7',
           '#ff7675',
+          '#74b9ff',
+          '#a8e6cf',
+          '#dfe6e9'
         ],
         borderWidth: 0,
       },
@@ -165,6 +183,8 @@ function App() {
     switch (paginaAtual) {
       case 'receitas':
         return <Receitas onUpdateDashboard={atualizarDadosFinanceiros} />;
+      case 'despesas':
+        return <Despesas onUpdateDashboard={atualizarDadosFinanceiros} />;
       case 'dashboard':
       default:
         return (
@@ -239,9 +259,12 @@ function App() {
               <span className="menu-icon">💰</span>
               <span className="menu-text">Receitas</span>
             </li>
-            <li>
+            <li 
+              className={paginaAtual === 'despesas' ? 'active' : ''}
+              onClick={() => setPaginaAtual('despesas')}
+            >
               <span className="menu-icon">💳</span>
-              <span className="menu-text">Cartões</span>
+              <span className="menu-text">Despesas</span>
             </li>
             <li>
               <span className="menu-icon">📈</span>
@@ -259,7 +282,11 @@ function App() {
       <div className="main-content">
         {/* Header */}
         <div className="header">
-          <h1>{paginaAtual === 'dashboard' ? 'Dashboard' : 'Receitas'}</h1>
+          <h1>
+            {paginaAtual === 'dashboard' ? 'Dashboard' : 
+             paginaAtual === 'receitas' ? 'Receitas' : 
+             paginaAtual === 'despesas' ? 'Despesas' : 'Dashboard'}
+          </h1>
           <div className="header-right">
             <span className="user-name">Olá, {usuario.nomeFamilia}</span>
             {paginaAtual === 'dashboard' && (
