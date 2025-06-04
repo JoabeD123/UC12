@@ -135,4 +135,73 @@ th {
 
 .btn-excluir:hover {
   background-color: #d63031;
+}
+
+/* Media Queries */
+@media screen and (max-width: 1024px) {
+  .despesa-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .despesas-container {
+    padding: 1rem;
+  }
+
+  .despesas-content {
+    padding: 1rem;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    padding: 0.6rem;
+  }
+
+  .btn-submit {
+    padding: 0.6rem;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  th, td {
+    padding: 0.8rem;
+    min-width: 120px;
+  }
+
+  td:last-child {
+    min-width: 160px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .despesas-content h2 {
+    font-size: 1.2rem;
+  }
+
+  .form-group label {
+    font-size: 0.8rem;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    font-size: 0.9rem;
+  }
+
+  .btn-editar,
+  .btn-excluir {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  th, td {
+    font-size: 0.9rem;
+    padding: 0.6rem;
+  }
 } 

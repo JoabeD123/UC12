@@ -133,4 +133,71 @@ th {
 
 .btn-excluir:hover {
   background-color: #d63031;
+}
+
+/* Media Queries */
+@media screen and (max-width: 1024px) {
+  .receita-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .receitas-container {
+    padding: 1rem;
+  }
+
+  .receitas-content {
+    padding: 1rem;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    padding: 0.6rem;
+  }
+
+  .btn-submit {
+    padding: 0.6rem;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  th, td {
+    padding: 0.8rem;
+    min-width: 120px;
+  }
+
+  td:last-child {
+    min-width: 160px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .receitas-content h2 {
+    font-size: 1.2rem;
+  }
+
+  .form-group label {
+    font-size: 0.8rem;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    font-size: 0.9rem;
+  }
+
+  .btn-editar,
+  .btn-excluir {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  th, td {
+    font-size: 0.9rem;
+    padding: 0.6rem;
+  }
 } 

@@ -1,17 +1,41 @@
+/* Reset CSS */
 * {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
+    'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #333;
   background-color: #f5f6fa;
 }
 
+#root {
+  height: 100%;
+}
+
 .app {
+  min-height: 100%;
+  height: 100%;
   display: flex;
-  min-height: 100vh;
+  flex-direction: column;
+  background-color: #f5f6fa;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
 }
 
 /* Sidebar */
@@ -70,11 +94,6 @@ body {
 }
 
 /* Main Content */
-.main-content {
-  flex: 1;
-  padding: 30px;
-}
-
 .header {
   display: flex;
   justify-content: space-between;
@@ -141,6 +160,7 @@ body {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
+  margin-bottom: 20px;
 }
 
 .chart-container {
@@ -148,6 +168,10 @@ body {
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
 }
 
 .chart-container h2 {
@@ -157,8 +181,309 @@ body {
 }
 
 .donut-chart, .bar-chart {
-  height: 300px;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 250px;
+  position: relative;
+}
+
+/* Media Queries */
+@media screen and (max-width: 1024px) {
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  .charts {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-container {
+    margin-bottom: 20px;
+    min-height: 350px;
+  }
+
+  .donut-chart, .bar-chart {
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  html, body {
+    overflow: auto;
+  }
+
+  .app {
+    min-height: 100vh;
+    height: auto;
+  }
+
+  .main-content {
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .sidebar {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .menu ul {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 10px;
+  }
+
+  .menu li {
+    white-space: nowrap;
+    margin: 0 5px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .month-selector {
+    width: 150px;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-container {
+    padding: 15px;
+    min-height: 300px;
+  }
+
+  .donut-chart, .bar-chart {
+    min-height: 250px;
+  }
+
+  canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .menu-text {
+    display: none;
+  }
+
+  .menu li {
+    padding: 10px;
+  }
+
+  .menu-icon {
+    margin-right: 0;
+    font-size: 24px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
+  .card {
+    padding: 15px;
+  }
+
+  .amount {
+    font-size: 20px;
+  }
+
+  .chart-container {
+    min-height: 250px;
+    padding: 10px;
+  }
+
+  .chart-container h2 {
+    font-size: 16px;
+    margin-bottom: 15px;
+  }
+
+  .donut-chart, .bar-chart {
+    min-height: 200px;
+  }
+}
+
+.sem-permissao {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  text-align: center;
+  margin: 2rem;
+}
+
+.sem-permissao h2 {
+  color: #ff7675;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.sem-permissao p {
+  color: #666;
+  font-size: 1rem;
+}
+
+@media screen and (max-width: 768px) {
+  .sem-permissao {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+
+  .sem-permissao h2 {
+    font-size: 1.2rem;
+  }
+
+  .sem-permissao p {
+    font-size: 0.9rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .sem-permissao {
+    margin: 0.5rem;
+    padding: 1rem;
+  }
+
+  .sem-permissao h2 {
+    font-size: 1.1rem;
+  }
+
+  .sem-permissao p {
+    font-size: 0.8rem;
+  }
+}
+
+/* Estilos gerais */
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Estilos para telas de autenticação */
+.auth-container {
+  min-height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 2rem;
+}
+
+.auth-box {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Estilos para formulários */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* Mensagens de erro */
+.erro-mensagem {
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+/* Botões */
+.btn-primary {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  width: 100%;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #2980b9;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #3498db;
+  text-decoration: underline;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.btn-link:hover {
+  color: #2980b9;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 1.2rem;
+  color: #6c5ce7;
+  background-color: #f5f6fa;
 }

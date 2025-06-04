@@ -1,110 +1,135 @@
 import React, { useState } from 'react';
-import './Login.css';
+import { useNavigate } from 'react-router-dom';
+import './Register.css';
 
-function Register({ onRegister, onSwitchToLogin }) {
-  const [nomeFamilia, setNomeFamilia] = useState('');
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [confirmarSenha, setConfirmarSenha] = useState('');
+function Register({ onLogin }) {
+  const [formData, setFormData] = useState({
+    nome: '',
+    email: '',
+    senha: '',
+    confirmarSenha: ''
+  });
   const [erro, setErro] = useState('');
+  const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setErro('');
 
-    // Validação das senhas
-    if (senha !== confirmarSenha) {
+    if (formData.senha !== formData.confirmarSenha) {
       setErro('As senhas não coincidem');
       return;
     }
 
-    // Recupera os usuários existentes
     const usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
-
-    // Verifica se o email já está cadastrado
-    if (usuarios.some(u => u.email === email)) {
+    
+    if (usuarios.some(u => u.email === formData.email)) {
       setErro('Este email já está cadastrado');
       return;
     }
 
-    // Cria novo usuário
     const novoUsuario = {
-      id: Date.now(), // Usando timestamp como ID
-      nomeFamilia,
-      email,
-      senha,
-      criadoEm: new Date().toISOString(),
-      atualizadoEm: new Date().toISOString()
+      id: Date.now().toString(),
+      nome: formData.nome,
+      email: formData.email,
+      senha: formData.senha,
+      dataCriacao: new Date().toISOString()
     };
 
-    // Adiciona o novo usuário à lista
+    // Criar perfil principal para o novo usuário
+    const perfilPrincipal = {
+      id: Date.now().toString() + '1',
+      usuarioId: novoUsuario.id,
+      nome: formData.nome,
+      tipo: 'Principal',
+      permissoes: {
+        verReceitas: true,
+        editarReceitas: true,
+        verDespesas: true,
+        editarDespesas: true,
+        verRelatorios: true,
+        gerenciarPerfis: true
+      }
+    };
+
+    // Salvar usuário e perfil
     usuarios.push(novoUsuario);
-    
-    // Salva no localStorage
     localStorage.setItem('usuarios', JSON.stringify(usuarios));
-    
-    // Salva o usuário atual
-    localStorage.setItem('usuarioAtual', JSON.stringify(novoUsuario));
-    
-    // Chama a função de callback
-    onRegister(novoUsuario);
+
+    const perfis = JSON.parse(localStorage.getItem('perfis')) || [];
+    perfis.push(perfilPrincipal);
+    localStorage.setItem('perfis', JSON.stringify(perfis));
+
+    // Fazer login com o novo usuário
+    onLogin(novoUsuario, perfilPrincipal);
+    navigate('/dashboard');
+  };
+
+  const handleVoltar = () => {
+    navigate('/login');
   };
 
   return (
-    <div className="login-container">
-      <div className="login-box">
+    <div className="auth-container">
+      <div className="auth-box">
         <h2>Cadastro</h2>
+        {erro && <div className="erro-mensagem">{erro}</div>}
         <form onSubmit={handleSubmit}>
-          {erro && <div className="erro-mensagem">{erro}</div>}
-
           <div className="form-group">
-            <label>Nome da Família:</label>
+            <label>Nome:</label>
             <input
               type="text"
-              value={nomeFamilia}
-              onChange={(e) => setNomeFamilia(e.target.value)}
+              name="nome"
+              value={formData.nome}
+              onChange={handleChange}
               required
             />
           </div>
-
           <div className="form-group">
             <label>Email:</label>
             <input
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
               required
             />
           </div>
-
           <div className="form-group">
             <label>Senha:</label>
             <input
               type="password"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
+              name="senha"
+              value={formData.senha}
+              onChange={handleChange}
               required
             />
           </div>
-
           <div className="form-group">
             <label>Confirmar Senha:</label>
             <input
               type="password"
-              value={confirmarSenha}
-              onChange={(e) => setConfirmarSenha(e.target.value)}
+              name="confirmarSenha"
+              value={formData.confirmarSenha}
+              onChange={handleChange}
               required
             />
           </div>
-
-          <button type="submit" className="btn-login">Cadastrar</button>
-        </form>
-
-        <p className="register-link">
-          Já tem uma conta?{' '}
-          <button onClick={onSwitchToLogin} className="btn-link">
-            Faça login
+          <button type="submit" className="btn-primary">
+            Cadastrar
           </button>
-        </p>
+        </form>
+        <button onClick={handleVoltar} className="btn-link">
+          Já tem uma conta? Faça login
+        </button>
       </div>
     </div>
   );

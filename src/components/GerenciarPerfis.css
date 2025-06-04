@@ -1,0 +1,187 @@
+.perfis-container {
+  padding: 20px;
+}
+
+.perfis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.perfil-card {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.perfil-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.perfil-card.perfil-atual {
+  border: 2px solid #6c5ce7;
+  background-color: #f8f7ff;
+}
+
+.perfil-card h3 {
+  margin: 0 0 10px;
+  color: #2d3436;
+}
+
+.perfil-card p {
+  color: #636e72;
+  margin-bottom: 15px;
+}
+
+.permissoes-lista {
+  margin-top: 15px;
+}
+
+.permissoes-lista h4 {
+  margin-bottom: 10px;
+  color: #2d3436;
+}
+
+.permissoes-lista ul {
+  list-style: none;
+  padding: 0;
+}
+
+.permissoes-lista li {
+  padding: 5px 0;
+  color: #636e72;
+}
+
+.permissoes-lista li.permitido {
+  color: #00b894;
+}
+
+.permissoes-lista li.negado {
+  color: #d63031;
+}
+
+.perfil-acoes {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-alternar {
+  background-color: #6c5ce7;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  flex: 1;
+}
+
+.btn-alternar:hover {
+  background-color: #5f50e3;
+}
+
+.btn-excluir {
+  background-color: #ff7675;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn-excluir:hover {
+  background-color: #ff6b6b;
+}
+
+.novo-perfil-form {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.novo-perfil-form h2 {
+  margin-bottom: 20px;
+  color: #2d3436;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #2d3436;
+}
+
+.form-group input[type="text"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.permissoes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-primary {
+  background-color: #6c5ce7;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  width: 100%;
+}
+
+.btn-primary:hover {
+  background-color: #5f50e3;
+}
+
+.perfil-atual {
+  color: #6c5ce7;
+  font-weight: 500;
+  margin-top: 5px;
+}
+
+@media (max-width: 768px) {
+  .perfis-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .permissoes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .perfil-acoes {
+    flex-direction: column;
+  }
+
+  .btn-alternar,
+  .btn-excluir {
+    width: 100%;
+  }
+} 

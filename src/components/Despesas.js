@@ -1,224 +1,195 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Despesas.css';
 
-function Despesas({ onUpdateDashboard }) {
+function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const [despesas, setDespesas] = useState([]);
   const [novaDespesa, setNovaDespesa] = useState({
-    nome: '',
+    descricao: '',
     valor: '',
-    dataPagamento: '',
-    categoria: '',
-    descricao: ''
+    data: '',
+    categoria: 'Moradia'
   });
-  const [modoEdicao, setModoEdicao] = useState(false);
-  const [despesaEditando, setDespesaEditando] = useState(null);
+  const navigate = useNavigate();
 
-  // Obtém o usuário atual do localStorage
-  const usuarioAtual = JSON.parse(localStorage.getItem('usuarioAtual'));
-
-  // Função para obter a chave específica do usuário para as despesas
-  const getChaveDespesas = useCallback(() => `despesas_${usuarioAtual.id}`, [usuarioAtual]);
-
+  // Mova a verificação para depois dos hooks
   useEffect(() => {
-    // Carrega as despesas do usuário atual do localStorage
-    const despesasSalvas = JSON.parse(localStorage.getItem(getChaveDespesas())) || [];
-    setDespesas(despesasSalvas);
-  }, [getChaveDespesas]);
+    if (usuario && perfil) {
+      const despesasSalvas = JSON.parse(localStorage.getItem(`despesas_${usuario.id}`)) || [];
+      setDespesas(despesasSalvas);
+    }
+  }, [usuario, perfil]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNovaDespesa(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  if (!usuario || !perfil || !perfil.permissoes.verDespesas) {
+    onLogout();
+    return (
+      <div className="sem-permissao">
+        <h2>Acesso Negado</h2>
+        <p>Você não tem permissão para acessar esta página.</p>
+        <button onClick={() => navigate('/dashboard')} className="btn-primary">
+          Voltar para o Dashboard
+        </button>
+      </div>
+    );
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    if (modoEdicao && despesaEditando) {
-      // Atualiza a despesa existente
-      const despesasAtualizadas = despesas.map(despesa =>
-        despesa.id === despesaEditando.id
-          ? { ...novaDespesa, id: despesaEditando.id, usuarioId: usuarioAtual.id }
-          : despesa
-      );
-      setDespesas(despesasAtualizadas);
-      localStorage.setItem(getChaveDespesas(), JSON.stringify(despesasAtualizadas));
-      onUpdateDashboard();
-    } else {
-      // Adiciona nova despesa
-      const novaDespesaComId = {
-        ...novaDespesa,
-        id: Date.now(),
-        usuarioId: usuarioAtual.id,
-        valor: parseFloat(novaDespesa.valor)
-      };
-      const despesasAtualizadas = [...despesas, novaDespesaComId];
-      setDespesas(despesasAtualizadas);
-      localStorage.setItem(getChaveDespesas(), JSON.stringify(despesasAtualizadas));
-      onUpdateDashboard();
+    if (!perfil.permissoes.editarDespesas) {
+      alert('Você não tem permissão para adicionar despesas.');
+      return;
     }
 
-    // Limpa o formulário
-    setNovaDespesa({
-      nome: '',
-      valor: '',
-      dataPagamento: '',
-      categoria: '',
-      descricao: ''
-    });
-    setModoEdicao(false);
-    setDespesaEditando(null);
-  };
+    const novaDespesaObj = {
+      id: Date.now().toString(),
+      ...novaDespesa,
+      valor: parseFloat(novaDespesa.valor),
+      usuarioId: usuario.id
+    };
 
-  const handleEditar = (despesa) => {
-    setModoEdicao(true);
-    setDespesaEditando(despesa);
+    const despesasAtualizadas = [...despesas, novaDespesaObj];
+    setDespesas(despesasAtualizadas);
+    localStorage.setItem(`despesas_${usuario.id}`, JSON.stringify(despesasAtualizadas));
+
     setNovaDespesa({
-      nome: despesa.nome,
-      valor: despesa.valor,
-      dataPagamento: despesa.dataPagamento,
-      categoria: despesa.categoria,
-      descricao: despesa.descricao
+      descricao: '',
+      valor: '',
+      data: '',
+      categoria: 'Moradia'
     });
   };
 
   const handleExcluir = (id) => {
+    if (!perfil.permissoes.editarDespesas) {
+      alert('Você não tem permissão para excluir despesas.');
+      return;
+    }
+
     const despesasAtualizadas = despesas.filter(despesa => despesa.id !== id);
     setDespesas(despesasAtualizadas);
-    localStorage.setItem(getChaveDespesas(), JSON.stringify(despesasAtualizadas));
-    onUpdateDashboard();
+    localStorage.setItem(`despesas_${usuario.id}`, JSON.stringify(despesasAtualizadas));
   };
 
-  const formatarData = (data) => {
-    return new Date(data).toLocaleDateString('pt-BR');
-  };
-
-  const formatarValor = (valor) => {
-    return valor.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    });
-  };
-
-  const categorias = [
-    'Alimentação',
-    'Casa',
-    'Educação',
-    'Lazer',
-    'Saúde',
-    'Transporte',
-    'Outros'
-  ];
+  const categorias = ['Moradia', 'Alimentação', 'Transporte', 'Saúde', 'Educação', 'Lazer', 'Outros'];
 
   return (
-    <div className="despesas-container">
-      <div className="despesas-content">
-        <h2>{modoEdicao ? 'Editar Despesa' : 'Nova Despesa'}</h2>
-        
-        <form onSubmit={handleSubmit} className="despesa-form">
-          <div className="form-group">
-            <label>Nome da Despesa:</label>
-            <input
-              type="text"
-              name="nome"
-              value={novaDespesa.nome}
-              onChange={handleInputChange}
-              required
-              placeholder="Ex: Aluguel"
-            />
-          </div>
+    <div className="dashboard">
+      <div className="sidebar">
+        <div className="logo">
+          <div className="logo-icon">GF</div>
+        </div>
+        <nav className="menu">
+          <ul>
+            <li onClick={() => navigate('/dashboard')}>
+              <span className="menu-icon">📊</span>
+              <span className="menu-text">Dashboard</span>
+            </li>
+            {perfil.permissoes.verReceitas && (
+              <li onClick={() => navigate('/receitas')}>
+                <span className="menu-icon">💰</span>
+                <span className="menu-text">Receitas</span>
+              </li>
+            )}
+            <li className="active">
+              <span className="menu-icon">💸</span>
+              <span className="menu-text">Despesas</span>
+            </li>
+            {perfil.permissoes.gerenciarPerfis && (
+              <li onClick={() => navigate('/gerenciar-perfis')}>
+                <span className="menu-icon">👥</span>
+                <span className="menu-text">Gerenciar Perfis</span>
+              </li>
+            )}
+            <li onClick={onLogout}>
+              <span className="menu-icon">🚪</span>
+              <span className="menu-text">Sair</span>
+            </li>
+          </ul>
+        </nav>
+      </div>
 
-          <div className="form-group">
-            <label>Valor:</label>
-            <input
-              type="number"
-              name="valor"
-              value={novaDespesa.valor}
-              onChange={handleInputChange}
-              required
-              min="0"
-              step="0.01"
-              placeholder="R$ 0,00"
-            />
-          </div>
+      <div className="dashboard-content">
+        <div className="content-header">
+          <h1>Despesas</h1>
+        </div>
 
-          <div className="form-group">
-            <label>Data de Pagamento:</label>
-            <input
-              type="date"
-              name="dataPagamento"
-              value={novaDespesa.dataPagamento}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
+        {perfil.permissoes.editarDespesas && (
+          <form onSubmit={handleSubmit} className="form-container">
+            <div className="form-row">
+              <div className="form-group">
+                <label>Descrição:</label>
+                <input
+                  type="text"
+                  value={novaDespesa.descricao}
+                  onChange={(e) => setNovaDespesa(prev => ({ ...prev, descricao: e.target.value }))}
+                  required
+                />
+              </div>
 
-          <div className="form-group">
-            <label>Categoria:</label>
-            <select
-              name="categoria"
-              value={novaDespesa.categoria}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="">Selecione uma categoria</option>
-              {categorias.map(categoria => (
-                <option key={categoria} value={categoria}>
-                  {categoria}
-                </option>
-              ))}
-            </select>
-          </div>
+              <div className="form-group">
+                <label>Valor:</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={novaDespesa.valor}
+                  onChange={(e) => setNovaDespesa(prev => ({ ...prev, valor: e.target.value }))}
+                  required
+                />
+              </div>
 
-          <div className="form-group">
-            <label>Descrição:</label>
-            <textarea
-              name="descricao"
-              value={novaDespesa.descricao}
-              onChange={handleInputChange}
-              placeholder="Descrição opcional"
-              rows="3"
-            />
-          </div>
+              <div className="form-group">
+                <label>Data:</label>
+                <input
+                  type="date"
+                  value={novaDespesa.data}
+                  onChange={(e) => setNovaDespesa(prev => ({ ...prev, data: e.target.value }))}
+                  required
+                />
+              </div>
 
-          <button type="submit" className="btn-submit">
-            {modoEdicao ? 'Atualizar' : 'Adicionar'} Despesa
-          </button>
-        </form>
+              <div className="form-group">
+                <label>Categoria:</label>
+                <select
+                  value={novaDespesa.categoria}
+                  onChange={(e) => setNovaDespesa(prev => ({ ...prev, categoria: e.target.value }))}
+                  required
+                >
+                  {categorias.map(categoria => (
+                    <option key={categoria} value={categoria}>
+                      {categoria}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-        <h2>Despesas Cadastradas</h2>
-        {despesas.length === 0 ? (
-          <p className="sem-despesas">Nenhuma despesa cadastrada</p>
-        ) : (
-          <div className="tabela-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Valor</th>
-                  <th>Data</th>
-                  <th>Categoria</th>
-                  <th>Descrição</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {despesas.map(despesa => (
-                  <tr key={despesa.id}>
-                    <td>{despesa.nome}</td>
-                    <td className="valor-despesa">{formatarValor(despesa.valor)}</td>
-                    <td>{formatarData(despesa.dataPagamento)}</td>
-                    <td>{despesa.categoria}</td>
-                    <td>{despesa.descricao || '-'}</td>
+              <button type="submit" className="btn-primary">
+                Adicionar Despesa
+              </button>
+            </div>
+          </form>
+        )}
+
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Descrição</th>
+                <th>Valor</th>
+                <th>Data</th>
+                <th>Categoria</th>
+                {perfil.permissoes.editarDespesas && <th>Ações</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {despesas.map(despesa => (
+                <tr key={despesa.id}>
+                  <td>{despesa.descricao}</td>
+                  <td>R$ {despesa.valor.toFixed(2)}</td>
+                  <td>{new Date(despesa.data).toLocaleDateString()}</td>
+                  <td>{despesa.categoria}</td>
+                  {perfil.permissoes.editarDespesas && (
                     <td>
-                      <button
-                        onClick={() => handleEditar(despesa)}
-                        className="btn-editar"
-                      >
-                        Editar
-                      </button>
                       <button
                         onClick={() => handleExcluir(despesa.id)}
                         className="btn-excluir"
@@ -226,12 +197,12 @@ function Despesas({ onUpdateDashboard }) {
                         Excluir
                       </button>
                     </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

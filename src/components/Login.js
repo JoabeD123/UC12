@@ -1,36 +1,45 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Login.css';
 
-function Login({ onLogin, onSwitchToRegister }) {
+function Login({ onLogin }) {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Recupera os usuários do localStorage
+    setErro('');
+
     const usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
-    
-    // Procura o usuário
     const usuario = usuarios.find(u => u.email === email && u.senha === senha);
-    
+
     if (usuario) {
-      // Salva o usuário atual no localStorage
-      localStorage.setItem('usuarioAtual', JSON.stringify(usuario));
-      onLogin(usuario);
+      const perfis = JSON.parse(localStorage.getItem('perfis')) || [];
+      const perfilPrincipal = perfis.find(p => p.usuarioId === usuario.id && p.tipo === 'Principal');
+      
+      if (perfilPrincipal) {
+        onLogin(usuario, perfilPrincipal);
+        navigate('/dashboard');
+      } else {
+        setErro('Erro ao carregar o perfil do usuário');
+      }
     } else {
       setErro('Email ou senha incorretos');
     }
   };
 
+  const handleCadastro = () => {
+    navigate('/registro');
+  };
+
   return (
-    <div className="login-container">
-      <div className="login-box">
+    <div className="auth-container">
+      <div className="auth-box">
         <h2>Login</h2>
+        {erro && <div className="erro-mensagem">{erro}</div>}
         <form onSubmit={handleSubmit}>
-          {erro && <div className="erro-mensagem">{erro}</div>}
-          
           <div className="form-group">
             <label>Email:</label>
             <input
@@ -40,7 +49,6 @@ function Login({ onLogin, onSwitchToRegister }) {
               required
             />
           </div>
-
           <div className="form-group">
             <label>Senha:</label>
             <input
@@ -50,16 +58,13 @@ function Login({ onLogin, onSwitchToRegister }) {
               required
             />
           </div>
-
-          <button type="submit" className="btn-login">Entrar</button>
-        </form>
-
-        <p className="register-link">
-          Não tem uma conta?{' '}
-          <button onClick={onSwitchToRegister} className="btn-link">
-            Cadastre-se
+          <button type="submit" className="btn-primary">
+            Entrar
           </button>
-        </p>
+        </form>
+        <button onClick={handleCadastro} className="btn-link">
+          Não tem uma conta? Cadastre-se
+        </button>
       </div>
     </div>
   );
