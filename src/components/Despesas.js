@@ -73,18 +73,18 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const categorias = ['Moradia', 'Alimentação', 'Transporte', 'Saúde', 'Educação', 'Lazer', 'Outros'];
 
   return (
-    <div className="dashboard">
+    <div className="layout-container">
       <div className="sidebar">
         <div className="logo">
           <div className="logo-icon">GF</div>
         </div>
         <nav className="menu">
           <ul>
-            <li onClick={() => navigate('/dashboard')}>
+            <li onClick={() => navigate('/')}>
               <span className="menu-icon">📊</span>
               <span className="menu-text">Dashboard</span>
             </li>
-            {perfil.permissoes.verReceitas && (
+            {perfil?.permissoes.verReceitas && (
               <li onClick={() => navigate('/receitas')}>
                 <span className="menu-icon">💰</span>
                 <span className="menu-text">Receitas</span>
@@ -94,7 +94,11 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
               <span className="menu-icon">💸</span>
               <span className="menu-text">Despesas</span>
             </li>
-            {perfil.permissoes.gerenciarPerfis && (
+            <li onClick={() => navigate('/cartoes')}>
+              <span className="menu-icon">💳</span>
+              <span className="menu-text">Cartões</span>
+            </li>
+            {perfil?.permissoes.gerenciarPerfis && (
               <li onClick={() => navigate('/gerenciar-perfis')}>
                 <span className="menu-icon">👥</span>
                 <span className="menu-text">Gerenciar Perfis</span>

@@ -77,14 +77,14 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const categorias = ['Salário', 'Freelance', 'Investimentos', 'Outros'];
 
   return (
-    <div className="dashboard">
+    <div className="layout-container">
       <div className="sidebar">
         <div className="logo">
           <div className="logo-icon">GF</div>
         </div>
         <nav className="menu">
           <ul>
-            <li onClick={() => navigate('/dashboard')}>
+            <li onClick={() => navigate('/')}>
               <span className="menu-icon">📊</span>
               <span className="menu-text">Dashboard</span>
             </li>
@@ -92,13 +92,17 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
               <span className="menu-icon">💰</span>
               <span className="menu-text">Receitas</span>
             </li>
-            {perfil.permissoes.verDespesas && (
+            {perfil?.permissoes.verDespesas && (
               <li onClick={() => navigate('/despesas')}>
                 <span className="menu-icon">💸</span>
                 <span className="menu-text">Despesas</span>
               </li>
             )}
-            {perfil.permissoes.gerenciarPerfis && (
+            <li onClick={() => navigate('/cartoes')}>
+              <span className="menu-icon">💳</span>
+              <span className="menu-text">Cartões</span>
+            </li>
+            {perfil?.permissoes.gerenciarPerfis && (
               <li onClick={() => navigate('/gerenciar-perfis')}>
                 <span className="menu-icon">👥</span>
                 <span className="menu-text">Gerenciar Perfis</span>
@@ -112,7 +116,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
         </nav>
       </div>
 
-      <div className="dashboard-content">
+      <div className="receitas-container">
         <div className="content-header">
           <h1>Receitas</h1>
         </div>

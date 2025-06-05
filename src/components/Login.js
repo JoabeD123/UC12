@@ -21,7 +21,7 @@ function Login({ onLogin }) {
       
       if (perfilPrincipal) {
         onLogin(usuario, perfilPrincipal);
-        navigate('/dashboard');
+        navigate('/');
       } else {
         setErro('Erro ao carregar o perfil do usuário');
       }

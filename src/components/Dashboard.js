@@ -217,6 +217,10 @@ function Dashboard({ usuario, perfil, onLogout }) {
                 <span className="menu-text">Despesas</span>
               </li>
             )}
+            <li onClick={() => navigate('/cartoes')}>
+              <span className="menu-icon">💳</span>
+              <span className="menu-text">Cartões</span>
+            </li>
             {perfil.permissoes.gerenciarPerfis && (
               <li onClick={() => navigate('/gerenciar-perfis')}>
                 <span className="menu-icon">👥</span>
