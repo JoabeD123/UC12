@@ -12,7 +12,6 @@ function GerenciarPerfis({ usuario, perfil, onLogout, onPerfilAtualizado }) {
       editarReceitas: false,
       verDespesas: false,
       editarDespesas: false,
-      verRelatorios: false,
       gerenciarPerfis: false
     }
   });
@@ -64,7 +63,6 @@ function GerenciarPerfis({ usuario, perfil, onLogout, onPerfilAtualizado }) {
         editarReceitas: false,
         verDespesas: false,
         editarDespesas: false,
-        verRelatorios: false,
         gerenciarPerfis: false
       }
     });

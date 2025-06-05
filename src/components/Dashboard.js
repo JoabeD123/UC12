@@ -1,6 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  Colors,
+  CategoryScale,
+  LinearScale,
+  BarElement
+} from 'chart.js';
+import { Doughnut, Bar } from 'react-chartjs-2';
 import './Dashboard.css';
+
+// Registrar os componentes necessários do Chart.js
+ChartJS.register(
+  ArcElement,
+  Tooltip,
+  Legend,
+  Colors,
+  CategoryScale,
+  LinearScale,
+  BarElement
+);
 
 function Dashboard({ usuario, perfil, onLogout }) {
   const [mesSelecionado, setMesSelecionado] = useState(new Date().getMonth());
@@ -8,7 +30,6 @@ function Dashboard({ usuario, perfil, onLogout }) {
     receitas: 0,
     despesas: 0,
     saldo: 0,
-    receitasPorCategoria: [],
     despesasPorCategoria: []
   });
   const navigate = useNavigate();
@@ -27,15 +48,7 @@ function Dashboard({ usuario, perfil, onLogout }) {
     const totalReceitas = receitas.reduce((total, receita) => total + receita.valor, 0);
     const totalDespesas = despesas.reduce((total, despesa) => total + despesa.valor, 0);
 
-    // Agrupar por categoria
-    const receitasPorCategoria = receitas.reduce((acc, receita) => {
-      if (!acc[receita.categoria]) {
-        acc[receita.categoria] = 0;
-      }
-      acc[receita.categoria] += receita.valor;
-      return acc;
-    }, {});
-
+    // Agrupar despesas por categoria
     const despesasPorCategoria = despesas.reduce((acc, despesa) => {
       if (!acc[despesa.categoria]) {
         acc[despesa.categoria] = 0;
@@ -49,10 +62,6 @@ function Dashboard({ usuario, perfil, onLogout }) {
       receitas: totalReceitas,
       despesas: totalDespesas,
       saldo: totalReceitas - totalDespesas,
-      receitasPorCategoria: Object.entries(receitasPorCategoria).map(([categoria, valor]) => ({
-        categoria,
-        valor
-      })),
       despesasPorCategoria: Object.entries(despesasPorCategoria).map(([categoria, valor]) => ({
         categoria,
         valor
@@ -68,6 +77,121 @@ function Dashboard({ usuario, perfil, onLogout }) {
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
   ];
+
+  // Configuração do gráfico de rosca (Despesas por Categoria)
+  const despesasChartData = {
+    labels: dadosFinanceiros.despesasPorCategoria.map(item => item.categoria),
+    datasets: [
+      {
+        data: dadosFinanceiros.despesasPorCategoria.map(item => item.valor),
+        backgroundColor: [
+          '#f44336',
+          '#E91E63',
+          '#9C27B0',
+          '#673AB7',
+          '#3F51B5',
+          '#2196F3'
+        ],
+        borderWidth: 1
+      }
+    ]
+  };
+
+  // Configuração do gráfico de barras (Comparação Receitas x Despesas)
+  const comparacaoChartData = {
+    labels: ['Receitas x Despesas'],
+    datasets: [
+      {
+        label: 'Receitas',
+        data: [dadosFinanceiros.receitas],
+        backgroundColor: '#4CAF50',
+        borderColor: '#4CAF50',
+        borderWidth: 1
+      },
+      {
+        label: 'Despesas',
+        data: [dadosFinanceiros.despesas],
+        backgroundColor: '#f44336',
+        borderColor: '#f44336',
+        borderWidth: 1
+      }
+    ]
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: {
+          usePointStyle: true,
+          pointStyle: 'circle',
+          font: {
+            size: 12
+          },
+          generateLabels: function(chart) {
+            const data = chart.data;
+            if (data.labels.length && data.datasets.length) {
+              return data.labels.map((label, i) => {
+                const value = data.datasets[0].data[i];
+                return {
+                  text: `${label}: R$ ${value.toFixed(2)}`,
+                  fillStyle: data.datasets[0].backgroundColor[i],
+                  hidden: isNaN(value) || value === 0,
+                  index: i
+                };
+              });
+            }
+            return [];
+          }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const value = context.raw;
+            return `R$ ${value.toFixed(2)}`;
+          }
+        }
+      }
+    }
+  };
+
+  const barChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: function(value) {
+            return 'R$ ' + value.toFixed(2);
+          }
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: {
+          usePointStyle: true,
+          pointStyle: 'circle',
+          font: {
+            size: 12
+          }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const value = context.raw;
+            return `${context.dataset.label}: R$ ${value.toFixed(2)}`;
+          }
+        }
+      }
+    }
+  };
 
   return (
     <div className="dashboard">
@@ -140,35 +264,23 @@ function Dashboard({ usuario, perfil, onLogout }) {
           </div>
         </div>
 
-        {perfil.permissoes.verRelatorios && (
-          <div className="charts">
-            <div className="chart-container">
-              <h2>Receitas por Categoria</h2>
-              <div className="donut-chart">
-                <ul>
-                  {dadosFinanceiros.receitasPorCategoria.map((item, index) => (
-                    <li key={index}>
-                      {item.categoria}: R$ {item.valor.toFixed(2)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            <div className="chart-container">
-              <h2>Despesas por Categoria</h2>
-              <div className="bar-chart">
-                <ul>
-                  {dadosFinanceiros.despesasPorCategoria.map((item, index) => (
-                    <li key={index}>
-                      {item.categoria}: R$ {item.valor.toFixed(2)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+        <div className="charts">
+          <div className="chart-container">
+            <h2>Comparação Receitas x Despesas</h2>
+            <div className="chart-wrapper">
+              <Bar data={comparacaoChartData} options={barChartOptions} />
             </div>
           </div>
-        )}
+
+          {dadosFinanceiros.despesasPorCategoria.length > 0 && (
+            <div className="chart-container">
+              <h2>Despesas por Categoria</h2>
+              <div className="chart-wrapper">
+                <Doughnut data={despesasChartData} options={chartOptions} />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -55,7 +55,6 @@ function Register({ onLogin }) {
         editarReceitas: true,
         verDespesas: true,
         editarDespesas: true,
-        verRelatorios: true,
         gerenciarPerfis: true
       }
     };
