@@ -10,13 +10,19 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     data: '',
     categoria: 'Moradia'
   });
+  const [categorias, setCategorias] = useState(['Moradia', 'Alimentação', 'Transporte', 'Saúde', 'Educação', 'Lazer', 'Outros']);
+  const [novaCategoria, setNovaCategoria] = useState('');
+  const [mostrarFormCategoria, setMostrarFormCategoria] = useState(false);
   const navigate = useNavigate();
 
-  // Mova a verificação para depois dos hooks
   useEffect(() => {
     if (usuario && perfil) {
       const despesasSalvas = JSON.parse(localStorage.getItem(`despesas_${usuario.id}`)) || [];
       setDespesas(despesasSalvas);
+
+      // Carregar categorias personalizadas
+      const categoriasPersonalizadas = JSON.parse(localStorage.getItem(`categorias_despesas_${usuario.id}`)) || ['Moradia', 'Alimentação', 'Transporte', 'Saúde', 'Educação', 'Lazer', 'Outros'];
+      setCategorias(categoriasPersonalizadas);
     }
   }, [usuario, perfil]);
 
@@ -70,7 +76,34 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     localStorage.setItem(`despesas_${usuario.id}`, JSON.stringify(despesasAtualizadas));
   };
 
-  const categorias = ['Moradia', 'Alimentação', 'Transporte', 'Saúde', 'Educação', 'Lazer', 'Outros'];
+  const handleAdicionarCategoria = (e) => {
+    e.preventDefault();
+    if (!novaCategoria.trim()) return;
+
+    const categoriaFormatada = novaCategoria.trim();
+    if (categorias.includes(categoriaFormatada)) {
+      alert('Esta categoria já existe!');
+      return;
+    }
+
+    const categoriasAtualizadas = [...categorias, categoriaFormatada];
+    setCategorias(categoriasAtualizadas);
+    localStorage.setItem(`categorias_despesas_${usuario.id}`, JSON.stringify(categoriasAtualizadas));
+    setNovaCategoria('');
+    setMostrarFormCategoria(false);
+  };
+
+  const handleExcluirCategoria = (categoria) => {
+    const categoriasFixas = ['Moradia', 'Alimentação', 'Transporte', 'Saúde', 'Educação', 'Lazer', 'Outros'];
+    if (categoriasFixas.includes(categoria)) {
+      alert('Não é possível excluir categorias padrão!');
+      return;
+    }
+
+    const categoriasAtualizadas = categorias.filter(cat => cat !== categoria);
+    setCategorias(categoriasAtualizadas);
+    localStorage.setItem(`categorias_despesas_${usuario.id}`, JSON.stringify(categoriasAtualizadas));
+  };
 
   return (
     <div className="layout-container">
@@ -110,12 +143,61 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
             </li>
           </ul>
         </nav>
+        <div className="sidebar-bottom">
+          <button onClick={() => navigate('/configuracoes')} className="config-button">
+            <span className="menu-icon">⚙️</span>
+            <span className="menu-text">Configurações</span>
+          </button>
+        </div>
       </div>
 
       <div className="dashboard-content">
         <div className="content-header">
           <h1>Despesas</h1>
+          {perfil.permissoes.editarDespesas && (
+            <button 
+              onClick={() => setMostrarFormCategoria(!mostrarFormCategoria)}
+              className="btn-secondary"
+            >
+              {mostrarFormCategoria ? 'Cancelar' : 'Gerenciar Categorias'}
+            </button>
+          )}
         </div>
+
+        {mostrarFormCategoria && perfil.permissoes.editarDespesas && (
+          <div className="categorias-container">
+            <h3>Gerenciar Categorias</h3>
+            <form onSubmit={handleAdicionarCategoria} className="categoria-form">
+              <div className="form-group">
+                <input
+                  type="text"
+                  value={novaCategoria}
+                  onChange={(e) => setNovaCategoria(e.target.value)}
+                  placeholder="Nova categoria"
+                  required
+                />
+                <button type="submit" className="btn-primary">
+                  Adicionar Categoria
+                </button>
+              </div>
+            </form>
+            <div className="categorias-lista">
+              {categorias.map(categoria => (
+                <div key={categoria} className="categoria-item">
+                  <span>{categoria}</span>
+                  {!['Moradia', 'Alimentação', 'Transporte', 'Saúde', 'Educação', 'Lazer', 'Outros'].includes(categoria) && (
+                    <button
+                      onClick={() => handleExcluirCategoria(categoria)}
+                      className="btn-excluir"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {perfil.permissoes.editarDespesas && (
           <form onSubmit={handleSubmit} className="form-container">

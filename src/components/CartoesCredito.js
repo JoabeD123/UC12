@@ -196,6 +196,12 @@ function CartoesCredito({ usuario, perfil }) {
             )}
           </ul>
         </nav>
+        <div className="sidebar-bottom">
+          <button onClick={() => navigate('/configuracoes')} className="config-button">
+            <span className="menu-icon">⚙️</span>
+            <span className="menu-text">Configurações</span>
+          </button>
+        </div>
       </div>
 
       <div className="cartoes-credito">

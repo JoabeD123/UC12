@@ -205,13 +205,13 @@ function Dashboard({ usuario, perfil, onLogout }) {
               <span className="menu-icon">📊</span>
               <span className="menu-text">Dashboard</span>
             </li>
-            {perfil.permissoes.verReceitas && (
+            {perfil?.permissoes.verReceitas && (
               <li onClick={() => navigate('/receitas')}>
                 <span className="menu-icon">💰</span>
                 <span className="menu-text">Receitas</span>
               </li>
             )}
-            {perfil.permissoes.verDespesas && (
+            {perfil?.permissoes.verDespesas && (
               <li onClick={() => navigate('/despesas')}>
                 <span className="menu-icon">💸</span>
                 <span className="menu-text">Despesas</span>
@@ -221,18 +221,20 @@ function Dashboard({ usuario, perfil, onLogout }) {
               <span className="menu-icon">💳</span>
               <span className="menu-text">Cartões</span>
             </li>
-            {perfil.permissoes.gerenciarPerfis && (
+            {perfil?.permissoes.gerenciarPerfis && (
               <li onClick={() => navigate('/gerenciar-perfis')}>
                 <span className="menu-icon">👥</span>
                 <span className="menu-text">Gerenciar Perfis</span>
               </li>
             )}
-            <li onClick={onLogout}>
-              <span className="menu-icon">🚪</span>
-              <span className="menu-text">Sair</span>
-            </li>
           </ul>
         </nav>
+        <div className="sidebar-bottom">
+          <button onClick={() => navigate('/configuracoes')} className="config-button">
+            <span className="menu-icon">⚙️</span>
+            <span className="menu-text">Configurações</span>
+          </button>
+        </div>
       </div>
 
       <div className="dashboard-content">

@@ -403,6 +403,10 @@ button:disabled {
   align-items: center;
   justify-content: center;
   padding: 2rem;
+  zoom: 100% !important;
+  -moz-transform: scale(1) !important;
+  -webkit-transform: scale(1) !important;
+  transform: scale(1) !important;
 }
 
 .auth-box {

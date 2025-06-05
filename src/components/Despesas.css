@@ -204,4 +204,133 @@ th {
     font-size: 0.9rem;
     padding: 0.6rem;
   }
+}
+
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.btn-secondary {
+  background-color: #6c5ce7;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.3s;
+}
+
+.btn-secondary:hover {
+  background-color: #5541d8;
+}
+
+.categorias-container {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.categorias-container h3 {
+  margin-bottom: 1rem;
+  color: #2d3436;
+}
+
+.categoria-form {
+  margin-bottom: 1.5rem;
+}
+
+.categoria-form .form-group {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.categoria-form input {
+  flex: 3;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  min-width: 250px;
+}
+
+.categoria-form button {
+  flex: 1;
+  padding: 0.8rem;
+  max-width: 180px;
+  white-space: nowrap;
+}
+
+.categorias-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.categoria-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #f0f0f0;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.categoria-item button {
+  background: none;
+  border: none;
+  color: #ff7675;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.categoria-item button:hover {
+  color: #d63031;
+}
+
+@media screen and (max-width: 1024px) {
+  .categoria-form .form-group {
+    flex-direction: column;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .categorias-container {
+    padding: 1rem;
+  }
+
+  .categoria-item {
+    font-size: 0.8rem;
+  }
+
+  .categoria-form .form-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .categoria-form input {
+    min-width: 100%;
+  }
+
+  .categoria-form button {
+    max-width: 100%;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .btn-secondary {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
 } 

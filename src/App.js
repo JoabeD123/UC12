@@ -8,6 +8,7 @@ import Receitas from './components/Receitas';
 import Despesas from './components/Despesas';
 import GerenciarPerfis from './components/GerenciarPerfis';
 import CartoesCredito from './components/CartoesCredito';
+import Configuracoes from './components/Configuracoes';
 
 function App() {
   const [usuarioAtual, setUsuarioAtual] = useState(null);
@@ -96,6 +97,7 @@ function App() {
                   <Receitas 
                     usuario={usuarioAtual}
                     perfil={perfilAtual}
+                    onLogout={handleLogout}
                   />
                 ) : (
                   <Navigate to="/login" replace />
@@ -111,6 +113,7 @@ function App() {
                   <Despesas 
                     usuario={usuarioAtual}
                     perfil={perfilAtual}
+                    onLogout={handleLogout}
                   />
                 ) : (
                   <Navigate to="/login" replace />
@@ -141,6 +144,20 @@ function App() {
                 <CartoesCredito 
                   usuario={usuarioAtual}
                   perfil={perfilAtual}
+                />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/configuracoes"
+            element={
+              usuarioAtual ? (
+                <Configuracoes 
+                  usuario={usuarioAtual}
+                  perfil={perfilAtual}
+                  onLogout={handleLogout}
                 />
               ) : (
                 <Navigate to="/login" replace />

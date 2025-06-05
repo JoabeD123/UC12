@@ -114,12 +114,20 @@ function GerenciarPerfis({ usuario, perfil, onLogout, onPerfilAtualizado }) {
               <span className="menu-icon">💳</span>
               <span className="menu-text">Cartões</span>
             </li>
-            <li className="active">
-              <span className="menu-icon">👥</span>
-              <span className="menu-text">Gerenciar Perfis</span>
-            </li>
+            {perfil?.permissoes.gerenciarPerfis && (
+              <li className="active">
+                <span className="menu-icon">👥</span>
+                <span className="menu-text">Gerenciar Perfis</span>
+              </li>
+            )}
           </ul>
         </nav>
+        <div className="sidebar-bottom">
+          <button onClick={() => navigate('/configuracoes')} className="config-button">
+            <span className="menu-icon">⚙️</span>
+            <span className="menu-text">Configurações</span>
+          </button>
+        </div>
       </div>
 
       <div className="dashboard-content">

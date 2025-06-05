@@ -1,0 +1,213 @@
+.config-container {
+  flex: 1;
+  padding: 2rem;
+}
+
+.config-content {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.config-section {
+  margin-bottom: 2rem;
+}
+
+.config-section h3 {
+  color: #2d3436;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.config-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+/* Switch (Toggle) para Dark Mode */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #6c5ce7;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+/* Controles de Zoom */
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.zoom-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background-color: #6c5ce7;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s;
+}
+
+.zoom-btn:hover:not(:disabled) {
+  background-color: #5541d8;
+}
+
+.zoom-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Botão de Sair */
+.btn-sair {
+  background-color: #ff7675;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn-sair:hover {
+  background-color: #d63031;
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+  background-color: #1a1a1a;
+  color: #ffffff;
+}
+
+body.dark-mode .config-content {
+  background-color: #2d2d2d;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .config-section h3 {
+  color: #ffffff;
+}
+
+body.dark-mode .config-item {
+  background-color: #3d3d3d;
+}
+
+body.dark-mode .sidebar {
+  background-color: #2d2d2d;
+}
+
+body.dark-mode .menu li:hover {
+  background-color: #3d3d3d;
+}
+
+body.dark-mode .menu li.active {
+  background-color: #6c5ce7;
+}
+
+/* Responsividade */
+@media screen and (max-width: 768px) {
+  .config-container {
+    padding: 1rem;
+  }
+
+  .config-content {
+    padding: 1rem;
+  }
+
+  .config-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .zoom-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Botão de Configurações no Sidebar */
+.sidebar-bottom {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  width: 100%;
+  padding: 0 20px;
+}
+
+.config-button {
+  width: 100%;
+  padding: 12px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.3s;
+  background: none;
+  border: none;
+  color: inherit;
+}
+
+.config-button:hover {
+  background-color: rgba(108, 92, 231, 0.1);
+}
+
+.config-button .menu-icon {
+  margin-right: 10px;
+  font-size: 18px;
+} 
