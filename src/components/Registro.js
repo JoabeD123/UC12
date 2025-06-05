@@ -39,6 +39,8 @@ function Registro() {
         permissoes: {
           verReceitas: true,
           verDespesas: true,
+          editarReceitas: true,
+          editarDespesas: true,
           gerenciarPerfis: true
         }
       };

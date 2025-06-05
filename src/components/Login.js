@@ -8,6 +8,22 @@ function Login({ onLogin }) {
   const [erro, setErro] = useState('');
   const navigate = useNavigate();
 
+  const atualizarPermissoes = (perfilId) => {
+    const perfis = JSON.parse(localStorage.getItem('perfis')) || [];
+    const perfilIndex = perfis.findIndex(p => p.id === perfilId);
+    
+    if (perfilIndex !== -1) {
+      perfis[perfilIndex].permissoes = {
+        ...perfis[perfilIndex].permissoes,
+        editarReceitas: true,
+        editarDespesas: true
+      };
+      localStorage.setItem('perfis', JSON.stringify(perfis));
+      return perfis[perfilIndex];
+    }
+    return null;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setErro('');
@@ -20,7 +36,9 @@ function Login({ onLogin }) {
       const perfilPrincipal = perfis.find(p => p.usuarioId === usuario.id && p.tipo === 'Principal');
       
       if (perfilPrincipal) {
-        onLogin(usuario, perfilPrincipal);
+        // Atualiza as permissões e obtém o perfil atualizado
+        const perfilAtualizado = atualizarPermissoes(perfilPrincipal.id) || perfilPrincipal;
+        onLogin(usuario, perfilAtualizado);
         navigate('/');
       } else {
         setErro('Erro ao carregar o perfil do usuário');
