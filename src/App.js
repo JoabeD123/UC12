@@ -9,6 +9,7 @@ import Despesas from './components/Despesas';
 import GerenciarPerfis from './components/GerenciarPerfis';
 import CartoesCredito from './components/CartoesCredito';
 import Configuracoes from './components/Configuracoes';
+import ImpostoRenda from './components/ImpostoRenda/ImpostoRenda';
 
 function App() {
   const [usuarioAtual, setUsuarioAtual] = useState(null);
@@ -142,6 +143,19 @@ function App() {
             element={
               usuarioAtual ? (
                 <CartoesCredito 
+                  usuario={usuarioAtual}
+                  perfil={perfilAtual}
+                />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/imposto-renda"
+            element={
+              usuarioAtual ? (
+                <ImpostoRenda 
                   usuario={usuarioAtual}
                   perfil={perfilAtual}
                 />

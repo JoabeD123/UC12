@@ -16,7 +16,8 @@ function Login({ onLogin }) {
       perfis[perfilIndex].permissoes = {
         ...perfis[perfilIndex].permissoes,
         editarReceitas: true,
-        editarDespesas: true
+        editarDespesas: true,
+        verImpostoRenda: true
       };
       localStorage.setItem('perfis', JSON.stringify(perfis));
       return perfis[perfilIndex];

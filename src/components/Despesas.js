@@ -131,6 +131,10 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
               <span className="menu-icon">💳</span>
               <span className="menu-text">Cartões</span>
             </li>
+            <li onClick={() => navigate('/imposto-renda')}>
+              <span className="menu-icon">📑</span>
+              <span className="menu-text">Imposto de Renda</span>
+            </li>
             {perfil?.permissoes.gerenciarPerfis && (
               <li onClick={() => navigate('/gerenciar-perfis')}>
                 <span className="menu-icon">👥</span>

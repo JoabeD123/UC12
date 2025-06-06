@@ -41,7 +41,8 @@ function Registro() {
           verDespesas: true,
           editarReceitas: true,
           editarDespesas: true,
-          gerenciarPerfis: true
+          gerenciarPerfis: true,
+          verImpostoRenda: true
         }
       };
 

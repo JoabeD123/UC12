@@ -114,6 +114,10 @@ function GerenciarPerfis({ usuario, perfil, onLogout, onPerfilAtualizado }) {
               <span className="menu-icon">💳</span>
               <span className="menu-text">Cartões</span>
             </li>
+            <li onClick={() => navigate('/imposto-renda')}>
+              <span className="menu-icon">📑</span>
+              <span className="menu-text">Imposto de Renda</span>
+            </li>
             {perfil?.permissoes.gerenciarPerfis && (
               <li className="active">
                 <span className="menu-icon">👥</span>
