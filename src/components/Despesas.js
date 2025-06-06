@@ -7,7 +7,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const [novaDespesa, setNovaDespesa] = useState({
     descricao: '',
     valor: '',
-    data: '',
+    data: new Date().toISOString().split('T')[0],
     categoria: 'Moradia'
   });
   const [categorias, setCategorias] = useState(['Moradia', 'Alimentação', 'Transporte', 'Saúde', 'Educação', 'Lazer', 'Outros']);
@@ -60,7 +60,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     setNovaDespesa({
       descricao: '',
       valor: '',
-      data: '',
+      data: new Date().toISOString().split('T')[0],
       categoria: 'Moradia'
     });
   };
@@ -137,10 +137,6 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                 <span className="menu-text">Gerenciar Perfis</span>
               </li>
             )}
-            <li onClick={onLogout}>
-              <span className="menu-icon">🚪</span>
-              <span className="menu-text">Sair</span>
-            </li>
           </ul>
         </nav>
         <div className="sidebar-bottom">
