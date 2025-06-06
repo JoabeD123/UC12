@@ -1,17 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
-<<<<<<< HEAD
-import Login from './components/Login';
-import Registro from './components/Registro';
-import Dashboard from './components/Dashboard';
-import Receitas from './components/Receitas';
-import Despesas from './components/Despesas';
-import GerenciarPerfis from './components/GerenciarPerfis';
-import CartoesCredito from './components/CartoesCredito';
-import Configuracoes from './components/Configuracoes';
-import ImpostoRenda from './components/ImpostoRenda/ImpostoRenda';
-=======
 import Login from './components/Login/Login';
 import Registro from './components/Registro/Registro';
 import Dashboard from './components/Dashboard/Dashboard';
@@ -20,7 +9,7 @@ import Despesas from './components/Despesas/Despesas';
 import GerenciarPerfis from './components/GerenciarPerfis/GerenciarPerfis';
 import CartoesCredito from './components/CartoesCredito/CartoesCredito';
 import Configuracoes from './components/Configuracoes/Configuracoes';
->>>>>>> 67da2eb5748e5bc00372a9e014bb54668edecc4d
+import ImpostoRenda from './components/ImpostoRenda/ImpostoRenda';
 
 function App() {
   const [usuarioAtual, setUsuarioAtual] = useState(null);
@@ -60,7 +49,7 @@ function App() {
   };
 
   if (isLoading) {
-    return <div className="loading">Carregando...</div>;
+    return <div>Carregando...</div>;
   }
 
   return (
