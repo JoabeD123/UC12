@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Receitas.css';
 
@@ -16,117 +16,24 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const [mostrarFormCategoria, setMostrarFormCategoria] = useState(false);
   const navigate = useNavigate();
 
-  const limparReceitasVariaveisAntigas = useCallback((receitasSalvas) => {
-    try {
-      // Usa UTC para evitar problemas de fuso horário
-      const hoje = new Date();
-      const mesAtual = hoje.getUTCMonth();
-      const anoAtual = hoje.getUTCFullYear();
-
-      return receitasSalvas.filter(receita => {
-        if (!receita.fixa) {
-          try {
-            const dataReceita = new Date(receita.data);
-            
-            // Verifica se a data é válida
-            if (isNaN(dataReceita.getTime())) {
-              console.error(`Data inválida encontrada na receita: ${JSON.stringify(receita)}`);
-              return false;
-            }
-
-            const mesReceita = dataReceita.getUTCMonth();
-            const anoReceita = dataReceita.getUTCFullYear();
-            
-            // Mantém apenas as receitas variáveis do mês atual
-            return mesReceita === mesAtual && anoReceita === anoAtual;
-          } catch (error) {
-            console.error(`Erro ao processar data da receita: ${JSON.stringify(receita)}`, error);
-            return false;
-          }
-        }
-        return true; // Mantém todas as receitas fixas
-      });
-    } catch (error) {
-      console.error('Erro ao limpar receitas variáveis:', error);
-      return receitasSalvas; // Em caso de erro, mantém as receitas como estão
-    }
-  }, []);
-
-  const atualizarReceitas = useCallback(() => {
-    try {
-      if (usuario && perfil) {
-        let receitasSalvas;
-        try {
-          receitasSalvas = JSON.parse(localStorage.getItem(`receitas_${usuario.id}`)) || [];
-        } catch (error) {
-          console.error('Erro ao ler receitas do localStorage:', error);
-          receitasSalvas = [];
-        }
-
-        const receitasAtualizadas = limparReceitasVariaveisAntigas(receitasSalvas);
-
-        // Só atualiza se houver mudanças e os dados forem válidos
-        if (receitasSalvas.length !== receitasAtualizadas.length && Array.isArray(receitasAtualizadas)) {
-          try {
-            localStorage.setItem(`receitas_${usuario.id}`, JSON.stringify(receitasAtualizadas));
-            setReceitas(receitasAtualizadas);
-          } catch (error) {
-            console.error('Erro ao salvar receitas atualizadas:', error);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar receitas:', error);
-    }
-  }, [usuario, perfil, limparReceitasVariaveisAntigas]);
-
   useEffect(() => {
     if (usuario && perfil) {
-      atualizarReceitas();
-
-      // Carregar categorias personalizadas com tratamento de erro
       try {
+        const receitasSalvas = JSON.parse(localStorage.getItem(`receitas_${usuario.id}`)) || [];
+        setReceitas(receitasSalvas);
+
+        // Carregar categorias personalizadas
         const categoriasPersonalizadas = JSON.parse(
           localStorage.getItem(`categorias_receitas_${usuario.id}`)
         ) || ['Salário', 'Freelance', 'Investimentos', 'Outros'];
         setCategorias(categoriasPersonalizadas);
       } catch (error) {
-        console.error('Erro ao carregar categorias:', error);
+        console.error('Erro ao carregar dados:', error);
+        setReceitas([]);
         setCategorias(['Salário', 'Freelance', 'Investimentos', 'Outros']);
       }
     }
-  }, [usuario, perfil, atualizarReceitas]);
-
-  useEffect(() => {
-    let intervaloId;
-
-    const verificarMudancaMes = () => {
-      if (document.visibilityState === 'visible') {
-        atualizarReceitas();
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        verificarMudancaMes();
-        intervaloId = setInterval(verificarMudancaMes, 3600000);
-      } else {
-        clearInterval(intervaloId);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    if (document.visibilityState === 'visible') {
-      verificarMudancaMes();
-      intervaloId = setInterval(verificarMudancaMes, 3600000);
-    }
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      clearInterval(intervaloId);
-    };
-  }, [atualizarReceitas]);
+  }, [usuario, perfil]);
 
   if (!usuario || !perfil || !perfil.permissoes.verReceitas) {
     onLogout();
@@ -377,51 +284,31 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
 
         <div className="lista-container">
           <div className="lista-header">
-            <h3>Receitas Fixas</h3>
+            <h3>Todas as Receitas</h3>
           </div>
           <div className="lista-items">
-            {receitas.filter(receita => receita.fixa).map(receita => (
-              <div key={receita.id} className="item">
-                <div className="item-info">
-                  <strong>{receita.descricao}</strong>
-                  <span className="categoria">{receita.categoria}</span>
-                  <span className="valor">R$ {receita.valor.toFixed(2)}</span>
-                  <span className="data">{receita.data}</span>
+            {receitas
+              .sort((a, b) => new Date(b.data) - new Date(a.data))
+              .map(receita => (
+                <div key={receita.id} className="item">
+                  <div className="item-info">
+                    <strong>{receita.descricao}</strong>
+                    <span className="categoria">{receita.categoria}</span>
+                    <span className="valor">R$ {receita.valor.toFixed(2)}</span>
+                    <span className="data">{new Date(receita.data).toLocaleDateString()}</span>
+                    {receita.fixa && <span className="tag-fixa">Fixa</span>}
+                  </div>
+                  {perfil.permissoes.editarReceitas && (
+                    <button
+                      onClick={() => handleExcluir(receita.id)}
+                      className="btn-excluir"
+                      title="Excluir receita"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
-                {perfil.permissoes.editarReceitas && (
-                  <button
-                    onClick={() => handleExcluir(receita.id)}
-                    className="btn-excluir"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div className="lista-header">
-            <h3>Receitas Variáveis</h3>
-          </div>
-          <div className="lista-items">
-            {receitas.filter(receita => !receita.fixa).map(receita => (
-              <div key={receita.id} className="item">
-                <div className="item-info">
-                  <strong>{receita.descricao}</strong>
-                  <span className="categoria">{receita.categoria}</span>
-                  <span className="valor">R$ {receita.valor.toFixed(2)}</span>
-                  <span className="data">{receita.data}</span>
-                </div>
-                {perfil.permissoes.editarReceitas && (
-                  <button
-                    onClick={() => handleExcluir(receita.id)}
-                    className="btn-excluir"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       </div>

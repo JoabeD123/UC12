@@ -264,107 +264,128 @@ function CartoesCredito({ usuario, perfil }) {
           </form>
         </div>
 
-        <div className="cartoes-grid">
-          {cartoes.map(cartao => (
-            <div key={cartao.id} className="cartao-item">
-              {modoEdicao === cartao.id ? (
-                <div className="cartao-edicao">
-                  <input
-                    type="text"
-                    value={cartao.nome}
-                    onChange={(e) => atualizarCartao({ ...cartao, nome: e.target.value })}
-                  />
-                  <input
-                    type="number"
-                    value={cartao.limite}
-                    onChange={(e) => atualizarCartao({ ...cartao, limite: parseFloat(e.target.value) })}
-                  />
-                  <select
-                    value={cartao.mesVencimento}
-                    onChange={(e) => atualizarCartao({ ...cartao, mesVencimento: parseInt(e.target.value) })}
-                    required
-                  >
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map(mes => (
-                      <option key={mes} value={mes}>
-                        {mes.toString().padStart(2, '0')}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={cartao.anoVencimento}
-                    onChange={(e) => atualizarCartao({ ...cartao, anoVencimento: parseInt(e.target.value) })}
-                    required
-                  >
-                    {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(ano => (
-                      <option key={ano} value={ano % 100}>
-                        {(ano % 100).toString().padStart(2, '0')}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={cartao.diaFechamento}
-                    onChange={(e) => atualizarCartao({ ...cartao, diaFechamento: parseInt(e.target.value) })}
-                    required
-                  >
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map(dia => (
-                      <option key={dia} value={dia}>
-                        {dia.toString().padStart(2, '0')}
-                      </option>
-                    ))}
-                  </select>
-                  <button onClick={() => setModoEdicao(null)}>Salvar</button>
-                </div>
-              ) : (
-                <>
-                  <div className="cartao-header">
-                    <h3>{cartao.nome}</h3>
-                    <div className="cartao-acoes">
-                      <button onClick={() => setModoEdicao(cartao.id)}>✏️</button>
-                      <button onClick={() => removerCartao(cartao.id)}>🗑️</button>
+        <div className="cartoes-content">
+          <div className="cartoes-lista">
+            <div className="cartoes-grid">
+              {cartoes.map(cartao => (
+                <div key={cartao.id} className="cartao-item">
+                  {modoEdicao === cartao.id ? (
+                    <div className="cartao-edicao">
+                      <input
+                        type="text"
+                        value={cartao.nome}
+                        onChange={(e) => atualizarCartao({ ...cartao, nome: e.target.value })}
+                      />
+                      <input
+                        type="number"
+                        value={cartao.limite}
+                        onChange={(e) => atualizarCartao({ ...cartao, limite: parseFloat(e.target.value) })}
+                      />
+                      <select
+                        value={cartao.mesVencimento}
+                        onChange={(e) => atualizarCartao({ ...cartao, mesVencimento: parseInt(e.target.value) })}
+                        required
+                      >
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map(mes => (
+                          <option key={mes} value={mes}>
+                            {mes.toString().padStart(2, '0')}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        value={cartao.anoVencimento}
+                        onChange={(e) => atualizarCartao({ ...cartao, anoVencimento: parseInt(e.target.value) })}
+                        required
+                      >
+                        {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(ano => (
+                          <option key={ano} value={ano % 100}>
+                            {(ano % 100).toString().padStart(2, '0')}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        value={cartao.diaFechamento}
+                        onChange={(e) => atualizarCartao({ ...cartao, diaFechamento: parseInt(e.target.value) })}
+                        required
+                      >
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map(dia => (
+                          <option key={dia} value={dia}>
+                            {dia.toString().padStart(2, '0')}
+                          </option>
+                        ))}
+                      </select>
+                      <button onClick={() => setModoEdicao(null)}>Salvar</button>
                     </div>
-                  </div>
-                  <div className="cartao-info">
-                    <p>Limite: R$ {cartao.limite.toFixed(2)}</p>
-                    <p>Gasto Atual: R$ {cartao.gastoAtual.toFixed(2)}</p>
-                    <p>Disponível: R$ {(cartao.limite - cartao.gastoAtual).toFixed(2)}</p>
-                    <p>Vencimento: {(cartao.mesVencimento || 1).toString().padStart(2, '0')}/{(cartao.anoVencimento || new Date().getFullYear() % 100).toString().padStart(2, '0')}</p>
-                    <p>Fechamento: Dia {(cartao.diaFechamento || 1).toString().padStart(2, '0')}</p>
-                  </div>
-                  <div className="cartao-gasto">
-                    <input
-                      type="number"
-                      placeholder="Valor do gasto"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && e.target.value) {
-                          registrarGasto(cartao.id, e.target.value);
-                          e.target.value = '';
-                        }
-                      }}
-                    />
-                  </div>
-                  <div className="cartao-progresso">
-                    <div 
-                      className="progresso-barra"
-                      style={{
-                        width: `${(cartao.gastoAtual / cartao.limite) * 100}%`,
-                        backgroundColor: cartao.gastoAtual > cartao.limite * 0.8 ? '#f44336' : '#4CAF50'
-                      }}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {cartoes.length > 0 && (
-          <div className="grafico-container">
-            <h3>Comparativo de Utilização</h3>
-            <div className="grafico-wrapper">
-              <Bar data={chartData} options={chartOptions} />
+                  ) : (
+                    <>
+                      <div className="cartao-header">
+                        <h3>{cartao.nome}</h3>
+                        <div className="cartao-acoes">
+                          <button onClick={() => setModoEdicao(cartao.id)} title="Editar cartão">✏️</button>
+                          <button onClick={() => removerCartao(cartao.id)} title="Remover cartão">🗑️</button>
+                        </div>
+                      </div>
+                      <div className="cartao-info">
+                        <p>
+                          <span>Limite:</span>
+                          <span>R$ {cartao.limite.toFixed(2)}</span>
+                        </p>
+                        <p>
+                          <span>Gasto Atual:</span>
+                          <span>R$ {cartao.gastoAtual.toFixed(2)}</span>
+                        </p>
+                        <p>
+                          <span>Disponível:</span>
+                          <span>R$ {(cartao.limite - cartao.gastoAtual).toFixed(2)}</span>
+                        </p>
+                        <p>
+                          <span>Vencimento:</span>
+                          <span>{cartao.mesVencimento.toString().padStart(2, '0')}/{cartao.anoVencimento.toString().padStart(2, '0')}</span>
+                        </p>
+                        <p>
+                          <span>Fechamento:</span>
+                          <span>Dia {cartao.diaFechamento.toString().padStart(2, '0')}</span>
+                        </p>
+                      </div>
+                      <div className="cartao-gasto">
+                        <input
+                          type="number"
+                          placeholder="Registrar novo gasto"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && e.target.value) {
+                              registrarGasto(cartao.id, e.target.value);
+                              e.target.value = '';
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="cartao-progresso">
+                        <div 
+                          className="progresso-barra"
+                          style={{
+                            width: `${(cartao.gastoAtual / cartao.limite) * 100}%`,
+                            backgroundColor: cartao.gastoAtual > cartao.limite * 0.8 ? '#f44336' : '#4CAF50'
+                          }}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
-        )}
+
+          {cartoes.length > 0 && (
+            <div className="cartoes-graficos">
+              <div className="grafico-container">
+                <h3>Comparativo de Utilização</h3>
+                <div className="grafico-wrapper">
+                  <Bar data={chartData} options={chartOptions} />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

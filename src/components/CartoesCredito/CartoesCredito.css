@@ -64,6 +64,26 @@
   overflow-y: auto;
 }
 
+.cartoes-content {
+  display: flex;
+  gap: 20px;
+  height: calc(100vh - 100px);
+}
+
+.cartoes-lista {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.cartoes-graficos {
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
 .cartoes-header {
   margin-bottom: 30px;
 }
@@ -79,11 +99,13 @@
   flex-wrap: wrap;
 }
 
-.novo-cartao-form input {
+.novo-cartao-form input,
+.novo-cartao-form select {
   padding: 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
+  min-width: 120px;
 }
 
 .novo-cartao-form button {
@@ -101,10 +123,9 @@
 }
 
 .cartoes-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .cartao-item {
@@ -124,6 +145,7 @@
 .cartao-header h3 {
   margin: 0;
   color: #333;
+  font-size: 1.2rem;
 }
 
 .cartao-acoes {
@@ -137,6 +159,11 @@
   cursor: pointer;
   font-size: 16px;
   padding: 4px;
+  transition: transform 0.2s;
+}
+
+.cartao-acoes button:hover {
+  transform: scale(1.1);
 }
 
 .cartao-info {
@@ -146,6 +173,13 @@
 .cartao-info p {
   margin: 8px 0;
   color: #666;
+  display: flex;
+  justify-content: space-between;
+}
+
+.cartao-info p span:last-child {
+  font-weight: 500;
+  color: #333;
 }
 
 .cartao-gasto {
@@ -161,9 +195,9 @@
 }
 
 .cartao-progresso {
-  height: 4px;
+  height: 6px;
   background-color: #eee;
-  border-radius: 2px;
+  border-radius: 3px;
   overflow: hidden;
 }
 
@@ -178,7 +212,8 @@
   gap: 10px;
 }
 
-.cartao-edicao input {
+.cartao-edicao input,
+.cartao-edicao select {
   padding: 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -199,27 +234,36 @@
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  height: 100%;
 }
 
 .grafico-container h3 {
   margin-bottom: 20px;
   color: #333;
+  font-size: 1.1rem;
 }
 
 .grafico-wrapper {
-  height: 300px;
+  height: calc(100% - 50px);
+  min-height: 200px;
+}
+
+@media (max-width: 1200px) {
+  .cartoes-content {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .cartoes-graficos {
+    width: 100%;
+  }
+
+  .grafico-wrapper {
+    height: 300px;
+  }
 }
 
 @media (max-width: 768px) {
-  .layout-container {
-    flex-direction: column;
-  }
-
-  .sidebar {
-    width: 100%;
-    padding: 10px;
-  }
-
   .cartoes-credito {
     padding: 10px;
   }
@@ -229,11 +273,31 @@
   }
 
   .novo-cartao-form input,
+  .novo-cartao-form select,
   .novo-cartao-form button {
     width: 100%;
   }
+}
 
-  .cartoes-grid {
-    grid-template-columns: 1fr;
-  }
+/* Estilização da barra de rolagem */
+.cartoes-lista::-webkit-scrollbar,
+.cartoes-graficos::-webkit-scrollbar {
+  width: 8px;
+}
+
+.cartoes-lista::-webkit-scrollbar-track,
+.cartoes-graficos::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.cartoes-lista::-webkit-scrollbar-thumb,
+.cartoes-graficos::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.cartoes-lista::-webkit-scrollbar-thumb:hover,
+.cartoes-graficos::-webkit-scrollbar-thumb:hover {
+  background: #555;
 } 

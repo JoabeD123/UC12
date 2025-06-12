@@ -399,6 +399,15 @@ th {
   color: #868e96;
 }
 
+.item-info .tag-fixa {
+  background-color: #6c5ce7;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+}
+
 .btn-excluir {
   background: none;
   border: none;
