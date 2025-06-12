@@ -12,44 +12,79 @@ import Configuracoes from './components/Configuracoes/Configuracoes';
 import ImpostoRenda from './components/ImpostoRenda/ImpostoRenda';
 
 function App() {
-  const [usuarioAtual, setUsuarioAtual] = useState(null);
-  const [perfilAtual, setPerfilAtual] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
-    try {
-      const usuarioSalvo = JSON.parse(localStorage.getItem('usuarioAtual'));
-      const perfilSalvo = JSON.parse(localStorage.getItem('perfilAtual'));
-      if (usuarioSalvo) setUsuarioAtual(usuarioSalvo);
-      if (perfilSalvo) setPerfilAtual(perfilSalvo);
-    } catch (error) {
-      console.error('Erro ao carregar dados do usuário:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    // Carregar usuário e configurações ao iniciar
+    const loadUserData = () => {
+      try {
+        const userData = JSON.parse(localStorage.getItem('currentUser'));
+        if (userData) {
+          setCurrentUser(userData);
+          setProfile(JSON.parse(localStorage.getItem(`profile_${userData.id}`)));
+          
+          // Carregar configurações específicas do usuário
+          const userConfig = JSON.parse(localStorage.getItem(`config_${userData.id}`)) || {};
+          setDarkMode(userConfig.darkMode || false);
+          document.documentElement.setAttribute('data-theme', userConfig.darkMode ? 'dark' : 'light');
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados do usuário:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
   }, []);
 
-  const handleLogin = (usuario, perfil) => {
-    setUsuarioAtual(usuario);
-    setPerfilAtual(perfil);
-    localStorage.setItem('usuarioAtual', JSON.stringify(usuario));
-    localStorage.setItem('perfilAtual', JSON.stringify(perfil));
+  const handleLogin = (userData) => {
+    try {
+      setCurrentUser(userData);
+      setProfile(JSON.parse(localStorage.getItem(`profile_${userData.id}`)));
+      
+      // Carregar configurações do usuário ao fazer login
+      const userConfig = JSON.parse(localStorage.getItem(`config_${userData.id}`)) || {};
+      setDarkMode(userConfig.darkMode || false);
+      document.documentElement.setAttribute('data-theme', userConfig.darkMode ? 'dark' : 'light');
+    } catch (error) {
+      console.error('Erro ao fazer login:', error);
+    }
   };
 
   const handleLogout = () => {
-    setUsuarioAtual(null);
-    setPerfilAtual(null);
-    localStorage.removeItem('usuarioAtual');
-    localStorage.removeItem('perfilAtual');
+    try {
+      setCurrentUser(null);
+      setProfile(null);
+      setDarkMode(false);
+      document.documentElement.setAttribute('data-theme', 'light');
+      localStorage.removeItem('currentUser');
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
   };
 
-  const handlePerfilAtualizado = (perfil) => {
-    setPerfilAtual(perfil);
-    localStorage.setItem('perfilAtual', JSON.stringify(perfil));
+  const handleThemeChange = (isDark) => {
+    try {
+      setDarkMode(isDark);
+      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      
+      // Salvar configuração de tema específica do usuário
+      if (currentUser?.id) {
+        const userConfig = JSON.parse(localStorage.getItem(`config_${currentUser.id}`)) || {};
+        userConfig.darkMode = isDark;
+        localStorage.setItem(`config_${currentUser.id}`, JSON.stringify(userConfig));
+      }
+    } catch (error) {
+      console.error('Erro ao alterar tema:', error);
+    }
   };
 
-  if (isLoading) {
-    return <div>Carregando...</div>;
+  if (loading) {
+    return <div className="loading">Carregando...</div>;
   }
 
   return (
@@ -59,7 +94,7 @@ function App() {
           <Route 
             path="/login" 
             element={
-              !usuarioAtual ? (
+              !currentUser ? (
                 <Login onLogin={handleLogin} />
               ) : (
                 <Navigate to="/dashboard" replace />
@@ -69,7 +104,7 @@ function App() {
           <Route 
             path="/registro" 
             element={
-              !usuarioAtual ? (
+              !currentUser ? (
                 <Registro />
               ) : (
                 <Navigate to="/dashboard" replace />
@@ -79,10 +114,10 @@ function App() {
           <Route 
             path="/dashboard" 
             element={
-              usuarioAtual ? (
+              currentUser ? (
                 <Dashboard 
-                  usuario={usuarioAtual}
-                  perfil={perfilAtual}
+                  usuario={currentUser}
+                  perfil={profile}
                   onLogout={handleLogout}
                 />
               ) : (
@@ -90,14 +125,14 @@ function App() {
               )
             } 
           />
-          {perfilAtual?.permissoes.verReceitas && (
+          {profile?.permissoes.verReceitas && (
             <Route
               path="/receitas"
               element={
-                usuarioAtual ? (
+                currentUser ? (
                   <Receitas 
-                    usuario={usuarioAtual}
-                    perfil={perfilAtual}
+                    usuario={currentUser}
+                    perfil={profile}
                     onLogout={handleLogout}
                   />
                 ) : (
@@ -106,14 +141,14 @@ function App() {
               }
             />
           )}
-          {perfilAtual?.permissoes.verDespesas && (
+          {profile?.permissoes.verDespesas && (
             <Route
               path="/despesas"
               element={
-                usuarioAtual ? (
+                currentUser ? (
                   <Despesas 
-                    usuario={usuarioAtual}
-                    perfil={perfilAtual}
+                    usuario={currentUser}
+                    perfil={profile}
                     onLogout={handleLogout}
                   />
                 ) : (
@@ -122,15 +157,15 @@ function App() {
               }
             />
           )}
-          {perfilAtual?.permissoes.gerenciarPerfis && (
+          {profile?.permissoes.gerenciarPerfis && (
             <Route
               path="/gerenciar-perfis"
               element={
-                usuarioAtual ? (
+                currentUser ? (
                   <GerenciarPerfis
-                    usuario={usuarioAtual}
-                    perfil={perfilAtual}
-                    onPerfilAtualizado={handlePerfilAtualizado}
+                    usuario={currentUser}
+                    perfil={profile}
+                    onPerfilAtualizado={setProfile}
                   />
                 ) : (
                   <Navigate to="/login" replace />
@@ -141,10 +176,10 @@ function App() {
           <Route
             path="/cartoes"
             element={
-              usuarioAtual ? (
+              currentUser ? (
                 <CartoesCredito 
-                  usuario={usuarioAtual}
-                  perfil={perfilAtual}
+                  usuario={currentUser}
+                  perfil={profile}
                 />
               ) : (
                 <Navigate to="/login" replace />
@@ -154,10 +189,10 @@ function App() {
           <Route
             path="/imposto-renda"
             element={
-              usuarioAtual ? (
+              currentUser ? (
                 <ImpostoRenda 
-                  usuario={usuarioAtual}
-                  perfil={perfilAtual}
+                  usuario={currentUser}
+                  perfil={profile}
                 />
               ) : (
                 <Navigate to="/login" replace />
@@ -167,11 +202,13 @@ function App() {
           <Route
             path="/configuracoes"
             element={
-              usuarioAtual ? (
+              currentUser ? (
                 <Configuracoes 
-                  usuario={usuarioAtual}
-                  perfil={perfilAtual}
+                  usuario={currentUser}
+                  perfil={profile}
                   onLogout={handleLogout}
+                  darkMode={darkMode}
+                  onThemeChange={handleThemeChange}
                 />
               ) : (
                 <Navigate to="/login" replace />
@@ -181,7 +218,7 @@ function App() {
           <Route 
             path="/" 
             element={
-              usuarioAtual ? (
+              currentUser ? (
                 <Navigate to="/dashboard" replace />
               ) : (
                 <Navigate to="/login" replace />

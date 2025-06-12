@@ -2,62 +2,74 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Configuracoes.css';
 
-function Configuracoes({ usuario, perfil, onLogout }) {
-  const [darkMode, setDarkMode] = useState(false);
+function Configuracoes({ usuario, perfil, onLogout, darkMode, onThemeChange }) {
   const [zoom, setZoom] = useState(100);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Carregar configurações salvas
-    const configSalvas = JSON.parse(localStorage.getItem(`config_${usuario?.id}`)) || {};
-    setDarkMode(configSalvas.darkMode || false);
-    setZoom(configSalvas.zoom || 100);
-
-    // Aplicar configurações
-    if (configSalvas.darkMode) {
-      document.body.classList.add('dark-mode');
-    }
-    
-    // Aplicar zoom apenas no container principal da aplicação
-    const appContainer = document.querySelector('.app > div:not(.auth-container)');
-    if (appContainer) {
-      appContainer.style.zoom = `${configSalvas.zoom || 100}%`;
+    try {
+      // Carregar configurações salvas
+      const configSalvas = JSON.parse(localStorage.getItem(`config_${usuario?.id}`)) || {};
+      setZoom(configSalvas.zoom || 100);
+      aplicarZoom(configSalvas.zoom || 100);
+    } catch (error) {
+      console.error('Erro ao carregar configurações:', error);
+      setError('Erro ao carregar configurações. Usando valores padrão.');
     }
 
     return () => {
       // Cleanup: remover zoom ao desmontar
-      if (appContainer) {
-        appContainer.style.zoom = '100%';
-      }
+      aplicarZoom(100);
     };
   }, [usuario]);
 
-  const handleDarkModeChange = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    
-    if (newDarkMode) {
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
+  const aplicarZoom = (zoomValue) => {
+    try {
+      const appContainer = document.querySelector('.app');
+      if (appContainer) {
+        // Usar transform scale como fallback para navegadores que não suportam zoom
+        if (typeof appContainer.style.zoom !== 'undefined') {
+          appContainer.style.zoom = `${zoomValue}%`;
+        } else {
+          appContainer.style.transform = `scale(${zoomValue / 100})`;
+          appContainer.style.transformOrigin = 'top left';
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao aplicar zoom:', error);
     }
+  };
 
-    salvarConfiguracoes({ darkMode: newDarkMode, zoom });
+  const handleDarkModeChange = () => {
+    try {
+      onThemeChange(!darkMode);
+    } catch (error) {
+      console.error('Erro ao alterar modo escuro:', error);
+      setError('Erro ao alterar modo escuro. Tente novamente.');
+    }
   };
 
   const handleZoomChange = (novoZoom) => {
-    setZoom(novoZoom);
-    // Aplicar zoom apenas no container principal da aplicação
-    const appContainer = document.querySelector('.app > div:not(.auth-container)');
-    if (appContainer) {
-      appContainer.style.zoom = `${novoZoom}%`;
+    try {
+      setZoom(novoZoom);
+      aplicarZoom(novoZoom);
+      salvarConfiguracoes({ darkMode, zoom: novoZoom });
+    } catch (error) {
+      console.error('Erro ao alterar zoom:', error);
+      setError('Erro ao alterar zoom. Tente novamente.');
     }
-    salvarConfiguracoes({ darkMode, zoom: novoZoom });
   };
 
   const salvarConfiguracoes = (config) => {
-    if (usuario) {
-      localStorage.setItem(`config_${usuario.id}`, JSON.stringify(config));
+    try {
+      if (usuario?.id) {
+        localStorage.setItem(`config_${usuario.id}`, JSON.stringify(config));
+        setError(null);
+      }
+    } catch (error) {
+      console.error('Erro ao salvar configurações:', error);
+      setError('Erro ao salvar configurações. Tente novamente.');
     }
   };
 
@@ -113,6 +125,8 @@ function Configuracoes({ usuario, perfil, onLogout }) {
         <div className="content-header">
           <h1>Configurações</h1>
         </div>
+
+        {error && <div className="error-message">{error}</div>}
 
         <div className="config-content">
           <div className="config-section">

@@ -92,7 +92,8 @@ function Dashboard({ usuario, perfil, onLogout }) {
           '#3F51B5',
           '#2196F3'
         ],
-        borderWidth: 1
+        borderWidth: 1,
+        borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#333' : '#fff'
       }
     ]
   };
@@ -130,6 +131,7 @@ function Dashboard({ usuario, perfil, onLogout }) {
           font: {
             size: 12
           },
+          color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : '#333',
           generateLabels: function(chart) {
             const data = chart.data;
             if (data.labels.length && data.datasets.length) {
@@ -148,6 +150,11 @@ function Dashboard({ usuario, perfil, onLogout }) {
         }
       },
       tooltip: {
+        backgroundColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#333' : '#fff',
+        titleColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : '#333',
+        bodyColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : '#333',
+        borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#444' : '#ddd',
+        borderWidth: 1,
         callbacks: {
           label: function(context) {
             const value = context.raw;
@@ -164,10 +171,22 @@ function Dashboard({ usuario, perfil, onLogout }) {
     scales: {
       y: {
         beginAtZero: true,
+        grid: {
+          color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#333' : '#ddd'
+        },
         ticks: {
+          color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : '#333',
           callback: function(value) {
             return 'R$ ' + value.toFixed(2);
           }
+        }
+      },
+      x: {
+        grid: {
+          color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#333' : '#ddd'
+        },
+        ticks: {
+          color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : '#333'
         }
       }
     },
@@ -179,10 +198,16 @@ function Dashboard({ usuario, perfil, onLogout }) {
           pointStyle: 'circle',
           font: {
             size: 12
-          }
+          },
+          color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : '#333'
         }
       },
       tooltip: {
+        backgroundColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#333' : '#fff',
+        titleColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : '#333',
+        bodyColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : '#333',
+        borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#444' : '#ddd',
+        borderWidth: 1,
         callbacks: {
           label: function(context) {
             const value = context.raw;

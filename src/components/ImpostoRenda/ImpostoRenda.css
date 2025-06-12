@@ -3,13 +3,16 @@
   min-height: 100vh;
   width: 100%;
   overflow: hidden;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .sidebar {
   width: 250px;
   min-width: 250px;
-  background-color: #1a1a1a;
-  color: white;
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-text);
   padding: 20px 0;
   display: flex;
   flex-direction: column;
@@ -17,6 +20,7 @@
   position: sticky;
   top: 0;
   left: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .logo {
@@ -26,8 +30,8 @@
 }
 
 .logo-icon {
-  background-color: #333;
-  color: white;
+  background-color: var(--sidebar-hover);
+  color: var(--sidebar-text);
   width: 50px;
   height: 50px;
   border-radius: 10px;
@@ -36,6 +40,7 @@
   justify-content: center;
   font-size: 24px;
   margin: 0 auto;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .menu {
@@ -54,16 +59,17 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  color: var(--sidebar-text);
 }
 
 .menu li:hover {
-  background-color: #333;
+  background-color: var(--sidebar-hover);
 }
 
 .menu li.active {
-  background-color: #333;
-  border-left: 4px solid #007bff;
+  background-color: var(--sidebar-hover);
+  border-left: 4px solid var(--primary-color);
 }
 
 .menu-icon {
@@ -83,26 +89,27 @@
   width: 100%;
   padding: 10px;
   background: none;
-  border: 1px solid #333;
-  color: white;
+  border: 1px solid var(--border-color);
+  color: var(--sidebar-text);
   border-radius: 5px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .config-button:hover {
-  background-color: #333;
+  background-color: var(--sidebar-hover);
 }
 
 .imposto-renda-container {
   flex: 1;
   padding: 20px;
-  background-color: #f5f5f5;
+  background-color: var(--bg-color);
   overflow-y: auto;
   height: 100vh;
+  transition: background-color 0.3s ease;
 }
 
 .content-header {
@@ -112,16 +119,18 @@
 
 .content-header h1 {
   font-size: 24px;
-  color: #333;
+  color: var(--text-color);
   margin: 0;
+  transition: color 0.3s ease;
 }
 
 .calculo-container {
-  background-color: white;
+  background-color: var(--card-bg);
   border-radius: 10px;
   padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--card-shadow);
   margin-bottom: 20px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .form-section {
@@ -136,16 +145,20 @@
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  color: #333;
+  color: var(--text-color);
   font-weight: 500;
+  transition: color 0.3s ease;
 }
 
 .input-moeda {
   width: 100%;
   padding: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 5px;
   font-size: 16px;
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
 }
 
 .checkbox-group {
@@ -158,31 +171,32 @@
 }
 
 .btn-calcular {
-  background-color: #007bff;
+  background-color: var(--primary-color);
   color: white;
   border: none;
   padding: 12px 24px;
   border-radius: 5px;
   cursor: pointer;
   font-size: 16px;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s ease;
 }
 
 .btn-calcular:hover {
-  background-color: #0056b3;
+  background-color: var(--primary-hover);
 }
 
 .btn-calcular:disabled {
-  background-color: #ccc;
+  background-color: var(--disabled-color);
   cursor: not-allowed;
 }
 
 .erro-mensagem {
-  background-color: #ffebee;
-  color: #c62828;
+  background-color: var(--error-bg);
+  color: var(--error-color);
   padding: 12px;
   border-radius: 5px;
   margin-bottom: 20px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .resultado-section {
@@ -190,14 +204,16 @@
 }
 
 .resultado-resumo {
-  background-color: #f8f9fa;
+  background-color: var(--card-bg);
   border-radius: 8px;
   padding: 20px;
+  transition: background-color 0.3s ease;
 }
 
 .resultado-resumo h3 {
-  color: #333;
+  color: var(--text-color);
   margin-bottom: 20px;
+  transition: color 0.3s ease;
 }
 
 .info-grid {

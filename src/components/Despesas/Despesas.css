@@ -1,18 +1,23 @@
 .despesas-container {
   padding: 2rem;
   flex: 1;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .despesas-content {
-  background: white;
+  background: var(--card-bg);
   border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--card-shadow);
   padding: 2rem;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .despesas-content h2 {
-  color: #2d3436;
+  color: var(--text-color);
   margin-bottom: 1.5rem;
+  transition: color 0.3s ease;
 }
 
 .despesa-form {
@@ -29,8 +34,9 @@
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #2d3436;
+  color: var(--text-color);
   font-size: 0.9rem;
+  transition: color 0.3s ease;
 }
 
 .form-group input,
@@ -38,17 +44,19 @@
 .form-group select {
   width: 100%;
   padding: 0.8rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 1rem;
   outline: none;
-  transition: border-color 0.3s;
+  transition: border-color 0.3s, background-color 0.3s ease, color 0.3s ease;
+  background-color: var(--input-bg);
+  color: var(--text-color);
 }
 
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
-  border-color: #ff7675;
+  border-color: var(--danger-color);
 }
 
 .form-group textarea {
@@ -78,8 +86,9 @@
 
 .sem-despesas {
   text-align: center;
-  color: #666;
+  color: var(--text-muted);
   padding: 2rem;
+  transition: color 0.3s ease;
 }
 
 .tabela-container {
@@ -90,23 +99,28 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
+  color: var(--text-color);
+  transition: color 0.3s ease;
 }
 
 th, td {
   padding: 1rem;
   text-align: left;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color);
+  transition: border-color 0.3s ease;
 }
 
 th {
-  background-color: #f8f9fa;
+  background-color: var(--table-header-bg);
   font-weight: 600;
-  color: #2d3436;
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .valor-despesa {
-  color: #ff7675;
+  color: var(--danger-color);
   font-weight: 500;
+  transition: color 0.3s ease;
 }
 
 .btn-editar,
@@ -117,24 +131,25 @@ th {
   cursor: pointer;
   font-size: 0.9rem;
   margin-right: 0.5rem;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .btn-editar {
-  background-color: #74b9ff;
+  background-color: var(--info-color);
   color: white;
 }
 
 .btn-excluir {
-  background-color: #ff7675;
+  background-color: var(--danger-color);
   color: white;
 }
 
 .btn-editar:hover {
-  background-color: #0984e3;
+  background-color: var(--info-hover);
 }
 
 .btn-excluir:hover {
-  background-color: #d63031;
+  background-color: var(--danger-hover);
 }
 
 /* Media Queries */

@@ -6,6 +6,7 @@ function Login({ onLogin }) {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const atualizarPermissoes = (perfilId) => {
@@ -25,27 +26,41 @@ function Login({ onLogin }) {
     return null;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setErro('');
+    setErro(null);
+    setLoading(true);
 
-    const usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
-    const usuario = usuarios.find(u => u.email === email && u.senha === senha);
+    try {
+      // Simular autenticação
+      const userData = {
+        id: 1,
+        nome: 'Usuário Teste',
+        email: email
+      };
 
-    if (usuario) {
-      const perfis = JSON.parse(localStorage.getItem('perfis')) || [];
-      const perfilPrincipal = perfis.find(p => p.usuarioId === usuario.id && p.tipo === 'Principal');
+      // Salvar dados do usuário
+      localStorage.setItem('currentUser', JSON.stringify(userData));
       
-      if (perfilPrincipal) {
-        // Atualiza as permissões e obtém o perfil atualizado
-        const perfilAtualizado = atualizarPermissoes(perfilPrincipal.id) || perfilPrincipal;
-        onLogin(usuario, perfilAtualizado);
-        navigate('/');
-      } else {
-        setErro('Erro ao carregar o perfil do usuário');
-      }
-    } else {
-      setErro('Email ou senha incorretos');
+      // Criar perfil padrão se não existir
+      const profile = {
+        id: 1,
+        nome: 'Perfil Padrão',
+        permissoes: {
+          verReceitas: true,
+          verDespesas: true,
+          gerenciarPerfis: true
+        }
+      };
+      localStorage.setItem(`profile_${userData.id}`, JSON.stringify(profile));
+
+      // Chamar callback de login com os dados do usuário
+      onLogin(userData);
+    } catch (error) {
+      console.error('Erro ao fazer login:', error);
+      setErro('Erro ao fazer login. Tente novamente.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,8 +92,8 @@ function Login({ onLogin }) {
               required
             />
           </div>
-          <button type="submit" className="btn-primary">
-            Entrar
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
         <button onClick={handleCadastro} className="btn-link">
