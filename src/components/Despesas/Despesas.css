@@ -1,5 +1,5 @@
 :root {
-    --primary-purple: #6a0dad;
+    --primary-purple: #1976D2;
     --secondary-blue: #007bff;
     --white: #ffffff;
     --light-grey: #f8f9fa; /* Fundo principal */
@@ -11,13 +11,13 @@
     --success-green: #28a745;
     --danger-red: #dc3545;
     --input-border: #dee2e6;
-    --input-focus-shadow: rgba(106, 13, 173, 0.25);
+    --input-focus-shadow: rgba(25, 118, 210, 0.25);
     --error-bg: #f8d7da;
     --error-color: #721c24;
-    --primary-hover: #5a099a;
+    --primary-hover: #1565C0;
     --text-muted: #6c757d;
-    --tag-bg: #e0e7ff;
-    --primary-bg: #ede7f6;
+    --tag-bg: #e3f2fd;
+    --primary-bg: #e3f2fd;
     --secondary-color: #6c757d;
     --secondary-hover: #5a6268;
     --table-header-bg-light: #f0f2f5;

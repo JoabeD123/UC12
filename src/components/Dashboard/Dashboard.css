@@ -1,6 +1,6 @@
 /* Color palette based on the image */
 :root {
-    --primary-purple: #6a0dad; /* Um tom de roxo para detalhes */
+    --primary-purple: #1976D2; /* Um tom de azul para detalhes */
     --secondary-blue: #007bff; /* Um tom de azul para detalhes */
     --white: #ffffff;
     --light-grey: #f8f9fa; /* Fundo principal levemente cinza */
@@ -14,12 +14,12 @@
     --icon-bg-blue: #007bff;
     --icon-bg-red: #dc3545;
     --icon-bg-green: #28a745;
-    --card-balance-bg: #ede7f6; /* Cor mais clara para o card de saldo atual */
+    --card-balance-bg: #e3f2fd; /* Cor mais clara para o card de saldo atual */
     --sidebar-active-bg: #eceff1; /* Cor de fundo para item ativo da sidebar no modo claro */
     --sidebar-text-dark: #495057;
     --chart-legend-color-light: #6c757d; /* Cor da legenda do gráfico no modo claro */
     --chart-grid-color-light: #e0e0e0; /* Cor da grade do gráfico no modo claro */
-    --sidebar-active-bar-color: #6a0dad; /* Cor da barra roxa do item ativo */
+    --sidebar-active-bar-color: #1976D2; /* Cor da barra azul do item ativo */
 }
 
 [data-theme='light'] {
@@ -366,7 +366,7 @@
   transform: translateY(-50%);
   width: 4px;
   height: 80%; /* Altura da barra */
-  background-color: var(--sidebar-active-bar-color); /* Cor da barra roxa */
+  background-color: var(--sidebar-active-bar-color); /* Cor da barra azul */
   border-radius: 0 4px 4px 0; /* Borda arredondada no lado direito */
 }
 
