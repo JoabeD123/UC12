@@ -43,8 +43,8 @@ function Dashboard({ usuario, perfil, onLogout }) {
     }
 
     // Carregar dados financeiros
-    const receitas = JSON.parse(localStorage.getItem(`receitas_${usuario.id}`)) || [];
-    const despesas = JSON.parse(localStorage.getItem(`despesas_${usuario.id}`)) || [];
+    const receitas = JSON.parse(localStorage.getItem(`receitas_${usuario.id_usuario}`)) || [];
+    const despesas = JSON.parse(localStorage.getItem(`despesas_${usuario.id_usuario}`)) || [];
 
     // Calcular totais
     const totalReceitas = receitas.reduce((total, receita) => total + receita.valor, 0);
@@ -221,6 +221,23 @@ function Dashboard({ usuario, perfil, onLogout }) {
     }
   };
 
+  const handleLogout = () => {
+    try {
+      // Limpar dados do localStorage
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem(`profile_${usuario.id_usuario}`);
+      localStorage.removeItem(`config_${usuario.id_usuario}`);
+      
+      // Chamar a função de logout do App.js
+      onLogout();
+      
+      // Redirecionar para a página de login
+      navigate('/login');
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
+  };
+
   return (
     <div className="dashboard">
       <div className="sidebar">
@@ -233,13 +250,13 @@ function Dashboard({ usuario, perfil, onLogout }) {
               <FaRegChartBar className="menu-icon" />
               <span className="menu-text">Dashboard</span>
             </li>
-            {perfil?.permissoes.verReceitas && (
+            {perfil?.permissoes?.pode_ver_todas_contas && (
               <li onClick={() => navigate('/receitas')}>
                 <FaMoneyBillWave className="menu-icon" />
                 <span className="menu-text">Receitas</span>
               </li>
             )}
-            {perfil?.permissoes.verDespesas && (
+            {perfil?.permissoes?.pode_ver_todas_contas && (
               <li onClick={() => navigate('/despesas')}>
                 <FaWallet className="menu-icon" />
                 <span className="menu-text">Despesas</span>
@@ -253,27 +270,29 @@ function Dashboard({ usuario, perfil, onLogout }) {
               <FaPiggyBank className="menu-icon" />
               <span className="menu-text">Imposto Renda</span>
             </li>
-            <li onClick={() => navigate('/gerenciar-perfis')}>
+            {perfil?.permissoes?.pode_editar_conta && (
+              <li onClick={() => navigate('/gerenciar-perfis')}>
                 <FaUsers className="menu-icon" />
                 <span className="menu-text">Gerenciar Perfis</span>
-            </li>
+              </li>
+            )}
             <li onClick={() => navigate('/configuracoes')}>
-                <FaCog className="menu-icon" />
-                <span className="menu-text">Configurações</span>
+              <FaCog className="menu-icon" />
+              <span className="menu-text">Configurações</span>
             </li>
-            <li onClick={onLogout}>
+            <li onClick={handleLogout}>
               <FaSignOutAlt className="menu-icon" />
               <span className="menu-text">Sair</span>
             </li>
           </ul>
         </nav>
         <div className="add-button">
-            <FaPlus />
+          <FaPlus />
         </div>
       </div>
       <div className="dashboard-content">
         <div className="content-header">
-          <h1>Dashboard <span className="notification-count">110</span></h1>
+          <h1>Dashboard</h1>
           <div className="user-profile-header">
             <select
               className="month-selector"
@@ -287,9 +306,9 @@ function Dashboard({ usuario, perfil, onLogout }) {
               ))}
             </select>
             <div className="user-profile-icon">
-                {usuario?.nome ? usuario.nome.charAt(0).toUpperCase() : 'U'}
+              {usuario?.nome_familia ? usuario.nome_familia.charAt(0).toUpperCase() : 'U'}
             </div>
-            <span className="user-name">{usuario?.nome || 'Usuário'}</span>
+            <span className="user-name">{usuario?.nome_familia || 'Usuário'}</span>
             <span className="joranda">Jornada</span>
           </div>
         </div>
@@ -297,10 +316,10 @@ function Dashboard({ usuario, perfil, onLogout }) {
         <div className="cards">
           <div className="card saldo-atual">
             <div className="card-header">
-                <span className="card-title">Saldo atual</span>
-                <div className="card-icon-wrapper default">
-                    <FaUniversity />
-                </div>
+              <span className="card-title">Saldo atual</span>
+              <div className="card-icon-wrapper default">
+                <FaUniversity />
+              </div>
             </div>
             <p className="amount">R$ {dadosFinanceiros.saldo.toFixed(2).replace('.', ',')}</p>
             <a href="#" className="meu-desempenho">Meu Desempenho <IoArrowForward /></a>
@@ -308,32 +327,32 @@ function Dashboard({ usuario, perfil, onLogout }) {
 
           <div className="card">
             <div className="card-header">
-                <span className="card-title">Receitas</span>
-                <div className="card-icon-wrapper green">
-                    <FaArrowUp />
-                </div>
+              <span className="card-title">Receitas</span>
+              <div className="card-icon-wrapper green">
+                <FaArrowUp />
+              </div>
             </div>
             <p className="amount positive">R$ {dadosFinanceiros.receitas.toFixed(2).replace('.', ',')}</p>
           </div>
 
           <div className="card">
             <div className="card-header">
-                <span className="card-title">Despesas</span>
-                <div className="card-icon-wrapper red">
-                    <FaArrowDown />
-                </div>
+              <span className="card-title">Despesas</span>
+              <div className="card-icon-wrapper red">
+                <FaArrowDown />
+              </div>
             </div>
             <p className="amount negative">R$ {dadosFinanceiros.despesas.toFixed(2).replace('.', ',')}</p>
           </div>
 
           <div className="card">
             <div className="card-header">
-                <span className="card-title">Cartão de crédito</span>
-                <div className="card-icon-wrapper blue">
-                    <FaCreditCard />
-                </div>
+              <span className="card-title">Cartão de crédito</span>
+              <div className="card-icon-wrapper blue">
+                <FaCreditCard />
+              </div>
             </div>
-            <p className="amount">R$ 0,00</p> {/* Placeholder, ajustar com dados reais */}
+            <p className="amount">R$ 0,00</p>
           </div>
         </div>
 
@@ -341,40 +360,11 @@ function Dashboard({ usuario, perfil, onLogout }) {
           <div className="chart-container">
             <h2>Despesas por Categoria</h2>
             <div className="chart-wrapper">
-              <Doughnut data={despesasChartData} options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    position: 'right',
-                    labels: {
-                      usePointStyle: true,
-                      pointStyle: 'circle',
-                      font: {
-                        size: 12
-                      },
-                      color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : '#333',
-                    }
-                  },
-                  tooltip: {
-                    backgroundColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#333' : '#fff',
-                    titleColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : '#333',
-                    bodyColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : '#333',
-                    borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#444' : '#ddd',
-                    borderWidth: 1,
-                    callbacks: {
-                      label: function(context) {
-                        const value = context.raw;
-                        return `R$ ${value.toFixed(2)}`;
-                      }
-                    }
-                  }
-                }
-              }} />
+              <Doughnut data={despesasChartData} options={chartOptions} />
             </div>
             <div className="doughnut-summary">
-                <div className="doughnut-center-text">R$ {dadosFinanceiros.despesas.toFixed(2).replace('.', ',')}</div>
-                <div className="doughnut-center-subtext">Total</div>
+              <div className="doughnut-center-text">R$ {dadosFinanceiros.despesas.toFixed(2).replace('.', ',')}</div>
+              <div className="doughnut-center-subtext">Total</div>
             </div>
             <button className="ver-mais-btn">VER MAIS</button>
           </div>
@@ -382,43 +372,42 @@ function Dashboard({ usuario, perfil, onLogout }) {
           <div className="chart-container">
             <h2>Balanço Mensal</h2>
             <div className="chart-wrapper">
-                <Bar data={comparacaoChartData} options={barChartOptions} />
+              <Bar data={comparacaoChartData} options={barChartOptions} />
             </div>
             <button className="ver-mais-btn">VER MAIS</button>
           </div>
         </div>
 
         <div className="credit-card-section">
-            <h2>Cartões de crédito</h2>
-            <div className="credit-card-tabs">
-                <div className="credit-card-tab active">Faturas abertas</div>
-                <div className="credit-card-tab">Faturas fechadas</div>
-            </div>
-            <div className="credit-card-list">
-                <div className="card-item">
-                    <div className="card-info">
-                        <div className="card-logo">N</div>
-                        <div className="card-details">
-                            <span className="card-name">Nubank</span>
-                            <span className="card-due-date">Vence amanhã</span>
-                        </div>
-                    </div>
-                    <span className="card-amount negative">R$30,00</span>
-                    <button className="pay-bill-btn">Pagar fatura</button>
+          <h2>Cartões de crédito</h2>
+          <div className="credit-card-tabs">
+            <div className="credit-card-tab active">Faturas abertas</div>
+            <div className="credit-card-tab">Faturas fechadas</div>
+          </div>
+          <div className="credit-card-list">
+            <div className="card-item">
+              <div className="card-info">
+                <div className="card-logo">N</div>
+                <div className="card-details">
+                  <span className="card-name">Nubank</span>
+                  <span className="card-due-date">Vence amanhã</span>
                 </div>
-                <div className="card-item">
-                    <div className="card-info">
-                        <div className="card-logo">C</div>
-                        <div className="card-details">
-                            <span className="card-name">Caixa</span>
-                            <span className="card-due-date">Vence em 10/09</span>
-                        </div>
-                    </div>
-                    <span className="card-amount negative">R$150,00</span>
-                    <button className="pay-bill-btn">Pagar fatura</button>
-                </div>
-                {/* Adicionar mais itens de cartão conforme necessário */}
+              </div>
+              <span className="card-amount negative">R$30,00</span>
+              <button className="pay-bill-btn">Pagar fatura</button>
             </div>
+            <div className="card-item">
+              <div className="card-info">
+                <div className="card-logo">C</div>
+                <div className="card-details">
+                  <span className="card-name">Caixa</span>
+                  <span className="card-due-date">Vence em 10/09</span>
+                </div>
+              </div>
+              <span className="card-amount negative">R$150,00</span>
+              <button className="pay-bill-btn">Pagar fatura</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

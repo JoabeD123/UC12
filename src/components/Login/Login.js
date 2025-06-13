@@ -29,14 +29,30 @@ function Login({ onLogin }) {
       console.log('Resposta do servidor:', data);
 
       if (!response.ok) {
-        // Se a resposta não for OK (ex: 401, 400, 500)
         throw new Error(data.message || 'Erro ao fazer login');
       }
 
       // Se chegou aqui, o login foi bem sucedido
-      console.log('Login bem sucedido, chamando onLogin com:', { user: data.user, profiles: data.profiles });
-      onLogin(data.user, data.profiles);
-      console.log('onLogin chamado com sucesso');
+      console.log('Login bem sucedido, chamando onLogin com:', { 
+        userId: data.userId, 
+        nomeFamilia: data.nomeFamilia 
+      });
+
+      const userLogged = {
+        id_usuario: data.userId,
+        nome_familia: data.nomeFamilia
+      };
+
+      // Salva os dados no localStorage
+      localStorage.setItem('currentUser', JSON.stringify(userLogged));
+      // localStorage.setItem(`profile_${data.user.id_usuario}`, JSON.stringify(data.profile)); // Removido
+      // localStorage.setItem(`permissions_${data.user.id_usuario}`, JSON.stringify(data.permissions)); // Removido
+
+      // Chama a função onLogin com os dados corretos (passando um array vazio para perfis por enquanto)
+      onLogin(userLogged, []); 
+      
+      // Navega para o dashboard
+      navigate('/dashboard');
 
     } catch (error) {
       console.error('Erro detalhado ao fazer login:', error);

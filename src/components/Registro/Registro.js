@@ -31,8 +31,8 @@ function Registro() {
         throw new Error(data.message || 'Erro ao criar conta');
       }
 
-      // Redirecionar para login após registro bem-sucedido
-      navigate('/');
+      // Redirecionar para a tela de criação do primeiro perfil após registro bem-sucedido
+      navigate('/criar-primeiro-perfil', { state: { userId: data.userId } });
       
     } catch (error) {
       console.error('Erro ao registrar:', error.message);

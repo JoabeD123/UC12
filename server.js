@@ -31,9 +31,25 @@ app.get('/', async (req, res) => {
   }
 });
 
-// Endpoint para criar as tabelas no banco de dados (executar uma vez)
+// Endpoint para inicializar/reiniciar o banco de dados
 app.get('/init-db', async (req, res) => {
-  const schema = `
+  const dropSchema = `
+    DROP TABLE IF EXISTS orcamento CASCADE;
+    DROP TABLE IF EXISTS historico_alteracoes CASCADE;
+    DROP TABLE IF EXISTS receita CASCADE;
+    DROP TABLE IF EXISTS contas CASCADE;
+    DROP TABLE IF EXISTS permissoes CASCADE;
+    DROP TABLE IF EXISTS perfil CASCADE;
+    DROP TABLE IF EXISTS usuario CASCADE;
+    DROP TABLE IF EXISTS categoria CASCADE;
+    DROP TABLE IF EXISTS status_pagamento_tipo CASCADE;
+    DROP TABLE IF EXISTS tipo_conta_tipo CASCADE;
+    DROP TABLE IF EXISTS recorrencia_tipo CASCADE;
+    DROP TABLE IF EXISTS tabela_afetada_tipo CASCADE;
+    DROP TABLE IF EXISTS tipo_acao_tipo CASCADE;
+  `;
+
+  const createSchema = `
     -- Tabela de Usuários (Conta da Família)
     CREATE TABLE IF NOT EXISTS usuario (
         id_usuario SERIAL PRIMARY KEY,
@@ -51,8 +67,9 @@ app.get('/init-db', async (req, res) => {
         nome VARCHAR(255) NOT NULL,
         categoria_familiar VARCHAR(50) NOT NULL,
         cod_perfil VARCHAR(10) UNIQUE NOT NULL,
-        renda DECIMAL(10,2) NOT NULL,
+        renda DECIMAL(10,2) DEFAULT 0.00 NOT NULL,
         is_admin BOOLEAN DEFAULT FALSE,
+        senha VARCHAR(255) NOT NULL,
         FOREIGN KEY (usuario_id) REFERENCES usuario(id_usuario)
     );
 
@@ -116,11 +133,11 @@ app.get('/init-db', async (req, res) => {
         valor_conta DECIMAL(10,2) NOT NULL,
         data_entrega DATE NOT NULL,
         data_vencimento DATE NOT NULL,
-        status_pagamento_id INT DEFAULT (SELECT id_status_pagamento_tipo FROM status_pagamento_tipo WHERE nome_status = 'pendente'),
+        status_pagamento_id INT,
         descricao TEXT,
-        tipo_conta_id INT DEFAULT (SELECT id_tipo_conta_tipo FROM tipo_conta_tipo WHERE nome_tipo = 'variável'),
+        tipo_conta_id INT,
         avisado BOOLEAN DEFAULT FALSE,
-        recorrencia_id INT DEFAULT (SELECT id_recorrencia_tipo FROM recorrencia_tipo WHERE nome_recorrencia = 'nenhuma'),
+        recorrencia_id INT,
         perfil_id INT,
         categoria_id INT,
         FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil),
@@ -179,11 +196,21 @@ app.get('/init-db', async (req, res) => {
 
   try {
     const client = await pool.connect();
-    await client.query(schema);
+    console.log('Conexão com o banco estabelecida para init-db.');
+    // Excluir tabelas existentes (para garantir um estado limpo)
+    console.log('Excluindo tabelas existentes...');
+    await client.query(dropSchema);
+    console.log('Tabelas excluídas com sucesso (se existiam).');
+    
+    // Criar tabelas
+    console.log('Criando tabelas...');
+    await client.query(createSchema);
+    console.log('Tabelas criadas com sucesso.');
+    
     client.release();
-    res.status(200).send('Tabelas criadas ou já existentes no banco de dados.');
+    res.status(200).send('Banco de dados inicializado/reiniciado com sucesso.');
   } catch (err) {
-    console.error('Erro ao inicializar o banco de dados:', err);
+    console.error('Erro ao inicializar o banco de dados:', err); // Loga o erro completo
     res.status(500).send('Erro ao inicializar o banco de dados.');
   }
 });
@@ -191,141 +218,213 @@ app.get('/init-db', async (req, res) => {
 // Endpoint de Registro de Usuário
 app.post('/api/register', async (req, res) => {
   const { nome_familia, email, senha } = req.body;
+  console.log('Recebendo requisição de registro:', { nome_familia, email });
 
   if (!nome_familia || !email || !senha) {
+    console.log('Campos obrigatórios faltando');
     return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
   }
 
   try {
+    console.log('Iniciando processo de registro');
     const hashedPassword = await bcrypt.hash(senha, 10);
+    console.log('Senha hasheada com sucesso');
+    
     const client = await pool.connect();
+    console.log('Conexão com o banco estabelecida');
     
     try {
       // Inicia uma transação
       await client.query('BEGIN');
+      console.log('Transação iniciada');
       
       // Verifica se o email já existe
       const checkEmail = await client.query('SELECT id_usuario FROM usuario WHERE email = $1', [email]);
+      console.log('Verificação de email:', checkEmail.rows);
+      
       if (checkEmail.rows.length > 0) {
+        console.log('Email já cadastrado');
         await client.query('ROLLBACK');
         client.release();
         return res.status(409).json({ message: 'Email já cadastrado.' });
       }
 
       // Insere o usuário
+      console.log('Inserindo novo usuário');
       const userResult = await client.query(
         'INSERT INTO usuario (nome_familia, email, senha) VALUES ($1, $2, $3) RETURNING id_usuario, nome_familia, email, criado_em, atualizado_em',
         [nome_familia, email, hashedPassword]
       );
+      console.log('Usuário inserido:', userResult.rows[0]);
       
       const newUser = userResult.rows[0];
 
-      // Cria um perfil padrão para o usuário
-      const perfilResult = await client.query(
-        `INSERT INTO perfil (usuario_id, nome, categoria_familiar, cod_perfil, renda, is_admin) 
-         VALUES ($1, $2, $3, $4, $5, $6) 
-         RETURNING *`,
-        [newUser.id_usuario, 'Administrador', 'Principal', 'ADM001', 0.00, true]
-      );
-
-      // Cria as permissões para o perfil
-      await client.query(
-        `INSERT INTO permissoes (perfil_id, pode_criar_conta, pode_editar_conta, pode_excluir_conta, pode_ver_todas_contas) 
-         VALUES ($1, $2, $3, $4, $5)`,
-        [perfilResult.rows[0].id_perfil, true, true, true, true]
-      );
-
-      // Commit da transação
-      await client.query('COMMIT');
-
-      // Retorna o usuário e o perfil criado
-      res.status(201).json({ 
-        message: 'Usuário registrado com sucesso!', 
-        user: newUser,
-        profile: perfilResult.rows[0]
-      });
-
-    } catch (err) {
-      // Em caso de erro, faz rollback
-      await client.query('ROLLBACK');
-      throw err;
-    } finally {
+      await client.query('COMMIT'); // Confirma a transação
+      console.log('Transação de registro de usuário confirmada.');
+      client.release(); // Libera o cliente de volta para o pool
+      res.status(201).json({ message: 'Usuário registrado com sucesso!', userId: newUser.id_usuario });
+    } catch (error) {
+      await client.query('ROLLBACK'); // Em caso de erro, desfaz a transação
+      console.error('Erro na transação de registro:', error);
       client.release();
+      throw error; // Propaga o erro para o catch externo
     }
 
   } catch (err) {
     console.error('Erro no registro de usuário:', err);
-    res.status(500).json({ message: 'Erro ao registrar usuário.' });
+    let errorMessage = 'Erro interno do servidor ao registrar usuário.';
+    if (err.message.includes('duplicate key value violates unique constraint "usuario_email_key"')) {
+      errorMessage = 'Este email já está cadastrado.';
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    res.status(500).json({ message: errorMessage });
+  }
+});
+
+// Novo Endpoint para criar o primeiro perfil após o registro
+app.post('/api/perfil/primeiro', async (req, res) => {
+  const { usuario_id, nome_perfil, categoria_familiar, senha_perfil } = req.body; // Adicione senha_perfil aqui
+  console.log('Recebendo requisição para criar primeiro perfil:', { usuario_id, nome_perfil, categoria_familiar });
+
+  if (!usuario_id || !nome_perfil || !categoria_familiar || !senha_perfil) { // Verifique também a senha_perfil
+    return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
+  }
+
+  let client; // Declarar client fora do try para ser acessível no finally
+  try {
+    const hashedPasswordPerfil = await bcrypt.hash(senha_perfil, 10); // Hashear a senha do perfil
+    client = await pool.connect();
+    await client.query('BEGIN');
+
+    // Gerar um código único para o perfil
+    const timestamp = Date.now().toString();
+    const codPerfil = `PERF${timestamp.slice(-6)}`; // Usar PERF para perfis
+
+    // Inserir o perfil
+    const perfilResult = await client.query(
+      `INSERT INTO perfil (usuario_id, nome, categoria_familiar, cod_perfil, renda, is_admin, senha) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id_perfil`,
+      [usuario_id, nome_perfil, categoria_familiar, codPerfil, 0.00, true, hashedPasswordPerfil] // Definir renda inicial como 0.00 e is_admin como true
+    );
+    const id_perfil = perfilResult.rows[0].id_perfil;
+
+    // Inserir todas as permissões como ativas para o primeiro perfil
+    await client.query(
+      `INSERT INTO permissoes (perfil_id, pode_criar_conta, pode_editar_conta, pode_excluir_conta, pode_ver_todas_contas) 
+       VALUES ($1, $2, $3, $4, $5)`,
+      [id_perfil, true, true, true, true] // Todas as permissões ativas
+    );
+
+    await client.query('COMMIT');
+    res.status(201).json({ message: 'Primeiro perfil criado com sucesso!', perfilId: id_perfil });
+
+  } catch (err) {
+    if (client) {
+      await client.query('ROLLBACK');
+    }
+    console.error('Erro ao criar o primeiro perfil:', err);
+    res.status(500).json({ message: 'Erro ao criar o primeiro perfil.' });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 });
 
 // Endpoint de Login de Usuário
 app.post('/api/login', async (req, res) => {
   const { email, senha } = req.body;
+  console.log('Recebendo requisição de login:', { email });
 
   if (!email || !senha) {
+    console.log('Campos obrigatórios faltando para login');
     return res.status(400).json({ message: 'Email e senha são obrigatórios.' });
   }
 
   try {
     const client = await pool.connect();
-
-    // Busca o usuário pelo email
     const userResult = await client.query('SELECT * FROM usuario WHERE email = $1', [email]);
-
+    
     if (userResult.rows.length === 0) {
       client.release();
+      console.log('Usuário não encontrado');
       return res.status(401).json({ message: 'Credenciais inválidas.' });
     }
 
     const user = userResult.rows[0];
+    const isMatch = await bcrypt.compare(senha, user.senha);
 
-    // Compara a senha fornecida com o hash armazenado
-    const isPasswordValid = await bcrypt.compare(senha, user.senha);
-
-    if (!isPasswordValid) {
+    if (!isMatch) {
       client.release();
+      console.log('Senha incorreta');
       return res.status(401).json({ message: 'Credenciais inválidas.' });
     }
 
-    // Busca o perfil do usuário
-    const profileResult = await client.query(
-      `SELECT p.*, perm.* 
-       FROM perfil p 
-       LEFT JOIN permissoes perm ON p.id_perfil = perm.perfil_id 
-       WHERE p.usuario_id = $1`,
-      [user.id_usuario]
-    );
-
-    // Remove a senha do objeto do usuário antes de enviar para o frontend
-    delete user.senha;
-
-    // Prepara o objeto de perfil com as permissões
-    const profile = profileResult.rows[0];
-    if (profile) {
-      profile.permissoes = {
-        verReceitas: true,
-        verDespesas: true,
-        editarReceitas: true,
-        editarDespesas: true,
-        gerenciarPerfis: true,
-        verImpostoRenda: true
-      };
-    }
-
-    client.release();
+    // Se login bem-sucedido, você pode retornar os dados do usuário (exceto a senha hasheada)
+    // Ou gerar um token de sessão, etc.
+    // Para esta etapa, vamos retornar o ID do usuário e o nome da família
     res.status(200).json({ 
       message: 'Login bem-sucedido!', 
-      user: user, 
-      profiles: profile ? [profile] : [] 
+      userId: user.id_usuario,
+      nomeFamilia: user.nome_familia
     });
+    client.release();
 
   } catch (err) {
-    console.error('Erro no login de usuário:', err);
-    res.status(500).json({ message: 'Erro ao fazer login.' });
+    console.error('Erro no login:', err);
+    res.status(500).json({ message: 'Erro interno do servidor.' });
+  }
+});
+
+// Novo Endpoint para buscar perfis e permissões de um usuário
+app.get('/api/user/profiles-and-permissions/:userId', async (req, res) => {
+  const { userId } = req.params;
+  console.log(`Recebendo requisição para buscar perfis e permissões para userId: ${userId}`);
+
+  try {
+    const client = await pool.connect();
+
+    // Buscar perfis do usuário
+    const profilesResult = await client.query('SELECT * FROM perfil WHERE usuario_id = $1', [userId]);
+    const profiles = profilesResult.rows;
+
+    if (profiles.length === 0) {
+      client.release();
+      return res.status(404).json({ message: 'Nenhum perfil encontrado para este usuário.' });
+    }
+
+    // Para cada perfil, buscar suas permissões
+    const profilesWithPermissions = await Promise.all(profiles.map(async (profile) => {
+      const permissionsResult = await client.query('SELECT * FROM permissoes WHERE perfil_id = $1', [profile.id_perfil]);
+      const permissions = permissionsResult.rows[0]; // Assumindo 1:1 perfil-permissões
+
+      return { ...profile, permissoes: permissions || {} }; // Garante que permissoes seja um objeto mesmo se não houver
+    }));
+
+    client.release();
+    res.status(200).json({ profiles: profilesWithPermissions });
+
+  } catch (err) {
+    console.error('Erro ao buscar perfis e permissões do usuário:', err);
+    res.status(500).json({ message: 'Erro interno do servidor ao buscar perfis e permissões.' });
   }
 });
 
 app.listen(port, () => {
   console.log(`Servidor backend rodando em http://localhost:${port}`);
-}); 
+});
+
+// Captura de exceções não tratadas
+process.on('uncaughtException', (err) => {
+  console.error('Erro não capturado (uncaughtException):', err);
+  // Opcional: Terminar o processo de forma graciosa após logar o erro
+  // process.exit(1);
+});
+
+// Captura de rejeições de promessas não tratadas
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Rejeição de promessa não tratada (unhandledRejection):', reason);
+  // Opcional: Terminar o processo de forma graciosa após logar o erro
+  // process.exit(1);
+});

@@ -10,6 +10,7 @@ import GerenciarPerfis from './components/GerenciarPerfis/GerenciarPerfis';
 import CartoesCredito from './components/CartoesCredito/CartoesCredito';
 import Configuracoes from './components/Configuracoes/Configuracoes';
 import ImpostoRenda from './components/ImpostoRenda/ImpostoRenda';
+import CriarPrimeiroPerfil from './components/CriarPrimeiroPerfil/CriarPrimeiroPerfil';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -24,10 +25,10 @@ function App() {
         const userData = JSON.parse(localStorage.getItem('currentUser'));
         if (userData) {
           setCurrentUser(userData);
-          setProfile(JSON.parse(localStorage.getItem(`profile_${userData.id}`)));
+          setProfile(JSON.parse(localStorage.getItem(`profile_${userData.id_usuario}`)));
           
           // Carregar configurações específicas do usuário
-          const userConfig = JSON.parse(localStorage.getItem(`config_${userData.id}`)) || {};
+          const userConfig = JSON.parse(localStorage.getItem(`config_${userData.id_usuario}`)) || {};
           setDarkMode(userConfig.darkMode || false);
           document.documentElement.setAttribute('data-theme', userConfig.darkMode ? 'dark' : 'light');
         }
@@ -41,34 +42,41 @@ function App() {
     loadUserData();
   }, []);
 
-  const handleLogin = (user, profiles) => {
+  const handleLogin = async (user) => {
     try {
-      console.log('handleLogin chamado com:', { user, profiles });
+      console.log('handleLogin chamado com:', { user });
       
-      // Salvar dados do usuário
+      // Salvar dados do usuário no localStorage e no estado
       setCurrentUser(user);
+      localStorage.setItem('currentUser', JSON.stringify(user));
       console.log('currentUser atualizado:', user);
-      
+
+      // Buscar perfis e permissões do usuário recém-logado
+      const profilesResponse = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${user.id_usuario}`);
+      const profilesData = await profilesResponse.json();
+
+      if (!profilesResponse.ok) {
+        throw new Error(profilesData.message || 'Erro ao buscar perfis do usuário');
+      }
+
+      const fetchedProfiles = profilesData.profiles;
+
       // Se houver perfis, usar o primeiro como perfil atual
-      if (profiles && profiles.length > 0) {
-        const primeiroPerfil = profiles[0];
+      if (fetchedProfiles && fetchedProfiles.length > 0) {
+        const primeiroPerfil = fetchedProfiles[0];
         console.log('Usando primeiro perfil:', primeiroPerfil);
         setProfile(primeiroPerfil);
-        
-        // Adicionar permissões padrão se não existirem
-        if (!primeiroPerfil.permissoes) {
-          console.log('Adicionando permissões padrão ao perfil');
-          primeiroPerfil.permissoes = {
-            verReceitas: true,
-            verDespesas: true,
-            editarReceitas: true,
-            editarDespesas: true,
-            gerenciarPerfis: true,
-            verImpostoRenda: true
-          };
-        }
+        localStorage.setItem(`profile_${user.id_usuario}`, JSON.stringify(primeiroPerfil));
+        // As permissões já vêm aninhadas no objeto perfil
+        localStorage.setItem(`permissions_${user.id_usuario}`, JSON.stringify(primeiroPerfil.permissoes));
       } else {
-        console.log('Nenhum perfil encontrado');
+        console.log('Nenhum perfil encontrado para o usuário. Redirecionando para criação de perfil...');
+        // Se não houver perfis, redirecionar para a tela de criação do primeiro perfil
+        // Isso deve ser tratado no Login.js ou onde o redirecionamento inicial acontece
+        // Por agora, apenas logar. A navegação para /criar-primeiro-perfil é feita no Registro.js.
+        // No caso de um login onde não há perfis, o usuário será levado ao dashboard com profile=null
+        // O que pode causar erros em rotas protegidas por permissões.
+        // Precisamos garantir que, ao logar, um perfil *exista* ou o usuário seja forçado a criar um.
       }
       
       // Carregar configurações do usuário ao fazer login
@@ -84,11 +92,27 @@ function App() {
 
   const handleLogout = () => {
     try {
+      // Limpar dados do usuário atual
+      if (currentUser?.id_usuario) {
+        localStorage.removeItem(`profile_${currentUser.id_usuario}`);
+        localStorage.removeItem(`permissions_${currentUser.id_usuario}`);
+        localStorage.removeItem(`config_${currentUser.id_usuario}`);
+        localStorage.removeItem(`receitas_${currentUser.id_usuario}`);
+        localStorage.removeItem(`despesas_${currentUser.id_usuario}`);
+        localStorage.removeItem(`categorias_receitas_${currentUser.id_usuario}`);
+        localStorage.removeItem(`categorias_despesas_${currentUser.id_usuario}`);
+      }
+      
+      // Limpar dados gerais
+      localStorage.removeItem('currentUser');
+      
+      // Resetar estados
       setCurrentUser(null);
       setProfile(null);
       setDarkMode(false);
       document.documentElement.setAttribute('data-theme', 'light');
-      localStorage.removeItem('currentUser');
+      
+      console.log('Logout realizado com sucesso');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }
@@ -133,6 +157,16 @@ function App() {
             element={
               !currentUser ? (
                 <Registro />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
+            } 
+          />
+          <Route 
+            path="/criar-primeiro-perfil" 
+            element={
+              !currentUser ? (
+                <CriarPrimeiroPerfil />
               ) : (
                 <Navigate to="/dashboard" replace />
               )
