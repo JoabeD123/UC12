@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FaPlus, FaEdit, FaTrash, FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard } from 'react-icons/fa';
+import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -7,155 +9,202 @@ import {
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ArcElement
 } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
 import './CartoesCredito.css';
 
-// Registrar os componentes necessários do Chart.js
 ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ArcElement
 );
 
-function CartoesCredito({ usuario, perfil }) {
+const CartoesCredito = () => {
+  const navigate = useNavigate();
   const [cartoes, setCartoes] = useState([]);
   const [novoCartao, setNovoCartao] = useState({
     nome: '',
     limite: '',
-    mesVencimento: '',
-    anoVencimento: '',
-    diaFechamento: ''
+    diaVencimento: '',
+    bandeira: 'visa'
   });
-  const [modoEdicao, setModoEdicao] = useState(null);
-  const navigate = useNavigate();
+  const [editandoCartao, setEditandoCartao] = useState(null);
+  const [error, setError] = useState('');
+  const [gastos, setGastos] = useState({});
 
   useEffect(() => {
-    const cartoesArmazenados = JSON.parse(localStorage.getItem(`cartoes_${usuario.id}`)) || [];
-    // Migrar dados antigos para o novo formato
-    const cartoesMigrados = cartoesArmazenados.map(cartao => {
-      if (cartao.diaVencimento && !cartao.mesVencimento) {
-        return {
-          ...cartao,
-          mesVencimento: 1, // Define mês padrão como Janeiro
-          anoVencimento: new Date().getFullYear() % 100 // Ano atual com 2 dígitos
-        };
+    // Simular carregamento de dados
+    const cartoesMock = [
+      {
+        id: 1,
+        nome: 'Cartão Principal',
+        limite: 5000,
+        diaVencimento: 15,
+        bandeira: 'visa',
+        gastos: 2500
+      },
+      {
+        id: 2,
+        nome: 'Cartão Secundário',
+        limite: 3000,
+        diaVencimento: 20,
+        bandeira: 'mastercard',
+        gastos: 1500
       }
-      return cartao;
-    });
-    setCartoes(cartoesMigrados);
-  }, [usuario.id]);
+    ];
+    setCartoes(cartoesMock);
+  }, []);
 
-  const salvarCartoes = (novosCartoes) => {
-    localStorage.setItem(`cartoes_${usuario.id}`, JSON.stringify(novosCartoes));
-    setCartoes(novosCartoes);
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNovoCartao(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  const adicionarCartao = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (!novoCartao.nome || !novoCartao.limite || !novoCartao.mesVencimento || 
-        !novoCartao.anoVencimento || !novoCartao.diaFechamento) return;
+    if (!novoCartao.nome || !novoCartao.limite || !novoCartao.diaVencimento) {
+      setError('Por favor, preencha todos os campos');
+      return;
+    }
 
-    const novosDados = {
-      ...novoCartao,
+    const novoCartaoCompleto = {
       id: Date.now(),
+      ...novoCartao,
       limite: parseFloat(novoCartao.limite),
-      mesVencimento: parseInt(novoCartao.mesVencimento),
-      anoVencimento: parseInt(novoCartao.anoVencimento),
-      diaFechamento: parseInt(novoCartao.diaFechamento),
-      gastoAtual: 0
+      diaVencimento: parseInt(novoCartao.diaVencimento),
+      gastos: 0
     };
 
-    salvarCartoes([...cartoes, novosDados]);
-    setNovoCartao({ 
-      nome: '', 
-      limite: '', 
-      mesVencimento: '', 
-      anoVencimento: '', 
-      diaFechamento: '' 
+    setCartoes(prev => [...prev, novoCartaoCompleto]);
+    setNovoCartao({
+      nome: '',
+      limite: '',
+      diaVencimento: '',
+      bandeira: 'visa'
+    });
+    setError('');
+  };
+
+  const handleEditar = (cartao) => {
+    setEditandoCartao(cartao);
+    setNovoCartao({
+      nome: cartao.nome,
+      limite: cartao.limite.toString(),
+      diaVencimento: cartao.diaVencimento.toString(),
+      bandeira: cartao.bandeira
     });
   };
 
-  const atualizarCartao = (cartao) => {
-    const cartoesAtualizados = cartoes.map(c => 
-      c.id === cartao.id ? cartao : c
-    );
-    salvarCartoes(cartoesAtualizados);
-    setModoEdicao(null);
-  };
-
-  const removerCartao = (id) => {
-    if (window.confirm('Tem certeza que deseja remover este cartão?')) {
-      const cartoesAtualizados = cartoes.filter(cartao => cartao.id !== id);
-      salvarCartoes(cartoesAtualizados);
+  const handleSalvarEdicao = () => {
+    if (!novoCartao.nome || !novoCartao.limite || !novoCartao.diaVencimento) {
+      setError('Por favor, preencha todos os campos');
+      return;
     }
+
+    setCartoes(prev => prev.map(cartao => 
+      cartao.id === editandoCartao.id
+        ? {
+            ...cartao,
+            nome: novoCartao.nome,
+            limite: parseFloat(novoCartao.limite),
+            diaVencimento: parseInt(novoCartao.diaVencimento),
+            bandeira: novoCartao.bandeira
+          }
+        : cartao
+    ));
+
+    setEditandoCartao(null);
+    setNovoCartao({
+      nome: '',
+      limite: '',
+      diaVencimento: '',
+      bandeira: 'visa'
+    });
+    setError('');
   };
 
-  const registrarGasto = (id, valor) => {
-    const cartoesAtualizados = cartoes.map(cartao => {
-      if (cartao.id === id) {
-        const novoGasto = cartao.gastoAtual + parseFloat(valor);
-        if (novoGasto <= cartao.limite) {
-          return { ...cartao, gastoAtual: novoGasto };
-        }
-      }
-      return cartao;
-    });
-    salvarCartoes(cartoesAtualizados);
+  const handleExcluir = (id) => {
+    setCartoes(prev => prev.filter(cartao => cartao.id !== id));
+  };
+
+  const handleGastoChange = (id, valor) => {
+    setGastos(prev => ({
+      ...prev,
+      [id]: parseFloat(valor) || 0
+    }));
   };
 
   const chartData = {
     labels: cartoes.map(cartao => cartao.nome),
     datasets: [
       {
-        label: 'Limite Disponível',
-        data: cartoes.map(cartao => cartao.limite - cartao.gastoAtual),
-        backgroundColor: '#4CAF50',
-        stack: 'Stack 0',
+        label: 'Limite',
+        data: cartoes.map(cartao => cartao.limite),
+        backgroundColor: 'rgba(111, 66, 193, 0.5)',
+        borderColor: 'rgba(111, 66, 193, 1)',
+        borderWidth: 1
       },
       {
-        label: 'Valor Utilizado',
-        data: cartoes.map(cartao => cartao.gastoAtual),
-        backgroundColor: '#f44336',
-        stack: 'Stack 0',
+        label: 'Gastos',
+        data: cartoes.map(cartao => gastos[cartao.id] || cartao.gastos),
+        backgroundColor: 'rgba(28, 200, 138, 0.5)',
+        borderColor: 'rgba(28, 200, 138, 1)',
+        borderWidth: 1
       }
     ]
   };
 
   const chartOptions = {
     responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        stacked: true
-      },
-      y: {
-        stacked: true,
-        beginAtZero: true,
-        ticks: {
-          callback: (value) => `R$ ${value.toFixed(2)}`
-        }
-      }
-    },
     plugins: {
       legend: {
         position: 'top',
-        labels: {
-          usePointStyle: true,
-          pointStyle: 'circle',
-          font: {
-            size: 12
-          }
-        }
       },
-      tooltip: {
-        callbacks: {
-          label: (context) => `${context.dataset.label}: R$ ${context.raw.toFixed(2)}`
-        }
+      title: {
+        display: true,
+        text: 'Limite vs Gastos por Cartão'
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true
+      }
+    }
+  };
+
+  const doughnutData = {
+    labels: cartoes.map(cartao => cartao.nome),
+    datasets: [
+      {
+        data: cartoes.map(cartao => gastos[cartao.id] || cartao.gastos),
+        backgroundColor: [
+          'rgba(111, 66, 193, 0.8)',
+          'rgba(28, 200, 138, 0.8)',
+          'rgba(78, 115, 223, 0.8)',
+          'rgba(246, 194, 62, 0.8)'
+        ],
+        borderWidth: 1
+      }
+    ]
+  };
+
+  const doughnutOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'right'
+      },
+      title: {
+        display: true,
+        text: 'Distribuição de Gastos'
       }
     }
   };
@@ -163,232 +212,163 @@ function CartoesCredito({ usuario, perfil }) {
   return (
     <div className="layout-container">
       <div className="sidebar">
-        <div className="logo">
-          <div className="logo-icon">GF</div>
-        </div>
-        <nav className="menu">
-          <ul>
-            <li onClick={() => navigate('/')}>
-              <span className="menu-icon">📊</span>
-              <span className="menu-text">Dashboard</span>
-            </li>
-            {perfil?.permissoes.verReceitas && (
-              <li onClick={() => navigate('/receitas')}>
-                <span className="menu-icon">💰</span>
-                <span className="menu-text">Receitas</span>
-              </li>
-            )}
-            {perfil?.permissoes.verDespesas && (
-              <li onClick={() => navigate('/despesas')}>
-                <span className="menu-icon">💸</span>
-                <span className="menu-text">Despesas</span>
-              </li>
-            )}
-            <li className="active">
-              <span className="menu-icon">💳</span>
-              <span className="menu-text">Cartões</span>
-            </li>
-            <li onClick={() => navigate('/imposto-renda')}>
-              <span className="menu-icon">📑</span>
-              <span className="menu-text">Imposto de Renda</span>
-            </li>
-            {perfil?.permissoes.gerenciarPerfis && (
-              <li onClick={() => navigate('/gerenciar-perfis')}>
-                <span className="menu-icon">👥</span>
-                <span className="menu-text">Gerenciar Perfis</span>
-              </li>
-            )}
-          </ul>
-        </nav>
-        <div className="sidebar-bottom">
-          <button onClick={() => navigate('/configuracoes')} className="config-button">
-            <span className="menu-icon">⚙️</span>
-            <span className="menu-text">Configurações</span>
-          </button>
+        <div className="menu">
+          <div className="menu-item" onClick={() => navigate('/dashboard')}>
+            <FaChartBar />
+            <span>Dashboard</span>
+          </div>
+          <div className="menu-item" onClick={() => navigate('/cartoes')}>
+            <FaCreditCard />
+            <span>Cartões</span>
+          </div>
+          <div className="menu-item" onClick={() => navigate('/imposto-renda')}>
+            <FaChartPie />
+            <span>Imposto de Renda</span>
+          </div>
+          <div className="menu-item" onClick={() => navigate('/gerenciar-perfis')}>
+            <FaUsers />
+            <span>Gerenciar Perfis</span>
+          </div>
+          <div className="menu-item" onClick={() => navigate('/configuracoes')}>
+            <FaCog />
+            <span>Configurações</span>
+          </div>
         </div>
       </div>
 
       <div className="cartoes-credito">
         <div className="cartoes-header">
           <h2>Cartões de Crédito</h2>
-          <form onSubmit={adicionarCartao} className="novo-cartao-form">
-            <input
-              type="text"
-              placeholder="Nome do cartão"
-              value={novoCartao.nome}
-              onChange={(e) => setNovoCartao({ ...novoCartao, nome: e.target.value })}
-            />
-            <input
-              type="number"
-              placeholder="Limite"
-              value={novoCartao.limite}
-              onChange={(e) => setNovoCartao({ ...novoCartao, limite: e.target.value })}
-            />
-            <select
-              value={novoCartao.mesVencimento}
-              onChange={(e) => setNovoCartao({ ...novoCartao, mesVencimento: e.target.value })}
-              required
-            >
-              <option value="">Mês</option>
-              {Array.from({ length: 12 }, (_, i) => i + 1).map(mes => (
-                <option key={mes} value={mes}>
-                  {mes.toString().padStart(2, '0')}
-                </option>
-              ))}
-            </select>
-            <select
-              value={novoCartao.anoVencimento}
-              onChange={(e) => setNovoCartao({ ...novoCartao, anoVencimento: e.target.value })}
-              required
-            >
-              <option value="">Ano</option>
-              {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(ano => (
-                <option key={ano} value={ano % 100}>
-                  {(ano % 100).toString().padStart(2, '0')}
-                </option>
-              ))}
-            </select>
-            <select
-              value={novoCartao.diaFechamento}
-              onChange={(e) => setNovoCartao({ ...novoCartao, diaFechamento: e.target.value })}
-              required
-            >
-              <option value="">Dia do Fechamento</option>
-              {Array.from({ length: 31 }, (_, i) => i + 1).map(dia => (
-                <option key={dia} value={dia}>
-                  {dia.toString().padStart(2, '0')}
-                </option>
-              ))}
-            </select>
-            <button type="submit">Adicionar Cartão</button>
-          </form>
+          <button className="btn-novo-cartao" onClick={() => setNovoCartao({ nome: '', limite: '', diaVencimento: '', bandeira: 'visa' })}>
+            <FaPlus /> Novo Cartão
+          </button>
         </div>
 
-        <div className="cartoes-content">
-          <div className="cartoes-lista">
-            <div className="cartoes-grid">
-              {cartoes.map(cartao => (
-                <div key={cartao.id} className="cartao-item">
-                  {modoEdicao === cartao.id ? (
-                    <div className="cartao-edicao">
-                      <input
-                        type="text"
-                        value={cartao.nome}
-                        onChange={(e) => atualizarCartao({ ...cartao, nome: e.target.value })}
-                      />
-                      <input
-                        type="number"
-                        value={cartao.limite}
-                        onChange={(e) => atualizarCartao({ ...cartao, limite: parseFloat(e.target.value) })}
-                      />
-                      <select
-                        value={cartao.mesVencimento}
-                        onChange={(e) => atualizarCartao({ ...cartao, mesVencimento: parseInt(e.target.value) })}
-                        required
-                      >
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map(mes => (
-                          <option key={mes} value={mes}>
-                            {mes.toString().padStart(2, '0')}
-                          </option>
-                        ))}
-                      </select>
-                      <select
-                        value={cartao.anoVencimento}
-                        onChange={(e) => atualizarCartao({ ...cartao, anoVencimento: parseInt(e.target.value) })}
-                        required
-                      >
-                        {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(ano => (
-                          <option key={ano} value={ano % 100}>
-                            {(ano % 100).toString().padStart(2, '0')}
-                          </option>
-                        ))}
-                      </select>
-                      <select
-                        value={cartao.diaFechamento}
-                        onChange={(e) => atualizarCartao({ ...cartao, diaFechamento: parseInt(e.target.value) })}
-                        required
-                      >
-                        {Array.from({ length: 31 }, (_, i) => i + 1).map(dia => (
-                          <option key={dia} value={dia}>
-                            {dia.toString().padStart(2, '0')}
-                          </option>
-                        ))}
-                      </select>
-                      <button onClick={() => setModoEdicao(null)}>Salvar</button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="cartao-header">
-                        <h3>{cartao.nome}</h3>
-                        <div className="cartao-acoes">
-                          <button onClick={() => setModoEdicao(cartao.id)} title="Editar cartão">✏️</button>
-                          <button onClick={() => removerCartao(cartao.id)} title="Remover cartão">🗑️</button>
-                        </div>
-                      </div>
-                      <div className="cartao-info">
-                        <p>
-                          <span>Limite:</span>
-                          <span>R$ {cartao.limite.toFixed(2)}</span>
-                        </p>
-                        <p>
-                          <span>Gasto Atual:</span>
-                          <span>R$ {cartao.gastoAtual.toFixed(2)}</span>
-                        </p>
-                        <p>
-                          <span>Disponível:</span>
-                          <span>R$ {(cartao.limite - cartao.gastoAtual).toFixed(2)}</span>
-                        </p>
-                        <p>
-                          <span>Vencimento:</span>
-                          <span>{cartao.mesVencimento.toString().padStart(2, '0')}/{cartao.anoVencimento.toString().padStart(2, '0')}</span>
-                        </p>
-                        <p>
-                          <span>Fechamento:</span>
-                          <span>Dia {cartao.diaFechamento.toString().padStart(2, '0')}</span>
-                        </p>
-                      </div>
-                      <div className="cartao-gasto">
-                        <input
-                          type="number"
-                          placeholder="Registrar novo gasto"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && e.target.value) {
-                              registrarGasto(cartao.id, e.target.value);
-                              e.target.value = '';
-                            }
-                          }}
-                        />
-                      </div>
-                      <div className="cartao-progresso">
-                        <div 
-                          className="progresso-barra"
-                          style={{
-                            width: `${(cartao.gastoAtual / cartao.limite) * 100}%`,
-                            backgroundColor: cartao.gastoAtual > cartao.limite * 0.8 ? '#f44336' : '#4CAF50'
-                          }}
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+        {error && <div className="error-message">{error}</div>}
 
-          {cartoes.length > 0 && (
-            <div className="cartoes-graficos">
-              <div className="grafico-container">
-                <h3>Comparativo de Utilização</h3>
-                <div className="grafico-wrapper">
-                  <Bar data={chartData} options={chartOptions} />
+        <div className="cartoes-grid">
+          {cartoes.map(cartao => (
+            <div key={cartao.id} className="cartao-card">
+              <div className="cartao-header">
+                <h3>{cartao.nome}</h3>
+                <div className="cartao-acoes">
+                  <button onClick={() => handleEditar(cartao)}>
+                    <FaEdit />
+                  </button>
+                  <button onClick={() => handleExcluir(cartao.id)}>
+                    <FaTrash />
+                  </button>
+                </div>
+              </div>
+              <div className="cartao-info">
+                <p><strong>Limite:</strong> R$ {cartao.limite.toFixed(2)}</p>
+                <p><strong>Vencimento:</strong> Dia {cartao.diaVencimento}</p>
+                <p><strong>Bandeira:</strong> {cartao.bandeira}</p>
+                <div className="gastos-input">
+                  <label>Gastos Atuais:</label>
+                  <input
+                    type="number"
+                    value={gastos[cartao.id] || cartao.gastos}
+                    onChange={(e) => handleGastoChange(cartao.id, e.target.value)}
+                    min="0"
+                    max={cartao.limite}
+                  />
+                </div>
+                <div className="progress-bar">
+                  <div 
+                    className="progress-fill"
+                    style={{ 
+                      width: `${((gastos[cartao.id] || cartao.gastos) / cartao.limite) * 100}%`,
+                      backgroundColor: ((gastos[cartao.id] || cartao.gastos) / cartao.limite) > 0.8 ? 'var(--danger-color)' : 'var(--success-color)'
+                    }}
+                  />
                 </div>
               </div>
             </div>
-          )}
+          ))}
+        </div>
+
+        {(novoCartao.nome || editandoCartao) && (
+          <div className="novo-cartao-form">
+            <h3>{editandoCartao ? 'Editar Cartão' : 'Novo Cartão'}</h3>
+            <form onSubmit={editandoCartao ? handleSalvarEdicao : handleSubmit}>
+              <div className="form-group">
+                <label>Nome do Cartão</label>
+                <input
+                  type="text"
+                  name="nome"
+                  value={novoCartao.nome}
+                  onChange={handleInputChange}
+                  placeholder="Digite o nome do cartão"
+                />
+              </div>
+              <div className="form-group">
+                <label>Limite</label>
+                <input
+                  type="number"
+                  name="limite"
+                  value={novoCartao.limite}
+                  onChange={handleInputChange}
+                  placeholder="Digite o limite do cartão"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div className="form-group">
+                <label>Dia de Vencimento</label>
+                <input
+                  type="number"
+                  name="diaVencimento"
+                  value={novoCartao.diaVencimento}
+                  onChange={handleInputChange}
+                  placeholder="Digite o dia de vencimento"
+                  min="1"
+                  max="31"
+                />
+              </div>
+              <div className="form-group">
+                <label>Bandeira</label>
+                <select
+                  name="bandeira"
+                  value={novoCartao.bandeira}
+                  onChange={handleInputChange}
+                >
+                  <option value="visa">Visa</option>
+                  <option value="mastercard">Mastercard</option>
+                  <option value="amex">American Express</option>
+                  <option value="elo">Elo</option>
+                </select>
+              </div>
+              <div className="form-buttons">
+                <button type="submit" className="btn-primary">
+                  {editandoCartao ? 'Salvar' : 'Adicionar'}
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => {
+                    setNovoCartao({ nome: '', limite: '', diaVencimento: '', bandeira: 'visa' });
+                    setEditandoCartao(null);
+                  }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        <div className="charts-container">
+          <div className="chart-wrapper">
+            <Bar data={chartData} options={chartOptions} />
+          </div>
+          <div className="chart-wrapper">
+            <Doughnut data={doughnutData} options={doughnutOptions} />
+          </div>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default CartoesCredito; 

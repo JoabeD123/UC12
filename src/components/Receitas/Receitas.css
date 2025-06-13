@@ -1,60 +1,143 @@
+:root {
+    --primary-purple: #6a0dad;
+    --secondary-blue: #007bff;
+    --white: #ffffff;
+    --light-grey: #f8f9fa; /* Fundo principal */
+    --medium-grey: #e9ecef; /* Um tom de cinza para cards/elementos */
+    --dark-grey: #343a40;
+    --text-dark: #333333;
+    --text-light: #f8f9fa;
+    --card-shadow: rgba(0, 0, 0, 0.08);
+    --success-green: #28a745;
+    --danger-red: #dc3545;
+    --input-border: #dee2e6;
+    --input-focus-shadow: rgba(106, 13, 173, 0.25);
+    --error-bg: #f8d7da;
+    --error-color: #721c24;
+    --primary-hover: #5a099a;
+    --text-muted: #6c757d;
+    --tag-bg: #e0e7ff;
+    --primary-bg: #ede7f6;
+    --secondary-color: #6c757d;
+    --secondary-hover: #5a6268;
+    --table-header-bg-light: #f0f2f5;
+}
+
+[data-theme='light'] {
+    --bg-color: var(--light-grey);
+    --text-color: var(--text-dark);
+    --card-bg: var(--white);
+    --border-color: var(--input-border);
+    --input-bg: var(--white);
+    --shadow-color: var(--card-shadow);
+    --primary-color: var(--primary-purple);
+    --primary-shadow: var(--input-focus-shadow);
+    --error-bg-theme: var(--error-bg);
+    --error-color-theme: var(--error-color);
+    --table-header-bg: var(--table-header-bg-light);
+    --button-secondary-bg: var(--medium-grey); /* Cor de fundo para btn-secondary no modo claro */
+    --button-secondary-text: var(--text-dark); /* Cor do texto para btn-secondary no modo claro */
+    --button-secondary-hover: #d0d3d6; /* Cor de hover para btn-secondary no modo claro */
+    --tag-background-light: #e0e7ff;
+    --tag-color-light: var(--primary-purple);
+}
+
+[data-theme='dark'] {
+    --bg-color: #212529;
+    --text-color: var(--text-light);
+    --card-bg: #495057;
+    --border-color: #6c757d;
+    --input-bg: #495057;
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --primary-color: var(--primary-purple);
+    --primary-shadow: rgba(106, 13, 173, 0.4);
+    --error-bg-theme: #721c24;
+    --error-color-theme: #f8d7da;
+    --table-header-bg: #343a40;
+    --button-secondary-bg: #6c757d;
+    --button-secondary-text: var(--text-light);
+    --button-secondary-hover: #5a6268;
+    --tag-background-dark: #6a0dad;
+    --tag-color-dark: var(--text-light);
+}
+
+.layout-container {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 .receitas-container {
-  padding: 2rem;
   flex: 1;
+  padding: 30px;
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-y: auto;
 }
 
 .receitas-content {
   background: var(--card-bg);
-  border-radius: 12px;
-  box-shadow: var(--card-shadow);
+  border-radius: 15px; /* Mais arredondado */
+  box-shadow: 0 4px 12px var(--shadow-color); /* Sombra mais pronunciada */
   padding: 2rem;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  margin-bottom: 30px; /* Adicionado margem inferior */
 }
 
 .receitas-content h2 {
   color: var(--text-color);
   margin-bottom: 1.5rem;
+  font-size: 24px;
+  font-weight: 600;
   transition: color 0.3s ease;
 }
 
 .receita-form {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Layout flexível */
+  gap: 20px; /* Ajuste do gap */
+  margin-bottom: 30px; /* Ajuste da margem */
+  background: var(--card-bg);
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px var(--shadow-color);
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 0; /* Remover margem inferior para melhor controle no grid */
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
-  color: var(--text-color);
-  font-size: 0.9rem;
+  margin-bottom: 0.8rem; /* Aumentado a margem inferior */
+  color: var(--text-dark); /* Cor do texto mais escura */
+  font-weight: 500;
   transition: color 0.3s ease;
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-group select {
   width: 100%;
-  padding: 0.8rem;
+  padding: 1rem; /* Aumentado o padding */
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 8px; /* Mais arredondado */
   font-size: 1rem;
   outline: none;
-  transition: border-color 0.3s, background-color 0.3s ease, color 0.3s ease;
+  transition: border-color 0.3s, background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
   background-color: var(--input-bg);
   color: var(--text-color);
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
-  border-color: var(--primary-color);
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: var(--primary-purple);
+  box-shadow: 0 0 0 3px var(--primary-shadow); /* Sombra maior e roxa */
 }
 
 .form-group textarea {
@@ -64,22 +147,29 @@
 
 .btn-submit {
   grid-column: 1 / -1;
-  padding: 0.8rem;
-  background-color: #6c5ce7;
+  padding: 1rem; /* Aumentado o padding */
+  background-color: var(--primary-purple);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 8px; /* Mais arredondado */
+  font-size: 1.1rem; /* Fonte maior */
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  margin-top: 1rem; /* Espaçamento com os campos */
 }
 
 .btn-submit:hover {
-  background-color: #5f4dd0;
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
 }
 
 .receitas-lista {
-  margin-top: 2rem;
+  margin-top: 30px; /* Espaçamento com o formulário */
+  background: var(--card-bg);
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px var(--shadow-color);
 }
 
 .sem-receitas {
@@ -87,6 +177,7 @@
   color: var(--text-muted);
   padding: 2rem;
   transition: color 0.3s ease;
+  font-size: 1.1rem;
 }
 
 .tabela-container {
@@ -95,14 +186,18 @@
 
 table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate; /* Para border-radius */
+  border-spacing: 0; /* Remover espaçamento de célula */
   margin-top: 1rem;
   color: var(--text-color);
   transition: color 0.3s ease;
+  border-radius: 10px; /* Arredondar bordas da tabela */
+  overflow: hidden; /* Esconder o que excede o border-radius */
 }
 
-th, td {
-  padding: 1rem;
+th,
+td {
+  padding: 1rem; /* Ajustar padding */
   text-align: left;
   border-bottom: 1px solid var(--border-color);
   transition: border-color 0.3s ease;
@@ -111,49 +206,61 @@ th, td {
 th {
   background-color: var(--table-header-bg);
   font-weight: 600;
-  color: var(--text-color);
+  color: var(--text-dark); /* Cor do texto do cabeçalho */
   transition: background-color 0.3s ease, color 0.3s ease;
+  position: sticky; /* Fixar cabeçalho na rolagem */
+  top: 0;
+  z-index: 1; /* Garantir que fique acima do conteúdo da tabela */
+}
+
+tr:last-child td {
+    border-bottom: none; /* Remover borda da última linha */
 }
 
 .valor-receita {
   color: var(--success-color);
-  font-weight: 500;
+  font-weight: 600; /* Mais negrito */
   transition: color 0.3s ease;
 }
 
 .btn-editar,
 .btn-excluir {
-  padding: 0.5rem 1rem;
+  padding: 0.6rem 1.2rem; /* Ajustar padding */
   border: none;
-  border-radius: 4px;
+  border-radius: 8px; /* Mais arredondado */
   cursor: pointer;
   font-size: 0.9rem;
   margin-right: 0.5rem;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
 }
 
 .btn-editar {
-  background-color: var(--info-color);
+  background-color: var(--secondary-blue); /* Usar azul para editar */
   color: white;
 }
 
 .btn-excluir {
-  background-color: var(--danger-color);
+  background-color: var(--danger-red);
   color: white;
 }
 
+.btn-editar:hover,
+.btn-excluir:hover {
+  transform: translateY(-2px);
+}
+
 .btn-editar:hover {
-  background-color: var(--info-hover);
+  background-color: #0069d9;
 }
 
 .btn-excluir:hover {
-  background-color: var(--danger-hover);
+  background-color: #c82333;
 }
 
 /* Media Queries */
 @media screen and (max-width: 1024px) {
   .receita-form {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 }
 
@@ -166,13 +273,19 @@ th {
     padding: 1rem;
   }
 
+  .receita-form {
+    grid-template-columns: 1fr;
+  }
+
   .form-group input,
-  .form-group textarea {
-    padding: 0.6rem;
+  .form-group textarea,
+  .form-group select {
+    padding: 0.8rem;
   }
 
   .btn-submit {
-    padding: 0.6rem;
+    padding: 0.8rem;
+    font-size: 1rem;
   }
 
   table {
@@ -201,7 +314,8 @@ th {
   }
 
   .form-group input,
-  .form-group textarea {
+  .form-group textarea,
+  .form-group select {
     font-size: 0.9rem;
   }
 
@@ -221,219 +335,265 @@ th {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 30px; /* Ajuste da margem */
+}
+
+.content-header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-color);
 }
 
 .btn-secondary {
-  background-color: #6c5ce7;
-  color: white;
+  background-color: var(--button-secondary-bg); /* Usar cor de fundo da variável */
+  color: var(--button-secondary-text); /* Usar cor do texto da variável */
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
+  padding: 0.8rem 1.5rem; /* Ajustar padding */
+  border-radius: 8px; /* Mais arredondado */
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: background-color 0.3s;
+  font-size: 1rem; /* Ajustar fonte */
+  font-weight: 500; /* Ajustar peso da fonte */
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .btn-secondary:hover {
-  background-color: #5541d8;
+  background-color: var(--button-secondary-hover); /* Usar cor de hover da variável */
+  transform: translateY(-2px);
 }
 
 .categorias-container {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: var(--card-bg);
+  border-radius: 15px; /* Mais arredondado */
+  padding: 2rem;
+  margin-bottom: 30px; /* Ajuste da margem */
+  box-shadow: 0 4px 12px var(--shadow-color);
 }
 
 .categorias-container h3 {
-  margin-bottom: 1rem;
-  color: #2d3436;
+  margin: 0 0 1.5rem 0; /* Ajuste da margem */
+  color: var(--text-color);
+  font-size: 20px; /* Ajuste da fonte */
+  font-weight: 600;
+  transition: color 0.3s ease;
 }
 
 .categoria-form {
-  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 15px; /* Ajuste do gap */
+  margin-bottom: 1.5rem; /* Ajuste da margem */
 }
 
 .categoria-form .form-group {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
+  flex-grow: 1;
+  margin-bottom: 0; /* Remover margem inferior */
 }
 
 .categoria-form input {
-  flex: 3;
-  padding: 0.8rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  min-width: 250px;
+  width: 100%;
+  padding: 1rem; /* Ajuste do padding */
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  outline: none;
+  transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.categoria-form input:focus {
+    border-color: var(--primary-purple);
+    box-shadow: 0 0 0 3px var(--primary-shadow);
 }
 
 .categoria-form button {
-  flex: 1;
-  padding: 0.8rem;
-  max-width: 180px;
-  white-space: nowrap;
+  padding: 1rem 1.5rem; /* Ajuste do padding */
+  background-color: var(--primary-purple);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.categoria-form button:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px);
 }
 
 .categorias-lista {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 10px; /* Ajuste do gap */
 }
 
 .categoria-item {
+  background-color: var(--medium-grey); /* Cor de fundo para tags */
+  color: var(--text-dark);
+  padding: 8px 12px; /* Ajuste do padding */
+  border-radius: 20px; /* Mais arredondado (pill shape) */
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background-color: #f0f0f0;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
+  gap: 8px; /* Espaçamento entre texto e botão */
   font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .categoria-item button {
   background: none;
   border: none;
-  color: #ff7675;
+  color: var(--text-muted); /* Cor do ícone de fechar */
   cursor: pointer;
   font-size: 1rem;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  transition: color 0.3s ease;
 }
 
 .categoria-item button:hover {
-  color: #d63031;
+  color: var(--danger-red);
 }
 
 @media screen and (max-width: 768px) {
-  .categoria-form .form-group {
+  .categorias-container {
+    padding: 1.5rem;
+  }
+  .categoria-form {
     flex-direction: column;
-    align-items: stretch;
+    gap: 10px;
   }
-
-  .categoria-form input {
-    min-width: 100%;
-  }
-
   .categoria-form button {
-    max-width: 100%;
+    width: 100%;
+    padding: 0.8rem;
   }
 }
 
 .checkbox-group {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1.5rem;
 }
 
 .checkbox-group label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
+    font-weight: normal; /* Sobrescrever negrito do label */
+    margin-bottom: 0;
+    color: var(--text-color);
 }
 
 .checkbox-group input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
+    width: 20px;
+    height: 20px;
+    accent-color: var(--primary-purple); /* Cor do checkbox */
+    cursor: pointer;
 }
 
 .lista-container {
-  background: #fff;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-top: 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 30px;
 }
 
 .lista-header {
-  border-bottom: 2px solid #eee;
-  padding-bottom: 0.5rem;
-  margin-bottom: 1rem;
-  margin-top: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 }
 
 .lista-header h3 {
-  color: #333;
-  font-size: 1.2rem;
-  margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-color);
 }
 
 .lista-items {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
 .item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 6px;
-  transition: background-color 0.2s;
+    background-color: var(--card-bg);
+    padding: 15px 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
 }
 
 .item:hover {
-  background: #f1f3f5;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
 }
 
 .item-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
 .item-info strong {
-  min-width: 200px;
+    font-size: 1.1rem;
+    color: var(--text-dark);
 }
 
 .item-info .categoria {
-  background: #e9ecef;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  color: #495057;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    background-color: var(--tag-background-light); /* Usar variável para background */
+    color: var(--tag-color-light); /* Usar variável para cor do texto */
+    padding: 4px 8px;
+    border-radius: 4px;
+    align-self: flex-start; /* Alinhar a tag à esquerda */
+}
+
+[data-theme='dark'] .item-info .categoria {
+    background-color: var(--tag-background-dark);
+    color: var(--tag-color-dark);
 }
 
 .item-info .valor {
-  font-weight: 600;
-  color: #2b8a3e;
-  min-width: 120px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--success-color);
 }
 
 .item-info .data {
-  color: #868e96;
+    font-size: 0.85rem;
+    color: var(--text-muted);
 }
 
 .item-info .tag-fixa {
-  background-color: #6c5ce7;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  margin-left: 0.5rem;
+    background-color: var(--primary-purple);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-top: 5px;
+    align-self: flex-start;
+}
+
+.item-actions {
+    display: flex;
+    gap: 10px;
 }
 
 .btn-excluir {
-  background: none;
-  border: none;
-  color: #e03131;
-  cursor: pointer;
-  font-size: 1.2rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+    /* Overriding previous definition */
+    background-color: var(--danger-red);
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .btn-excluir:hover {
-  background: #fff5f5;
+    background-color: #c82333;
+    transform: translateY(-2px);
 } 

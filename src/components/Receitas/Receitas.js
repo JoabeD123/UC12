@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FaPlus, FaMoneyBillWave, FaWallet, FaCreditCard, FaChartPie, FaCog, FaSignOutAlt, FaRegChartBar, FaPiggyBank, FaUniversity, FaArrowUp, FaArrowDown, FaUsers } from 'react-icons/fa';
 import './Receitas.css';
 
 function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
@@ -126,41 +127,46 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
         </div>
         <nav className="menu">
           <ul>
-            <li onClick={() => navigate('/')}>
-              <span className="menu-icon">📊</span>
+            <li onClick={() => navigate('/dashboard')}>
+              <FaRegChartBar className="menu-icon" />
               <span className="menu-text">Dashboard</span>
             </li>
             <li className="active">
-              <span className="menu-icon">💰</span>
+              <FaMoneyBillWave className="menu-icon" />
               <span className="menu-text">Receitas</span>
             </li>
             {perfil?.permissoes.verDespesas && (
               <li onClick={() => navigate('/despesas')}>
-                <span className="menu-icon">💸</span>
+                <FaWallet className="menu-icon" />
                 <span className="menu-text">Despesas</span>
               </li>
             )}
             <li onClick={() => navigate('/cartoes')}>
-              <span className="menu-icon">💳</span>
+              <FaCreditCard className="menu-icon" />
               <span className="menu-text">Cartões</span>
             </li>
             <li onClick={() => navigate('/imposto-renda')}>
-              <span className="menu-icon">📑</span>
-              <span className="menu-text">Imposto de Renda</span>
+              <FaPiggyBank className="menu-icon" />
+              <span className="menu-text">Imposto Renda</span>
             </li>
             {perfil?.permissoes.gerenciarPerfis && (
               <li onClick={() => navigate('/gerenciar-perfis')}>
-                <span className="menu-icon">👥</span>
+                <FaUsers className="menu-icon" />
                 <span className="menu-text">Gerenciar Perfis</span>
               </li>
             )}
+            <li onClick={() => navigate('/configuracoes')}>
+                <FaCog className="menu-icon" />
+                <span className="menu-text">Configurações</span>
+            </li>
+            <li onClick={onLogout}>
+              <FaSignOutAlt className="menu-icon" />
+              <span className="menu-text">Sair</span>
+            </li>
           </ul>
         </nav>
-        <div className="sidebar-bottom">
-          <button onClick={() => navigate('/configuracoes')} className="config-button">
-            <span className="menu-icon">⚙️</span>
-            <span className="menu-text">Configurações</span>
-          </button>
+        <div className="add-button">
+            <FaPlus />
         </div>
       </div>
 
@@ -213,9 +219,8 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
         )}
 
         {perfil.permissoes.editarReceitas && (
-          <form onSubmit={handleSubmit} className="form-container">
-            <div className="form-row">
-              <div className="form-group">
+          <form onSubmit={handleSubmit} className="receita-form">
+            <div className="form-group">
                 <label>Descrição:</label>
                 <input
                   type="text"
@@ -223,9 +228,9 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                   onChange={(e) => setNovaReceita(prev => ({ ...prev, descricao: e.target.value }))}
                   required
                 />
-              </div>
+            </div>
 
-              <div className="form-group">
+            <div className="form-group">
                 <label>Valor:</label>
                 <input
                   type="number"
@@ -235,9 +240,9 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                   onChange={(e) => setNovaReceita(prev => ({ ...prev, valor: e.target.value }))}
                   required
                 />
-              </div>
+            </div>
 
-              <div className="form-group">
+            <div className="form-group">
                 <label>Data:</label>
                 <input
                   type="date"
@@ -245,71 +250,62 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                   onChange={(e) => setNovaReceita(prev => ({ ...prev, data: e.target.value }))}
                   required
                 />
-              </div>
+            </div>
 
-              <div className="form-group">
+            <div className="form-group">
                 <label>Categoria:</label>
                 <select
                   value={novaReceita.categoria}
                   onChange={(e) => setNovaReceita(prev => ({ ...prev, categoria: e.target.value }))}
-                  required
                 >
-                  {categorias.map(categoria => (
-                    <option key={categoria} value={categoria}>
-                      {categoria}
-                    </option>
+                  {categorias.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
-              </div>
-
-              <div className="form-group checkbox-group">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={novaReceita.fixa}
-                    onChange={(e) => setNovaReceita(prev => ({ ...prev, fixa: e.target.checked }))}
-                  />
-                  Receita Fixa (recebimento mensal)
-                </label>
-              </div>
-
-              <div className="form-group">
-                <button type="submit" className="btn-primary">
-                  Adicionar Receita
-                </button>
-              </div>
             </div>
+
+            <div className="checkbox-group">
+                <input
+                  type="checkbox"
+                  id="receitaFixa"
+                  checked={novaReceita.fixa}
+                  onChange={(e) => setNovaReceita(prev => ({ ...prev, fixa: e.target.checked }))}
+                />
+                <label htmlFor="receitaFixa">Receita Fixa</label>
+            </div>
+            
+            <button type="submit" className="btn-submit">
+              Adicionar Receita
+            </button>
           </form>
         )}
 
         <div className="lista-container">
           <div className="lista-header">
-            <h3>Todas as Receitas</h3>
+            <h3>Minhas Receitas</h3>
           </div>
-          <div className="lista-items">
-            {receitas
-              .sort((a, b) => new Date(b.data) - new Date(a.data))
-              .map(receita => (
+          {receitas.length === 0 ? (
+            <p className="sem-receitas">Nenhuma receita cadastrada.</p>
+          ) : (
+            <div className="lista-items">
+              {receitas.map(receita => (
                 <div key={receita.id} className="item">
                   <div className="item-info">
                     <strong>{receita.descricao}</strong>
                     <span className="categoria">{receita.categoria}</span>
-                    <span className="valor">R$ {receita.valor.toFixed(2)}</span>
                     <span className="data">{new Date(receita.data).toLocaleDateString()}</span>
                     {receita.fixa && <span className="tag-fixa">Fixa</span>}
                   </div>
-                  {perfil.permissoes.editarReceitas && (
-                    <button
-                      onClick={() => handleExcluir(receita.id)}
-                      className="btn-excluir"
-                      title="Excluir receita"
-                    >
-                      ✕
-                    </button>
-                  )}
+                  <span className="valor-receita">R$ {receita.valor.toFixed(2).replace('.', ',')}</span>
+                  <div className="item-actions">
+                      <button onClick={() => handleExcluir(receita.id)} className="btn-excluir">
+                        Excluir
+                      </button>
+                  </div>
                 </div>
               ))}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

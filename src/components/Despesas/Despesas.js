@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FaPlus, FaMoneyBillWave, FaWallet, FaCreditCard, FaChartPie, FaCog, FaSignOutAlt, FaRegChartBar, FaPiggyBank, FaUniversity, FaArrowUp, FaArrowDown, FaUsers } from 'react-icons/fa';
 import './Despesas.css';
 
 function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
@@ -113,45 +114,50 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
         </div>
         <nav className="menu">
           <ul>
-            <li onClick={() => navigate('/')}>
-              <span className="menu-icon">📊</span>
+            <li onClick={() => navigate('/dashboard')}>
+              <FaRegChartBar className="menu-icon" />
               <span className="menu-text">Dashboard</span>
             </li>
             {perfil?.permissoes.verReceitas && (
               <li onClick={() => navigate('/receitas')}>
-                <span className="menu-icon">💰</span>
+                <FaMoneyBillWave className="menu-icon" />
                 <span className="menu-text">Receitas</span>
               </li>
             )}
             <li className="active">
-              <span className="menu-icon">💸</span>
+              <FaWallet className="menu-icon" />
               <span className="menu-text">Despesas</span>
             </li>
             <li onClick={() => navigate('/cartoes')}>
-              <span className="menu-icon">💳</span>
+              <FaCreditCard className="menu-icon" />
               <span className="menu-text">Cartões</span>
             </li>
             <li onClick={() => navigate('/imposto-renda')}>
-              <span className="menu-icon">📑</span>
-              <span className="menu-text">Imposto de Renda</span>
+              <FaPiggyBank className="menu-icon" />
+              <span className="menu-text">Imposto Renda</span>
             </li>
             {perfil?.permissoes.gerenciarPerfis && (
               <li onClick={() => navigate('/gerenciar-perfis')}>
-                <span className="menu-icon">👥</span>
+                <FaUsers className="menu-icon" />
                 <span className="menu-text">Gerenciar Perfis</span>
               </li>
             )}
+            <li onClick={() => navigate('/configuracoes')}>
+                <FaCog className="menu-icon" />
+                <span className="menu-text">Configurações</span>
+            </li>
+            <li onClick={onLogout}>
+              <FaSignOutAlt className="menu-icon" />
+              <span className="menu-text">Sair</span>
+            </li>
           </ul>
         </nav>
-        <div className="sidebar-bottom">
-          <button onClick={() => navigate('/configuracoes')} className="config-button">
-            <span className="menu-icon">⚙️</span>
-            <span className="menu-text">Configurações</span>
-          </button>
+        <div className="add-button">
+            <FaPlus />
         </div>
       </div>
 
-      <div className="dashboard-content">
+      <div className="despesas-container">
         <div className="content-header">
           <h1>Despesas</h1>
           {perfil.permissoes.editarDespesas && (
@@ -200,9 +206,8 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
         )}
 
         {perfil.permissoes.editarDespesas && (
-          <form onSubmit={handleSubmit} className="form-container">
-            <div className="form-row">
-              <div className="form-group">
+          <form onSubmit={handleSubmit} className="despesa-form">
+            <div className="form-group">
                 <label>Descrição:</label>
                 <input
                   type="text"
@@ -210,9 +215,9 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                   onChange={(e) => setNovaDespesa(prev => ({ ...prev, descricao: e.target.value }))}
                   required
                 />
-              </div>
+            </div>
 
-              <div className="form-group">
+            <div className="form-group">
                 <label>Valor:</label>
                 <input
                   type="number"
@@ -222,9 +227,9 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                   onChange={(e) => setNovaDespesa(prev => ({ ...prev, valor: e.target.value }))}
                   required
                 />
-              </div>
+            </div>
 
-              <div className="form-group">
+            <div className="form-group">
                 <label>Data:</label>
                 <input
                   type="date"
@@ -232,62 +237,52 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                   onChange={(e) => setNovaDespesa(prev => ({ ...prev, data: e.target.value }))}
                   required
                 />
-              </div>
+            </div>
 
-              <div className="form-group">
+            <div className="form-group">
                 <label>Categoria:</label>
                 <select
                   value={novaDespesa.categoria}
                   onChange={(e) => setNovaDespesa(prev => ({ ...prev, categoria: e.target.value }))}
                   required
                 >
-                  {categorias.map(categoria => (
-                    <option key={categoria} value={categoria}>
-                      {categoria}
-                    </option>
+                  {categorias.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
-              </div>
-
-              <button type="submit" className="btn-primary">
-                Adicionar Despesa
-              </button>
             </div>
+            
+            <button type="submit" className="btn-submit">
+              Adicionar Despesa
+            </button>
           </form>
         )}
 
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Descrição</th>
-                <th>Valor</th>
-                <th>Data</th>
-                <th>Categoria</th>
-                {perfil.permissoes.editarDespesas && <th>Ações</th>}
-              </tr>
-            </thead>
-            <tbody>
+        <div className="lista-container">
+          <div className="lista-header">
+            <h3>Minhas Despesas</h3>
+          </div>
+          {despesas.length === 0 ? (
+            <p className="sem-despesas">Nenhuma despesa cadastrada.</p>
+          ) : (
+            <div className="lista-items">
               {despesas.map(despesa => (
-                <tr key={despesa.id}>
-                  <td>{despesa.descricao}</td>
-                  <td>R$ {despesa.valor.toFixed(2)}</td>
-                  <td>{new Date(despesa.data).toLocaleDateString()}</td>
-                  <td>{despesa.categoria}</td>
-                  {perfil.permissoes.editarDespesas && (
-                    <td>
-                      <button
-                        onClick={() => handleExcluir(despesa.id)}
-                        className="btn-excluir"
-                      >
+                <div key={despesa.id} className="item">
+                  <div className="item-info">
+                    <strong>{despesa.descricao}</strong>
+                    <span className="categoria">{despesa.categoria}</span>
+                    <span className="data">{new Date(despesa.data).toLocaleDateString()}</span>
+                  </div>
+                  <span className="valor-despesa">R$ {despesa.valor.toFixed(2).replace('.', ',')}</span>
+                  <div className="item-actions">
+                      <button onClick={() => handleExcluir(despesa.id)} className="btn-excluir">
                         Excluir
                       </button>
-                    </td>
-                  )}
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          )}
         </div>
       </div>
     </div>

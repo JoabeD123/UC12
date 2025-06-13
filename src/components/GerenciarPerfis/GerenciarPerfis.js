@@ -1,219 +1,330 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaPlus, FaEdit, FaTrash, FaSave, FaTimes } from 'react-icons/fa';
 import './GerenciarPerfis.css';
 
-function GerenciarPerfis({ usuario, perfil, onLogout, onPerfilAtualizado }) {
-  const [perfis, setPerfis] = useState([]);
+const GerenciarPerfis = () => {
+  const navigate = useNavigate();
+  const [perfis, setPerfis] = useState([
+    {
+      id: 1,
+      nome: 'Administrador',
+      descricao: 'Acesso total ao sistema',
+      permissoes: {
+        verDashboard: true,
+        verReceitas: true,
+        verDespesas: true,
+        verCartoes: true,
+        verImpostoRenda: true,
+        gerenciarPerfis: true,
+        verConfiguracoes: true
+      }
+    },
+    {
+      id: 2,
+      nome: 'Usuário',
+      descricao: 'Acesso básico ao sistema',
+      permissoes: {
+        verDashboard: true,
+        verReceitas: true,
+        verDespesas: true,
+        verCartoes: true,
+        verImpostoRenda: false,
+        gerenciarPerfis: false,
+        verConfiguracoes: true
+      }
+    }
+  ]);
+
   const [novoPerfil, setNovoPerfil] = useState({
     nome: '',
-    tipo: 'Secundário',
+    descricao: '',
     permissoes: {
-      verReceitas: false,
-      editarReceitas: false,
-      verDespesas: false,
-      editarDespesas: false,
-      gerenciarPerfis: false
+      verDashboard: true,
+      verReceitas: true,
+      verDespesas: true,
+      verCartoes: true,
+      verImpostoRenda: false,
+      gerenciarPerfis: false,
+      verConfiguracoes: true
     }
   });
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    const perfisArmazenados = JSON.parse(localStorage.getItem('perfis') || '[]');
-    const perfisFiltrados = perfisArmazenados.filter(p => p.usuarioId === usuario.id);
-    setPerfis(perfisFiltrados);
-  }, [usuario.id]);
+  const [perfilEditando, setPerfilEditando] = useState(null);
+  const [erro, setErro] = useState('');
 
-  const salvarPerfis = (novosPerfis) => {
-    const todosOsPerfis = JSON.parse(localStorage.getItem('perfis') || '[]');
-    const perfisOutrosUsuarios = todosOsPerfis.filter(p => p.usuarioId !== usuario.id);
-    const perfisSalvar = [...perfisOutrosUsuarios, ...novosPerfis];
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
     
-    localStorage.setItem('perfis', JSON.stringify(perfisSalvar));
-    setPerfis(novosPerfis);
-  };
-
-  const handlePermissaoChange = (permissao) => {
-    setNovoPerfil(prev => ({
-      ...prev,
-      permissoes: {
-        ...prev.permissoes,
-        [permissao]: !prev.permissoes[permissao]
-      }
-    }));
+    if (type === 'checkbox') {
+      const [permissao, campo] = name.split('.');
+      setNovoPerfil(prev => ({
+        ...prev,
+        permissoes: {
+          ...prev.permissoes,
+          [campo]: checked
+        }
+      }));
+    } else {
+      setNovoPerfil(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!novoPerfil.nome.trim()) return;
-
-    const novoPerfilCompleto = {
-      ...novoPerfil,
-      id: Date.now().toString(),
-      usuarioId: usuario.id
-    };
-
-    const novosPerfis = [...perfis, novoPerfilCompleto];
-    salvarPerfis(novosPerfis);
     
+    if (!novoPerfil.nome.trim()) {
+      setErro('O nome do perfil é obrigatório');
+      return;
+    }
+
+    if (perfilEditando) {
+      setPerfis(prev => prev.map(perfil => 
+        perfil.id === perfilEditando.id ? { ...novoPerfil, id: perfil.id } : perfil
+      ));
+      setPerfilEditando(null);
+    } else {
+      setPerfis(prev => [...prev, { ...novoPerfil, id: Date.now() }]);
+    }
+
     setNovoPerfil({
       nome: '',
-      tipo: 'Secundário',
+      descricao: '',
       permissoes: {
-        verReceitas: false,
-        editarReceitas: false,
-        verDespesas: false,
-        editarDespesas: false,
-        gerenciarPerfis: false
+        verDashboard: true,
+        verReceitas: true,
+        verDespesas: true,
+        verCartoes: true,
+        verImpostoRenda: false,
+        gerenciarPerfis: false,
+        verConfiguracoes: true
       }
     });
+    setErro('');
   };
 
-  const handleExcluirPerfil = (perfilId) => {
-    if (perfilId === perfil.id) {
-      alert('Você não pode excluir o perfil que está usando atualmente.');
-      return;
-    }
-    const novosPerfis = perfis.filter(p => p.id !== perfilId);
-    salvarPerfis(novosPerfis);
+  const handleEdit = (perfil) => {
+    setPerfilEditando(perfil);
+    setNovoPerfil(perfil);
   };
 
-  const handleAlterarPerfil = (novoPerfil) => {
-    if (novoPerfil.id === perfil.id) {
-      alert('Este já é seu perfil atual.');
-      return;
-    }
-    onPerfilAtualizado(novoPerfil);
-    navigate('/dashboard');
+  const handleDelete = (id) => {
+    setPerfis(prev => prev.filter(perfil => perfil.id !== id));
+  };
+
+  const handleCancel = () => {
+    setPerfilEditando(null);
+    setNovoPerfil({
+      nome: '',
+      descricao: '',
+      permissoes: {
+        verDashboard: true,
+        verReceitas: true,
+        verDespesas: true,
+        verCartoes: true,
+        verImpostoRenda: false,
+        gerenciarPerfis: false,
+        verConfiguracoes: true
+      }
+    });
+    setErro('');
   };
 
   return (
     <div className="layout-container">
       <div className="sidebar">
-        <div className="logo">
-          <div className="logo-icon">GF</div>
-        </div>
-        <nav className="menu">
-          <ul>
-            <li onClick={() => navigate('/')}>
-              <span className="menu-icon">📊</span>
-              <span className="menu-text">Dashboard</span>
-            </li>
-            {perfis.find(p => p.usuarioId === usuario.id && p.permissoes.verReceitas) && (
-              <li onClick={() => navigate('/receitas')}>
-                <span className="menu-icon">💰</span>
-                <span className="menu-text">Receitas</span>
-              </li>
-            )}
-            {perfis.find(p => p.usuarioId === usuario.id && p.permissoes.verDespesas) && (
-              <li onClick={() => navigate('/despesas')}>
-                <span className="menu-icon">💸</span>
-                <span className="menu-text">Despesas</span>
-              </li>
-            )}
-            <li onClick={() => navigate('/cartoes')}>
-              <span className="menu-icon">💳</span>
-              <span className="menu-text">Cartões</span>
-            </li>
-            <li onClick={() => navigate('/imposto-renda')}>
-              <span className="menu-icon">📑</span>
-              <span className="menu-text">Imposto de Renda</span>
-            </li>
-            {perfil?.permissoes.gerenciarPerfis && (
-              <li className="active">
-                <span className="menu-icon">👥</span>
-                <span className="menu-text">Gerenciar Perfis</span>
-              </li>
-            )}
-          </ul>
-        </nav>
-        <div className="sidebar-bottom">
-          <button onClick={() => navigate('/configuracoes')} className="config-button">
-            <span className="menu-icon">⚙️</span>
-            <span className="menu-text">Configurações</span>
-          </button>
+        <div className="menu">
+          <div className="menu-item" onClick={() => navigate('/dashboard')}>
+            <FaChartBar />
+            <span>Dashboard</span>
+          </div>
+          <div className="menu-item" onClick={() => navigate('/cartoes')}>
+            <FaCreditCard />
+            <span>Cartões</span>
+          </div>
+          <div className="menu-item" onClick={() => navigate('/imposto-renda')}>
+            <FaChartPie />
+            <span>Imposto de Renda</span>
+          </div>
+          <div className="menu-item active" onClick={() => navigate('/gerenciar-perfis')}>
+            <FaUsers />
+            <span>Gerenciar Perfis</span>
+          </div>
+          <div className="menu-item" onClick={() => navigate('/configuracoes')}>
+            <FaCog />
+            <span>Configurações</span>
+          </div>
         </div>
       </div>
 
-      <div className="dashboard-content">
-        <div className="content-header">
-          <h1>Gerenciar Perfis</h1>
-          <p className="perfil-atual">Perfil atual: {perfil.nome}</p>
+      <div className="perfis-container">
+        <div className="perfis-header">
+          <h2>Gerenciar Perfis de Acesso</h2>
         </div>
 
-        <div className="perfis-container">
-          <div className="perfis-grid">
-            {perfis.map(perfilItem => (
-              <div key={perfilItem.id} className={`perfil-card ${perfilItem.id === perfil.id ? 'perfil-atual' : ''}`}>
-                <h3>{perfilItem.nome}</h3>
-                <p>Tipo: {perfilItem.tipo}</p>
-                <div className="permissoes-lista">
-                  <h4>Permissões:</h4>
-                  <ul>
-                    {Object.entries(perfilItem.permissoes).map(([key, value]) => (
-                      <li key={key} className={value ? 'permitido' : 'negado'}>
-                        {key}: {value ? '✓' : '✗'}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="perfil-acoes">
-                  {perfilItem.id !== perfil.id && (
-                    <button 
-                      className="btn-alternar"
-                      onClick={() => handleAlterarPerfil(perfilItem)}
-                    >
-                      Usar este perfil
-                    </button>
-                  )}
-                  {perfilItem.tipo !== 'Principal' && perfilItem.id !== perfil.id && (
-                    <button 
-                      className="btn-excluir"
-                      onClick={() => handleExcluirPerfil(perfilItem.id)}
-                    >
-                      Excluir
-                    </button>
-                  )}
+        {erro && <div className="error-message">{erro}</div>}
+
+        <div className="perfis-content">
+          <div className="novo-perfil-form">
+            <h3>{perfilEditando ? 'Editar Perfil' : 'Novo Perfil'}</h3>
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label>Nome do Perfil</label>
+                <input
+                  type="text"
+                  name="nome"
+                  value={novoPerfil.nome}
+                  onChange={handleInputChange}
+                  placeholder="Digite o nome do perfil"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Descrição</label>
+                <textarea
+                  name="descricao"
+                  value={novoPerfil.descricao}
+                  onChange={handleInputChange}
+                  placeholder="Digite a descrição do perfil"
+                />
+              </div>
+
+              <div className="permissoes-section">
+                <h4>Permissões</h4>
+                <div className="permissoes-grid">
+                  <div className="permissao-item">
+                    <label>
+                      <input
+                        type="checkbox"
+                        name="permissoes.verDashboard"
+                        checked={novoPerfil.permissoes.verDashboard}
+                        onChange={handleInputChange}
+                      />
+                      Ver Dashboard
+                    </label>
+                  </div>
+                  <div className="permissao-item">
+                    <label>
+                      <input
+                        type="checkbox"
+                        name="permissoes.verReceitas"
+                        checked={novoPerfil.permissoes.verReceitas}
+                        onChange={handleInputChange}
+                      />
+                      Ver Receitas
+                    </label>
+                  </div>
+                  <div className="permissao-item">
+                    <label>
+                      <input
+                        type="checkbox"
+                        name="permissoes.verDespesas"
+                        checked={novoPerfil.permissoes.verDespesas}
+                        onChange={handleInputChange}
+                      />
+                      Ver Despesas
+                    </label>
+                  </div>
+                  <div className="permissao-item">
+                    <label>
+                      <input
+                        type="checkbox"
+                        name="permissoes.verCartoes"
+                        checked={novoPerfil.permissoes.verCartoes}
+                        onChange={handleInputChange}
+                      />
+                      Ver Cartões
+                    </label>
+                  </div>
+                  <div className="permissao-item">
+                    <label>
+                      <input
+                        type="checkbox"
+                        name="permissoes.verImpostoRenda"
+                        checked={novoPerfil.permissoes.verImpostoRenda}
+                        onChange={handleInputChange}
+                      />
+                      Ver Imposto de Renda
+                    </label>
+                  </div>
+                  <div className="permissao-item">
+                    <label>
+                      <input
+                        type="checkbox"
+                        name="permissoes.gerenciarPerfis"
+                        checked={novoPerfil.permissoes.gerenciarPerfis}
+                        onChange={handleInputChange}
+                      />
+                      Gerenciar Perfis
+                    </label>
+                  </div>
+                  <div className="permissao-item">
+                    <label>
+                      <input
+                        type="checkbox"
+                        name="permissoes.verConfiguracoes"
+                        checked={novoPerfil.permissoes.verConfiguracoes}
+                        onChange={handleInputChange}
+                      />
+                      Ver Configurações
+                    </label>
+                  </div>
                 </div>
               </div>
-            ))}
+
+              <div className="form-actions">
+                <button type="submit" className="btn-primary">
+                  {perfilEditando ? <FaSave /> : <FaPlus />}
+                  {perfilEditando ? 'Salvar' : 'Adicionar'}
+                </button>
+                {perfilEditando && (
+                  <button type="button" onClick={handleCancel} className="btn-secondary">
+                    <FaTimes />
+                    Cancelar
+                  </button>
+                )}
+              </div>
+            </form>
           </div>
 
-          <form onSubmit={handleSubmit} className="novo-perfil-form">
-            <h2>Adicionar Novo Perfil</h2>
-            <div className="form-group">
-              <label>Nome do Perfil:</label>
-              <input
-                type="text"
-                value={novoPerfil.nome}
-                onChange={(e) => setNovoPerfil(prev => ({ ...prev, nome: e.target.value }))}
-                required
-              />
+          <div className="perfis-list">
+            <h3>Perfis Existentes</h3>
+            <div className="perfis-grid">
+              {perfis.map(perfil => (
+                <div key={perfil.id} className="perfil-card">
+                  <div className="perfil-header">
+                    <h4>{perfil.nome}</h4>
+                    <div className="perfil-actions">
+                      <button onClick={() => handleEdit(perfil)} className="btn-icon">
+                        <FaEdit />
+                      </button>
+                      <button onClick={() => handleDelete(perfil.id)} className="btn-icon">
+                        <FaTrash />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="perfil-descricao">{perfil.descricao}</p>
+                  <div className="perfil-permissoes">
+                    <h5>Permissões:</h5>
+                    <ul>
+                      {Object.entries(perfil.permissoes).map(([permissao, valor]) => (
+                        <li key={permissao} className={valor ? 'permitido' : 'negado'}>
+                          {permissao.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ))}
             </div>
-
-            <div className="form-group">
-              <h3>Permissões:</h3>
-              <div className="permissoes-grid">
-                {Object.entries(novoPerfil.permissoes).map(([key, value]) => (
-                  <label key={key} className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={value}
-                      onChange={() => handlePermissaoChange(key)}
-                    />
-                    {key}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <button type="submit" className="btn-primary">
-              Adicionar Perfil
-            </button>
-          </form>
+          </div>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default GerenciarPerfis; 

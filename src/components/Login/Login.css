@@ -1,3 +1,53 @@
+:root {
+    --primary-purple: #6a0dad;
+    --secondary-blue: #007bff;
+    --white: #ffffff;
+    --light-grey: #f8f9fa; /* Fundo principal */
+    --medium-grey: #e9ecef; /* Um tom de cinza para cards/elementos */
+    --dark-grey: #343a40;
+    --text-dark: #333333;
+    --text-light: #f8f9fa;
+    --card-shadow: rgba(0, 0, 0, 0.08);
+    --success-green: #28a745;
+    --danger-red: #dc3545;
+    --input-border: #dee2e6; /* Cor da borda dos inputs */
+    --input-focus-shadow: rgba(106, 13, 173, 0.25); /* Sombra do input focado */
+    --error-bg: #f8d7da;
+    --error-color: #721c24;
+    --primary-hover: #5a099a;
+    --text-muted: #6c757d;
+    --tag-bg: #e0e7ff;
+    --primary-bg: #ede7f6;
+    --secondary-color: #6c757d;
+    --secondary-hover: #5a6268;
+}
+
+[data-theme='light'] {
+    --bg-color: var(--light-grey);
+    --text-color: var(--text-dark);
+    --card-bg: var(--white);
+    --border-color: var(--input-border);
+    --input-bg: var(--white);
+    --shadow-color: var(--card-shadow);
+    --primary-color: var(--primary-purple);
+    --primary-shadow: var(--input-focus-shadow);
+    --error-bg-theme: var(--error-bg);
+    --error-color-theme: var(--error-color);
+}
+
+[data-theme='dark'] {
+    --bg-color: #212529;
+    --text-color: var(--text-light);
+    --card-bg: #495057;
+    --border-color: #6c757d;
+    --input-bg: #495057;
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --primary-color: var(--primary-purple);
+    --primary-shadow: rgba(106, 13, 173, 0.4);
+    --error-bg-theme: #721c24;
+    --error-color-theme: #f8d7da;
+}
+
 .auth-container {
   min-height: 100vh;
   display: flex;
@@ -15,92 +65,106 @@
 
 .auth-box {
   background: var(--card-bg);
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: var(--card-shadow);
+  padding: 2.5rem; /* Aumentado o padding */
+  border-radius: 15px; /* Mais arredondado */
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); /* Sombra mais pronunciada e escura */
   width: 100%;
-  max-width: 400px;
+  max-width: 450px; /* Largura um pouco maior */
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
   margin: auto;
 }
 
 .auth-box h2 {
-  margin: 0 0 1.5rem 0;
-  color: var(--text-color);
+  margin: 0 0 2rem 0; /* Aumentado a margem inferior */
+  color: var(--primary-purple); /* Título roxo */
   text-align: center;
+  font-size: 28px; /* Fonte maior */
+  font-weight: 700; /* Mais negrito */
   transition: color 0.3s ease;
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem; /* Aumentado a margem inferior */
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
-  color: var(--text-muted);
+  margin-bottom: 0.8rem; /* Aumentado a margem inferior */
+  color: var(--text-dark); /* Cor do texto mais escura */
+  font-weight: 500; /* Mais negrito */
   transition: color 0.3s ease;
 }
 
 .form-group input {
   width: 100%;
-  padding: 0.8rem;
+  padding: 1rem; /* Aumentado o padding */
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: 8px; /* Mais arredondado */
   font-size: 1rem;
-  transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+  transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
   background-color: var(--input-bg);
   color: var(--text-color);
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px var(--primary-shadow);
+  border-color: var(--primary-purple);
+  box-shadow: 0 0 0 3px var(--primary-shadow); /* Sombra maior e roxa */
 }
 
 .erro-mensagem {
-  background-color: var(--error-bg);
-  color: var(--error-color);
+  background-color: var(--error-bg-theme);
+  color: var(--error-color-theme);
   padding: 0.8rem;
-  border-radius: 4px;
-  margin-bottom: 1rem;
+  border-radius: 8px; /* Mais arredondado */
+  margin-bottom: 1.5rem; /* Aumentado a margem */
   text-align: center;
   transition: background-color 0.3s ease, color 0.3s ease;
+  font-weight: 500;
 }
 
 .btn-primary {
   width: 100%;
-  padding: 0.8rem;
-  background-color: var(--primary-color);
+  padding: 1rem; /* Aumentado o padding */
+  background-color: var(--primary-purple);
   color: white;
   border: none;
-  border-radius: 4px;
-  font-size: 1rem;
+  border-radius: 8px; /* Mais arredondado */
+  font-size: 1.1rem; /* Fonte maior */
+  font-weight: 600; /* Mais negrito */
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .btn-primary:hover {
   background-color: var(--primary-hover);
+  transform: translateY(-2px); /* Efeito de "levantar" */
+}
+
+.btn-primary:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .btn-link {
   display: block;
   width: 100%;
-  padding: 0.5rem;
-  margin-top: 1rem;
+  padding: 0.8rem; /* Ajustado o padding */
+  margin-top: 1.5rem; /* Aumentado a margem */
   background: none;
   border: none;
-  color: var(--primary-color);
+  color: var(--primary-purple); /* Cor roxa */
   text-align: center;
-  text-decoration: underline;
+  text-decoration: none; /* Remover underline */
+  font-weight: 500;
   cursor: pointer;
   transition: color 0.3s ease;
 }
 
 .btn-link:hover {
   color: var(--primary-hover);
+  text-decoration: underline; /* Adiciona underline no hover */
 }
 
 @media (max-width: 480px) {
@@ -113,11 +177,17 @@
   }
 
   .form-group input {
-    padding: 0.6rem;
+    padding: 0.8rem;
   }
 
   .btn-primary {
+    padding: 0.8rem;
+    font-size: 1rem;
+  }
+
+  .btn-link {
     padding: 0.6rem;
+    margin-top: 1rem;
   }
 }
 

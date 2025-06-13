@@ -1,3 +1,57 @@
+/* Color palette based on the image */
+:root {
+    --primary-purple: #6a0dad; /* Um tom de roxo para detalhes */
+    --secondary-blue: #007bff; /* Um tom de azul para detalhes */
+    --white: #ffffff;
+    --light-grey: #f8f9fa; /* Fundo principal levemente cinza */
+    --medium-grey: #e9ecef; /* Um tom de cinza para cards/elementos */
+    --dark-grey: #343a40; /* Fundo da barra lateral */
+    --text-dark: #333333;
+    --text-light: #f8f9fa;
+    --card-shadow: rgba(0, 0, 0, 0.08);
+    --success-green: #28a745;
+    --danger-red: #dc3545;
+    --icon-bg-blue: #007bff;
+    --icon-bg-red: #dc3545;
+    --icon-bg-green: #28a745;
+    --card-balance-bg: #ede7f6; /* Cor mais clara para o card de saldo atual */
+    --sidebar-active-bg: #eceff1; /* Cor de fundo para item ativo da sidebar no modo claro */
+    --sidebar-text-dark: #495057;
+    --chart-legend-color-light: #6c757d; /* Cor da legenda do gráfico no modo claro */
+    --chart-grid-color-light: #e0e0e0; /* Cor da grade do gráfico no modo claro */
+    --sidebar-active-bar-color: #6a0dad; /* Cor da barra roxa do item ativo */
+}
+
+[data-theme='light'] {
+    --bg-color: var(--light-grey);
+    --text-color: var(--text-dark);
+    --sidebar-bg: var(--white); /* Sidebar branca como na imagem */
+    --sidebar-hover: #f0f0f0;
+    --card-bg: var(--white);
+    --border-color: #dee2e6;
+    --input-bg: var(--white);
+    --shadow-color: var(--card-shadow);
+    --primary-color: var(--primary-purple);
+    --success-color: var(--success-green);
+    --danger-color: var(--danger-red);
+    --icon-bg-default: #e9ecef; /* Cor de fundo padrão para ícones nos cards */
+}
+
+[data-theme='dark'] {
+    --bg-color: #212529;
+    --text-color: var(--text-light);
+    --sidebar-bg: #343a40;
+    --sidebar-hover: #495057;
+    --card-bg: #495057;
+    --border-color: #6c757d;
+    --input-bg: #495057;
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --primary-color: var(--primary-purple);
+    --success-color: var(--success-green);
+    --danger-color: var(--danger-red);
+    --icon-bg-default: #6c757d;
+}
+
 .dashboard {
   display: flex;
   min-height: 100vh;
@@ -13,6 +67,7 @@
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-y: auto; /* Adicionado para permitir scroll no conteúdo */
 }
 
 .content-header {
@@ -20,6 +75,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
+  padding: 0 10px; /* Adicionado padding para alinhar com o design */
 }
 
 .content-header h1 {
@@ -30,20 +86,32 @@
   transition: color 0.3s ease;
 }
 
+.notification-count {
+    background-color: #ffc107; /* Cor amarela similar ao ícone do usuário */
+    color: var(--white);
+    font-size: 0.9rem;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 12px; /* Mais arredondado */
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
 .month-selector {
-  padding: 8px;
-  border-radius: 4px;
+  padding: 8px 12px;
+  border-radius: 8px; /* Mais arredondado */
   border: 1px solid var(--border-color);
   background-color: var(--input-bg);
   color: var(--text-color);
   font-size: 16px;
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  box-shadow: 0 1px 2px var(--shadow-color); /* Sombra sutil */
 }
 
 /* Cards */
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Ajustado para caber 4 cards */
   gap: 20px;
   margin-bottom: 30px;
 }
@@ -51,21 +119,65 @@
 .card {
   background-color: var(--card-bg);
   padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px var(--shadow-color);
+  border-radius: 15px; /* Mais arredondado */
+  box-shadow: 0 4px 12px var(--shadow-color); /* Sombra mais pronunciada */
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-height: 120px; /* Altura mínima para os cards */
 }
 
-.card h3 {
-  margin: 0 0 10px 0;
-  color: var(--text-color);
-  transition: color 0.3s ease;
+.card.saldo-atual {
+    background-color: var(--card-balance-bg); /* Cor específica para o card de saldo */
+    color: var(--primary-purple); /* Texto roxo no card de saldo */
+    border: 1px solid var(--primary-purple);
 }
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.card.saldo-atual .card-title {
+    color: var(--primary-purple);
+}
+
+.card-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    color: var(--white);
+}
+
+.card-icon-wrapper.blue { background-color: var(--icon-bg-blue); }
+.card-icon-wrapper.green { background-color: var(--icon-bg-green); }
+.card-icon-wrapper.red { background-color: var(--icon-bg-red); }
+.card-icon-wrapper.default { background-color: var(--icon-bg-default); color: var(--text-dark); }
 
 .amount {
-  font-size: 24px;
+  font-size: 28px; /* Aumentado o tamanho da fonte */
   font-weight: bold;
   margin: 0;
+  color: var(--text-dark); /* Cor padrão para valores nos cards */
+}
+
+.card.saldo-atual .amount {
+    color: var(--primary-purple);
 }
 
 .positive {
@@ -76,10 +188,19 @@
   color: var(--danger-color);
 }
 
+.meu-desempenho {
+    font-size: 0.9rem;
+    color: var(--primary-purple);
+    margin-top: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    align-self: flex-end; /* Alinha no final do card */
+}
+
 /* Charts */
 .charts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); /* Ajustado minmax */
   gap: 20px;
   margin-top: 30px;
 }
@@ -87,41 +208,107 @@
 .chart-container {
   background-color: var(--card-bg);
   padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px var(--shadow-color);
+  border-radius: 15px; /* Mais arredondado */
+  box-shadow: 0 4px 12px var(--shadow-color); /* Sombra mais pronunciada */
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .chart-container h2 {
   margin: 0 0 20px 0;
   color: var(--text-color);
   font-size: 18px;
+  font-weight: 600;
   transition: color 0.3s ease;
+  width: 100%;
+  text-align: left;
 }
 
 .chart-wrapper {
   height: 300px;
+  width: 100%; /* Ocupar toda a largura disponível */
   position: relative;
+  display: flex; /* Para centralizar o gráfico */
+  justify-content: center;
+  align-items: center;
 }
+
+.doughnut-summary {
+    text-align: center;
+    margin-top: 15px; /* Espaço entre o gráfico e o texto */
+}
+
+.doughnut-summary .doughnut-center-text {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text-dark);
+    display: block; /* Garante que o texto fique em uma nova linha */
+    margin-bottom: 5px; /* Espaço entre o valor e o subtexto */
+}
+
+.doughnut-summary .doughnut-center-subtext {
+    font-size: 0.8rem;
+    color: var(--text-dark);
+    display: block;
+}
+
+/* Remove the old absolute positioning styles */
+.chart-wrapper .doughnut-center-text,
+.chart-wrapper .doughnut-center-subtext {
+    position: static; /* Remove o posicionamento absoluto */
+    transform: none; /* Remove a transformação de centralização */
+}
+
+.ver-mais-btn {
+    background: none;
+    border: none;
+    color: var(--primary-purple);
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-top: 20px;
+    cursor: pointer;
+    text-decoration: none;
+    align-self: flex-end; /* Alinha no final do container */
+    padding: 8px 15px;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.ver-mais-btn:hover {
+    background-color: var(--light-grey);
+}
+
 
 /* Sidebar */
 .sidebar {
-  width: 250px;
+  width: 200px; /* Largura fixa para exibir texto */
   background-color: var(--sidebar-bg);
   color: var(--text-color);
-  padding: 20px;
+  padding: 20px; /* Padding ajustado */
   border-right: 1px solid var(--border-color);
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Alinha itens à esquerda */
+  justify-content: space-between; /* Para empurrar o "Add" para baixo */
+}
+
+/* Remove hover effect for width */
+.sidebar:hover {
+    width: 200px;
 }
 
 .logo {
-  text-align: center;
+  text-align: left; /* Alinhar logo à esquerda */
   margin-bottom: 30px;
+  padding-left: 10px; /* Ajuste para alinhar com o menu */
 }
 
 .logo-icon {
-  background-color: var(--primary-color);
-  color: white;
+  background-color: var(--primary-purple); /* Fundo roxo sólido */
+  color: white; /* Texto branco */
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -129,25 +316,35 @@
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  margin: 0 auto;
+  margin: 0; /* Remover margin auto */
   transition: background-color 0.3s ease;
+  border: none; /* Remover borda */
 }
 
 .menu ul {
   list-style: none;
   padding: 0;
   margin: 0;
+  width: 100%;
 }
 
 .menu li {
-  padding: 15px;
+  padding: 12px 15px; /* Padding ajustado */
   cursor: pointer;
   display: flex;
   align-items: center;
   border-radius: 8px;
   margin-bottom: 5px;
   transition: background-color 0.3s ease;
-  color: var(--text-color);
+  color: var(--sidebar-text-dark); /* Cor do texto da sidebar */
+  justify-content: flex-start; /* Alinha à esquerda */
+  position: relative;
+}
+
+/* Remove hover effect for padding and justification */
+.sidebar:hover .menu li {
+    padding: 12px 15px;
+    justify-content: flex-start;
 }
 
 .menu li:hover {
@@ -155,17 +352,197 @@
 }
 
 .menu li.active {
-  background-color: var(--primary-color);
-  color: white;
+  background-color: var(--sidebar-active-bg); /* Cor de fundo para item ativo */
+  color: var(--primary-purple); /* Cor do texto ativo */
+  font-weight: 600;
+  position: relative; /* Necessário para a barra pseudo-elemento */
+}
+
+.menu li.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 80%; /* Altura da barra */
+  background-color: var(--sidebar-active-bar-color); /* Cor da barra roxa */
+  border-radius: 0 4px 4px 0; /* Borda arredondada no lado direito */
 }
 
 .menu-icon {
-  margin-right: 10px;
+  margin-right: 10px; /* Restaura margem para ícone */
   font-size: 20px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Remove hover effect for margin */
+.sidebar:hover .menu-icon {
+    margin-right: 10px;
 }
 
 .menu-text {
   font-size: 1rem;
+  opacity: 1; /* Sempre visível */
+  white-space: nowrap;
+  overflow: hidden;
+  transition: none; /* Remove transição de opacidade */
+}
+
+/* Remove hover effect for opacity */
+.sidebar:hover .menu-text {
+    opacity: 1;
+}
+
+.add-button {
+    background-color: var(--primary-purple);
+    color: var(--white);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2rem;
+    margin-top: auto; /* Empurra para o final */
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease;
+    align-self: center; /* Centraliza o botão de adição */
+}
+
+.add-button:hover {
+    background-color: #5a099a; /* Um roxo ligeiramente mais escuro */
+}
+
+/* User profile and Month selector in header */
+.user-profile-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-profile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #ffc107; /* Cor amarela do ícone do usuário */
+    color: var(--white);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.user-name {
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.joranda {
+    color: #6c757d; /* Cor mais suave para "Jornada" */
+    font-size: 0.9rem;
+}
+
+/* Credit Card Section */
+.credit-card-section {
+    background-color: var(--card-bg);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px var(--shadow-color);
+    margin-top: 30px;
+}
+
+.credit-card-section h2 {
+    margin: 0 0 20px 0;
+    color: var(--text-color);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.credit-card-tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.credit-card-tab {
+    padding: 10px 15px;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text-color);
+    border-bottom: 2px solid transparent;
+    transition: border-bottom 0.3s ease, color 0.3s ease;
+}
+
+.credit-card-tab.active {
+    border-bottom-color: var(--primary-purple);
+    color: var(--primary-purple);
+}
+
+.credit-card-list .card-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.credit-card-list .card-item:last-child {
+    border-bottom: none;
+}
+
+.card-info {
+    display: flex;
+    align-items: center;
+}
+
+.card-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background-color: var(--icon-bg-default); /* Ex: um cinza claro */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 15px;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.card-details span {
+    display: block;
+    font-size: 0.9rem;
+}
+
+.card-name {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.card-due-date {
+    color: #6c757d;
+}
+
+.card-amount {
+    font-weight: bold;
+    color: var(--danger-color);
+}
+
+.pay-bill-btn {
+    background-color: var(--primary-purple);
+    color: var(--white);
+    padding: 8px 15px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+.pay-bill-btn:hover {
+    background-color: #5a099a;
 }
 
 /* Mensagem de sem permissão */
@@ -195,6 +572,50 @@
     padding: 10px;
     border-right: none;
     border-bottom: 1px solid var(--border-color);
+    flex-direction: row; /* Sidebar em linha no mobile */
+    justify-content: space-around;
+    align-items: center; /* Centraliza itens no mobile */
+  }
+
+  .sidebar:hover {
+      width: 100%; /* Não expande horizontalmente no mobile */
+  }
+
+  .sidebar .logo {
+      display: none; /* Esconde logo no mobile */
+  }
+
+  .sidebar .menu ul {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-around;
+      width: 100%;
+  }
+
+  .sidebar .menu li {
+      padding: 10px 0;
+      flex-direction: column; /* Ícone e texto em coluna no mobile */
+  }
+
+  .sidebar:hover .menu li {
+      padding: 10px 0; /* Ajusta padding no hover */
+      flex-direction: column;
+      align-items: center;
+  }
+
+  .menu-icon {
+      margin-right: 0;
+      margin-bottom: 5px; /* Adiciona espaço entre ícone e texto */
+  }
+
+  .menu-text {
+      opacity: 1; /* Sempre visível no mobile */
+      font-size: 0.75rem; /* Fonte menor no mobile */
+      margin-left: 0;
+  }
+
+  .add-button {
+      display: none; /* Esconde botão adicionar no mobile */
   }
 
   .charts {

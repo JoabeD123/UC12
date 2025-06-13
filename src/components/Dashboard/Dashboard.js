@@ -11,6 +11,8 @@ import {
   BarElement
 } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
+import { FaPlus, FaMoneyBillWave, FaWallet, FaCreditCard, FaChartPie, FaCog, FaSignOutAlt, FaRegChartBar, FaPiggyBank, FaUniversity, FaArrowUp, FaArrowDown, FaUsers } from 'react-icons/fa';
+import { IoArrowForward } from "react-icons/io5";
 import './Dashboard.css';
 
 // Registrar os componentes necessários do Chart.js
@@ -172,21 +174,22 @@ function Dashboard({ usuario, perfil, onLogout }) {
       y: {
         beginAtZero: true,
         grid: {
-          color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#333' : '#ddd'
+          color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#333' : 'var(--chart-grid-color-light)'
         },
         ticks: {
-          color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : '#333',
+          color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : 'var(--chart-legend-color-light)',
           callback: function(value) {
-            return 'R$ ' + value.toFixed(2);
+            return 'R$ ' + value.toFixed(0);
           }
         }
       },
       x: {
         grid: {
-          color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#333' : '#ddd'
+          color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#333' : 'var(--chart-grid-color-light)'
         },
         ticks: {
-          color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : '#333'
+          color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : 'var(--chart-legend-color-light)',
+          display: false,
         }
       }
     },
@@ -199,7 +202,7 @@ function Dashboard({ usuario, perfil, onLogout }) {
           font: {
             size: 12
           },
-          color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : '#333'
+          color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : 'var(--chart-legend-color-light)'
         }
       },
       tooltip: {
@@ -227,94 +230,195 @@ function Dashboard({ usuario, perfil, onLogout }) {
         <nav className="menu">
           <ul>
             <li className="active">
-              <span className="menu-icon">📊</span>
+              <FaRegChartBar className="menu-icon" />
               <span className="menu-text">Dashboard</span>
             </li>
             {perfil?.permissoes.verReceitas && (
               <li onClick={() => navigate('/receitas')}>
-                <span className="menu-icon">💰</span>
+                <FaMoneyBillWave className="menu-icon" />
                 <span className="menu-text">Receitas</span>
               </li>
             )}
             {perfil?.permissoes.verDespesas && (
               <li onClick={() => navigate('/despesas')}>
-                <span className="menu-icon">💸</span>
+                <FaWallet className="menu-icon" />
                 <span className="menu-text">Despesas</span>
               </li>
             )}
             <li onClick={() => navigate('/cartoes')}>
-              <span className="menu-icon">💳</span>
+              <FaCreditCard className="menu-icon" />
               <span className="menu-text">Cartões</span>
             </li>
             <li onClick={() => navigate('/imposto-renda')}>
-              <span className="menu-icon">📑</span>
-              <span className="menu-text">Imposto de Renda</span>
+              <FaPiggyBank className="menu-icon" />
+              <span className="menu-text">Imposto Renda</span>
             </li>
-            {perfil?.permissoes.gerenciarPerfis && (
-              <li onClick={() => navigate('/gerenciar-perfis')}>
-                <span className="menu-icon">👥</span>
+            <li onClick={() => navigate('/gerenciar-perfis')}>
+                <FaUsers className="menu-icon" />
                 <span className="menu-text">Gerenciar Perfis</span>
-              </li>
-            )}
+            </li>
+            <li onClick={() => navigate('/configuracoes')}>
+                <FaCog className="menu-icon" />
+                <span className="menu-text">Configurações</span>
+            </li>
+            <li onClick={onLogout}>
+              <FaSignOutAlt className="menu-icon" />
+              <span className="menu-text">Sair</span>
+            </li>
           </ul>
         </nav>
-        <div className="sidebar-bottom">
-          <button onClick={() => navigate('/configuracoes')} className="config-button">
-            <span className="menu-icon">⚙️</span>
-            <span className="menu-text">Configurações</span>
-          </button>
+        <div className="add-button">
+            <FaPlus />
         </div>
       </div>
-
       <div className="dashboard-content">
         <div className="content-header">
-          <h1>Bem-vindo(a), {usuario.nome}!</h1>
-          <select 
-            className="month-selector"
-            value={mesSelecionado}
-            onChange={(e) => setMesSelecionado(Number(e.target.value))}
-          >
-            {meses.map((mes, index) => (
-              <option key={index} value={index}>
-                {mes}
-              </option>
-            ))}
-          </select>
+          <h1>Dashboard <span className="notification-count">110</span></h1>
+          <div className="user-profile-header">
+            <select
+              className="month-selector"
+              value={mesSelecionado}
+              onChange={(e) => setMesSelecionado(parseInt(e.target.value))}
+            >
+              {meses.map((mes, index) => (
+                <option key={index} value={index}>
+                  {mes}
+                </option>
+              ))}
+            </select>
+            <div className="user-profile-icon">
+                {usuario?.nome ? usuario.nome.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <span className="user-name">{usuario?.nome || 'Usuário'}</span>
+            <span className="joranda">Jornada</span>
+          </div>
         </div>
 
         <div className="cards">
-          <div className="card">
-            <h3>Receitas</h3>
-            <p className="amount positive">R$ {dadosFinanceiros.receitas.toFixed(2)}</p>
+          <div className="card saldo-atual">
+            <div className="card-header">
+                <span className="card-title">Saldo atual</span>
+                <div className="card-icon-wrapper default">
+                    <FaUniversity />
+                </div>
+            </div>
+            <p className="amount">R$ {dadosFinanceiros.saldo.toFixed(2).replace('.', ',')}</p>
+            <a href="#" className="meu-desempenho">Meu Desempenho <IoArrowForward /></a>
           </div>
+
           <div className="card">
-            <h3>Despesas</h3>
-            <p className="amount negative">R$ {dadosFinanceiros.despesas.toFixed(2)}</p>
+            <div className="card-header">
+                <span className="card-title">Receitas</span>
+                <div className="card-icon-wrapper green">
+                    <FaArrowUp />
+                </div>
+            </div>
+            <p className="amount positive">R$ {dadosFinanceiros.receitas.toFixed(2).replace('.', ',')}</p>
           </div>
+
           <div className="card">
-            <h3>Saldo</h3>
-            <p className={`amount ${dadosFinanceiros.saldo >= 0 ? 'positive' : 'negative'}`}>
-              R$ {dadosFinanceiros.saldo.toFixed(2)}
-            </p>
+            <div className="card-header">
+                <span className="card-title">Despesas</span>
+                <div className="card-icon-wrapper red">
+                    <FaArrowDown />
+                </div>
+            </div>
+            <p className="amount negative">R$ {dadosFinanceiros.despesas.toFixed(2).replace('.', ',')}</p>
+          </div>
+
+          <div className="card">
+            <div className="card-header">
+                <span className="card-title">Cartão de crédito</span>
+                <div className="card-icon-wrapper blue">
+                    <FaCreditCard />
+                </div>
+            </div>
+            <p className="amount">R$ 0,00</p> {/* Placeholder, ajustar com dados reais */}
           </div>
         </div>
 
         <div className="charts">
           <div className="chart-container">
-            <h2>Comparação Receitas x Despesas</h2>
+            <h2>Despesas por Categoria</h2>
             <div className="chart-wrapper">
-              <Bar data={comparacaoChartData} options={barChartOptions} />
+              <Doughnut data={despesasChartData} options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'right',
+                    labels: {
+                      usePointStyle: true,
+                      pointStyle: 'circle',
+                      font: {
+                        size: 12
+                      },
+                      color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : '#333',
+                    }
+                  },
+                  tooltip: {
+                    backgroundColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#333' : '#fff',
+                    titleColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : '#333',
+                    bodyColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : '#333',
+                    borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#444' : '#ddd',
+                    borderWidth: 1,
+                    callbacks: {
+                      label: function(context) {
+                        const value = context.raw;
+                        return `R$ ${value.toFixed(2)}`;
+                      }
+                    }
+                  }
+                }
+              }} />
             </div>
+            <div className="doughnut-summary">
+                <div className="doughnut-center-text">R$ {dadosFinanceiros.despesas.toFixed(2).replace('.', ',')}</div>
+                <div className="doughnut-center-subtext">Total</div>
+            </div>
+            <button className="ver-mais-btn">VER MAIS</button>
           </div>
 
-          {dadosFinanceiros.despesasPorCategoria.length > 0 && (
-            <div className="chart-container">
-              <h2>Despesas por Categoria</h2>
-              <div className="chart-wrapper">
-                <Doughnut data={despesasChartData} options={chartOptions} />
-              </div>
+          <div className="chart-container">
+            <h2>Balanço Mensal</h2>
+            <div className="chart-wrapper">
+                <Bar data={comparacaoChartData} options={barChartOptions} />
             </div>
-          )}
+            <button className="ver-mais-btn">VER MAIS</button>
+          </div>
+        </div>
+
+        <div className="credit-card-section">
+            <h2>Cartões de crédito</h2>
+            <div className="credit-card-tabs">
+                <div className="credit-card-tab active">Faturas abertas</div>
+                <div className="credit-card-tab">Faturas fechadas</div>
+            </div>
+            <div className="credit-card-list">
+                <div className="card-item">
+                    <div className="card-info">
+                        <div className="card-logo">N</div>
+                        <div className="card-details">
+                            <span className="card-name">Nubank</span>
+                            <span className="card-due-date">Vence amanhã</span>
+                        </div>
+                    </div>
+                    <span className="card-amount negative">R$30,00</span>
+                    <button className="pay-bill-btn">Pagar fatura</button>
+                </div>
+                <div className="card-item">
+                    <div className="card-info">
+                        <div className="card-logo">C</div>
+                        <div className="card-details">
+                            <span className="card-name">Caixa</span>
+                            <span className="card-due-date">Vence em 10/09</span>
+                        </div>
+                    </div>
+                    <span className="card-amount negative">R$150,00</span>
+                    <button className="pay-bill-btn">Pagar fatura</button>
+                </div>
+                {/* Adicionar mais itens de cartão conforme necessário */}
+            </div>
         </div>
       </div>
     </div>

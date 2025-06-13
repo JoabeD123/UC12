@@ -10,6 +10,7 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
+import { FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard } from 'react-icons/fa';
 import './ImpostoRenda.css';
 
 // Registrar os componentes do Chart.js
@@ -22,7 +23,7 @@ ChartJS.register(
   Legend
 );
 
-const ImpostoRenda = ({ usuario, perfil }) => {
+const ImpostoRenda = () => {
   const navigate = useNavigate();
   const [rendaInfo, setRendaInfo] = useState({
     rendaFixa: '',
@@ -108,34 +109,32 @@ const ImpostoRenda = ({ usuario, perfil }) => {
           {
             label: 'Renda Líquida',
             data: [rendaMensal - impostoMensal],
-            backgroundColor: '#4CAF50'
+            backgroundColor: 'rgba(28, 200, 138, 0.8)'
           },
           {
             label: 'Imposto',
             data: [impostoMensal],
-            backgroundColor: '#f44336'
+            backgroundColor: 'rgba(231, 74, 59, 0.8)'
           }
         ]
       };
 
       const chartOptions = {
         responsive: true,
-        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top'
+          },
+          title: {
+            display: true,
+            text: 'Distribuição de Renda vs Imposto'
+          }
+        },
         scales: {
           y: {
             beginAtZero: true,
             ticks: {
               callback: (value) => formatarMoeda(value)
-            }
-          }
-        },
-        plugins: {
-          legend: {
-            position: 'top'
-          },
-          tooltip: {
-            callbacks: {
-              label: (context) => `${context.dataset.label}: ${formatarMoeda(context.raw)}`
             }
           }
         }
@@ -221,89 +220,62 @@ const ImpostoRenda = ({ usuario, perfil }) => {
   return (
     <div className="layout-container">
       <div className="sidebar">
-        <div className="logo">
-          <div className="logo-icon">GF</div>
-        </div>
-        <nav className="menu">
-          <ul>
-            <li onClick={() => navigate('/')}>
-              <span className="menu-icon">📊</span>
-              <span className="menu-text">Dashboard</span>
-            </li>
-            {perfil?.permissoes.verReceitas && (
-              <li onClick={() => navigate('/receitas')}>
-                <span className="menu-icon">💰</span>
-                <span className="menu-text">Receitas</span>
-              </li>
-            )}
-            {perfil?.permissoes.verDespesas && (
-              <li onClick={() => navigate('/despesas')}>
-                <span className="menu-icon">💸</span>
-                <span className="menu-text">Despesas</span>
-              </li>
-            )}
-            <li onClick={() => navigate('/cartoes')}>
-              <span className="menu-icon">💳</span>
-              <span className="menu-text">Cartões</span>
-            </li>
-            <li className="active">
-              <span className="menu-icon">📑</span>
-              <span className="menu-text">Imposto de Renda</span>
-            </li>
-            {perfil?.permissoes.gerenciarPerfis && (
-              <li onClick={() => navigate('/gerenciar-perfis')}>
-                <span className="menu-icon">👥</span>
-                <span className="menu-text">Gerenciar Perfis</span>
-              </li>
-            )}
-          </ul>
-        </nav>
-        <div className="sidebar-bottom">
-          <button onClick={() => navigate('/configuracoes')} className="config-button">
-            <span className="menu-icon">⚙️</span>
-            <span className="menu-text">Configurações</span>
-          </button>
+        <div className="menu">
+          <div className="menu-item" onClick={() => navigate('/dashboard')}>
+            <FaChartBar />
+            <span>Dashboard</span>
+          </div>
+          <div className="menu-item" onClick={() => navigate('/cartoes')}>
+            <FaCreditCard />
+            <span>Cartões</span>
+          </div>
+          <div className="menu-item active" onClick={() => navigate('/imposto-renda')}>
+            <FaChartPie />
+            <span>Imposto de Renda</span>
+          </div>
+          <div className="menu-item" onClick={() => navigate('/gerenciar-perfis')}>
+            <FaUsers />
+            <span>Gerenciar Perfis</span>
+          </div>
+          <div className="menu-item" onClick={() => navigate('/configuracoes')}>
+            <FaCog />
+            <span>Configurações</span>
+          </div>
         </div>
       </div>
 
-      <div className="imposto-renda-container">
-        <div className="content-header">
-          <h1>Cálculo de Imposto de Renda</h1>
+      <div className="imposto-renda">
+        <div className="imposto-header">
+          <h2>Calculadora de Imposto de Renda</h2>
         </div>
 
-        <div className="calculo-container">
-          <div className="form-section">
-            {erro && (
-              <div className="erro-mensagem">
-                {erro}
-              </div>
-            )}
+        {erro && <div className="error-message">{erro}</div>}
 
+        <div className="imposto-content">
+          <div className="imposto-form">
             <div className="form-group">
-              <label>Renda Mensal Fixa:</label>
+              <label>Renda Fixa Mensal</label>
               <input
                 type="text"
                 name="rendaFixa"
                 value={rendaInfo.rendaFixa}
                 onChange={handleInputChange}
                 placeholder="R$ 0,00"
-                className="input-moeda"
               />
             </div>
 
             <div className="form-group">
-              <label>Renda Mensal Variável:</label>
+              <label>Renda Variável Mensal</label>
               <input
                 type="text"
                 name="rendaVariavel"
                 value={rendaInfo.rendaVariavel}
                 onChange={handleInputChange}
                 placeholder="R$ 0,00"
-                className="input-moeda"
               />
             </div>
 
-            <div className="form-group checkbox-group">
+            <div className="form-group checkbox">
               <label>
                 <input
                   type="checkbox"
@@ -311,94 +283,77 @@ const ImpostoRenda = ({ usuario, perfil }) => {
                   checked={rendaInfo.incluir13}
                   onChange={handleInputChange}
                 />
-                Incluir 13º salário no cálculo
+                Incluir 13º Salário
               </label>
             </div>
 
-            <button 
-              onClick={calcularImposto} 
-              className="btn-calcular"
-              disabled={!rendaInfo.rendaFixa && !rendaInfo.rendaVariavel}
-            >
+            <button onClick={calcularImposto} className="btn-primary">
               Calcular Imposto
             </button>
           </div>
 
           {resultado && (
-            <div className="resultado-section">
-              <div className="resultado-resumo">
-                <h3>Resumo do Cálculo</h3>
-                <div className="info-grid">
-                  <div className="info-item">
-                    <span className="label">Renda Mensal:</span>
-                    <span className="value">{resultado.rendaMensal}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="label">Renda Anual:</span>
-                    <span className="value">{resultado.rendaAnual}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="label">Imposto Mensal:</span>
-                    <span className="value">{resultado.impostoMensal}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="label">Imposto Anual:</span>
-                    <span className="value">{resultado.impostoAnual}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="label">Alíquota Efetiva:</span>
-                    <span className="value">{resultado.aliquotaEfetiva}%</span>
-                  </div>
-                </div>
-
-                {chartData && (
-                  <div className="grafico-container">
-                    <h4>Distribuição da Renda</h4>
-                    <div className="grafico-wrapper">
-                      <Bar data={chartData.data} options={chartData.options} />
-                    </div>
-                  </div>
-                )}
-
-                <div className="mostrar-detalhes-container">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={mostrarDetalhes}
-                      onChange={(e) => setMostrarDetalhes(e.target.checked)}
-                    />
-                    Mostrar detalhamento por faixa
-                  </label>
-                </div>
-
-                {mostrarDetalhes && (
-                  <div className="detalhamento">
-                    <h4>Detalhamento por Faixa</h4>
-                    <div className="tabela-detalhamento">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>Faixa</th>
-                            <th>Alíquota</th>
-                            <th>Valor na Faixa</th>
-                            <th>Imposto na Faixa</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {resultado.detalhamentoFaixas.map((faixa, index) => (
-                            <tr key={index}>
-                              <td>{faixa.faixa}</td>
-                              <td>{faixa.aliquota}</td>
-                              <td>{faixa.valorNaFaixa}</td>
-                              <td>{faixa.impostoNaFaixa}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
+            <div className="imposto-resultado">
+              <div className="resultado-header">
+                <h3>Resultado do Cálculo</h3>
+                <button
+                  className="btn-secondary"
+                  onClick={() => setMostrarDetalhes(!mostrarDetalhes)}
+                >
+                  {mostrarDetalhes ? 'Ocultar Detalhes' : 'Mostrar Detalhes'}
+                </button>
               </div>
+
+              <div className="resultado-resumo">
+                <div className="resultado-item">
+                  <span>Renda Mensal:</span>
+                  <strong>{resultado.rendaMensal}</strong>
+                </div>
+                <div className="resultado-item">
+                  <span>Renda Anual:</span>
+                  <strong>{resultado.rendaAnual}</strong>
+                </div>
+                <div className="resultado-item">
+                  <span>Imposto Mensal:</span>
+                  <strong>{resultado.impostoMensal}</strong>
+                </div>
+                <div className="resultado-item">
+                  <span>Imposto Anual:</span>
+                  <strong>{resultado.impostoAnual}</strong>
+                </div>
+                <div className="resultado-item">
+                  <span>Alíquota Efetiva:</span>
+                  <strong>{resultado.aliquotaEfetiva}%</strong>
+                </div>
+              </div>
+
+              {mostrarDetalhes && (
+                <div className="resultado-detalhes">
+                  <h4>Detalhamento por Faixa</h4>
+                  <div className="detalhes-tabela">
+                    <div className="tabela-header">
+                      <span>Faixa</span>
+                      <span>Alíquota</span>
+                      <span>Valor na Faixa</span>
+                      <span>Imposto na Faixa</span>
+                    </div>
+                    {resultado.detalhamentoFaixas.map((faixa, index) => (
+                      <div key={index} className="tabela-row">
+                        <span>{faixa.faixa}</span>
+                        <span>{faixa.aliquota}</span>
+                        <span>{faixa.valorNaFaixa}</span>
+                        <span>{faixa.impostoNaFaixa}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {chartData && (
+                <div className="chart-container">
+                  <Bar data={chartData.data} options={chartData.options} />
+                </div>
+              )}
             </div>
           )}
         </div>
