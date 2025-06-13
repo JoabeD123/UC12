@@ -7,7 +7,7 @@
 html, body, #root {
   height: 100%;
   width: 100%;
-  overflow: auto;
+  overflow: hidden;
 }
 
 body {
@@ -49,7 +49,7 @@ code {
 /* Media queries para responsividade */
 @media (max-width: 768px) {
   html, body, #root {
-    overflow: auto;
+    overflow: hidden;
   }
 }
 

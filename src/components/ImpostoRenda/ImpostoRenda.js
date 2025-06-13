@@ -263,140 +263,142 @@ const ImpostoRenda = () => {
 
         {erro && <div className="error-message">{erro}</div>}
 
-        <div className="imposto-content">
-          <div className="imposto-left-column">
-            <div className="imposto-form">
-              <div className="form-section">
-                <h3>Informe sua Renda</h3>
-                <div className="form-group">
-                  <label>Renda Fixa Mensal</label>
-                  <input
-                    type="text"
-                    name="rendaFixa"
-                    value={rendaInfo.rendaFixa}
-                    onChange={handleInputChange}
-                    placeholder="R$ 0,00"
-                  />
-                  <small>Salário, aposentadoria, pensão, etc.</small>
-                </div>
-
-                <div className="form-group">
-                  <label>Renda Variável Mensal</label>
-                  <input
-                    type="text"
-                    name="rendaVariavel"
-                    value={rendaInfo.rendaVariavel}
-                    onChange={handleInputChange}
-                    placeholder="R$ 0,00"
-                  />
-                  <small>Aluguéis, dividendos, rendimentos de aplicações, etc.</small>
-                </div>
-
-                <div className="form-group checkbox">
-                  <label>
+        <div className="imposto-main-content">
+          <div className="imposto-content">
+            <div className="imposto-left-column">
+              <div className="imposto-form">
+                <div className="form-section">
+                  <h3>Informe sua Renda</h3>
+                  <div className="form-group">
+                    <label>Renda Fixa Mensal</label>
                     <input
-                      type="checkbox"
-                      name="incluir13"
-                      checked={rendaInfo.incluir13}
+                      type="text"
+                      name="rendaFixa"
+                      value={rendaInfo.rendaFixa}
                       onChange={handleInputChange}
+                      placeholder="R$ 0,00"
                     />
-                    Incluir 13º Salário
-                  </label>
-                  <small>Marque se recebe 13º salário para cálculo anual</small>
-                </div>
+                    <small>Salário, aposentadoria, pensão, etc.</small>
+                  </div>
 
-                <button onClick={calcularImposto} className="btn-primary">
-                  Calcular Imposto
-                </button>
+                  <div className="form-group">
+                    <label>Renda Variável Mensal</label>
+                    <input
+                      type="text"
+                      name="rendaVariavel"
+                      value={rendaInfo.rendaVariavel}
+                      onChange={handleInputChange}
+                      placeholder="R$ 0,00"
+                    />
+                    <small>Aluguéis, dividendos, rendimentos de aplicações, etc.</small>
+                  </div>
+
+                  <div className="form-group checkbox">
+                    <label>
+                      <input
+                        type="checkbox"
+                        name="incluir13"
+                        checked={rendaInfo.incluir13}
+                        onChange={handleInputChange}
+                      />
+                      Incluir 13º Salário
+                    </label>
+                    <small>Marque se recebe 13º salário para cálculo anual</small>
+                  </div>
+
+                  <button onClick={calcularImposto} className="btn-primary">
+                    Calcular Imposto
+                  </button>
+                </div>
+              </div>
+
+              <div className="detalhamento-faixas">
+                {!resultado ? (
+                  <div className="resultado-placeholder">
+                    <h3>Detalhamento por Faixa</h3>
+                    <p>Após calcular o imposto, o detalhamento por faixa será exibido aqui.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="detalhamento-header">
+                      <h3>Detalhamento por Faixa</h3>
+                    </div>
+                    <div className="detalhes-tabela">
+                      <div className="tabela-header">
+                        <span>Faixa de Renda</span>
+                        <span>Alíquota</span>
+                        <span>Valor na Faixa</span>
+                        <span>Imposto na Faixa</span>
+                      </div>
+                      {resultado.detalhamentoFaixas.map((faixa, index) => (
+                        <div key={index} className="tabela-row">
+                          <span>{faixa.faixa}</span>
+                          <span>{faixa.aliquota}</span>
+                          <span>{faixa.valorNaFaixa}</span>
+                          <span>{faixa.impostoNaFaixa}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
-            <div className="detalhamento-faixas">
+            <div className="imposto-resultado">
               {!resultado ? (
                 <div className="resultado-placeholder">
-                  <h3>Detalhamento por Faixa</h3>
-                  <p>Após calcular o imposto, o detalhamento por faixa será exibido aqui.</p>
+                  <h3>Nenhum cálculo realizado ainda</h3>
+                  <p>Insira seus dados de renda e clique em "Calcular Imposto" para ver o resultado.</p>
+                  <p>As informações serão exibidas aqui, incluindo detalhes por faixa e um gráfico ilustrativo.</p>
                 </div>
               ) : (
                 <>
-                  <div className="detalhamento-header">
-                    <h3>Detalhamento por Faixa</h3>
+                  <div className="resultado-header">
+                    <h3>Resultado do Cálculo</h3>
                   </div>
-                  <div className="detalhes-tabela">
-                    <div className="tabela-header">
-                      <span>Faixa de Renda</span>
-                      <span>Alíquota</span>
-                      <span>Valor na Faixa</span>
-                      <span>Imposto na Faixa</span>
+
+                  <div className="resultado-resumo">
+                    <div className="resultado-item">
+                      <span>Renda Mensal</span>
+                      <strong>{resultado.rendaMensal}</strong>
+                      <small>Valor bruto mensal</small>
                     </div>
-                    {resultado.detalhamentoFaixas.map((faixa, index) => (
-                      <div key={index} className="tabela-row">
-                        <span>{faixa.faixa}</span>
-                        <span>{faixa.aliquota}</span>
-                        <span>{faixa.valorNaFaixa}</span>
-                        <span>{faixa.impostoNaFaixa}</span>
-                      </div>
-                    ))}
+                    <div className="resultado-item">
+                      <span>Renda Anual</span>
+                      <strong>{resultado.rendaAnual}</strong>
+                      <small>Valor bruto anual</small>
+                    </div>
+                    <div className="resultado-item">
+                      <span>Imposto Mensal</span>
+                      <strong>{resultado.impostoMensal}</strong>
+                      <small>Valor a pagar mensalmente</small>
+                    </div>
+                    <div className="resultado-item">
+                      <span>Imposto Anual</span>
+                      <strong>{resultado.impostoAnual}</strong>
+                      <small>Valor total anual</small>
+                    </div>
+                    <div className="resultado-item">
+                      <span>Alíquota Efetiva</span>
+                      <strong>{resultado.aliquotaEfetiva}%</strong>
+                      <small>Percentual real pago</small>
+                    </div>
+                    <div className="resultado-item">
+                      <span>Renda Líquida Mensal</span>
+                      <strong>{formatarMoeda(parseFloat(resultado.rendaMensal.replace(/[^\d,]/g, '').replace(',', '.')) - parseFloat(resultado.impostoMensal.replace(/[^\d,]/g, '').replace(',', '.')))}</strong>
+                      <small>Valor após desconto do IR</small>
+                    </div>
                   </div>
+
+                  {chartData && (
+                    <div className="chart-container">
+                      <h4>Distribuição de Renda vs Imposto</h4>
+                      <Bar data={chartData.data} options={chartData.options} />
+                    </div>
+                  )}
                 </>
               )}
             </div>
-          </div>
-
-          <div className="imposto-resultado">
-            {!resultado ? (
-              <div className="resultado-placeholder">
-                <h3>Nenhum cálculo realizado ainda</h3>
-                <p>Insira seus dados de renda e clique em "Calcular Imposto" para ver o resultado.</p>
-                <p>As informações serão exibidas aqui, incluindo detalhes por faixa e um gráfico ilustrativo.</p>
-              </div>
-            ) : (
-              <>
-                <div className="resultado-header">
-                  <h3>Resultado do Cálculo</h3>
-                </div>
-
-                <div className="resultado-resumo">
-                  <div className="resultado-item">
-                    <span>Renda Mensal</span>
-                    <strong>{resultado.rendaMensal}</strong>
-                    <small>Valor bruto mensal</small>
-                  </div>
-                  <div className="resultado-item">
-                    <span>Renda Anual</span>
-                    <strong>{resultado.rendaAnual}</strong>
-                    <small>Valor bruto anual</small>
-                  </div>
-                  <div className="resultado-item">
-                    <span>Imposto Mensal</span>
-                    <strong>{resultado.impostoMensal}</strong>
-                    <small>Valor a pagar mensalmente</small>
-                  </div>
-                  <div className="resultado-item">
-                    <span>Imposto Anual</span>
-                    <strong>{resultado.impostoAnual}</strong>
-                    <small>Valor total anual</small>
-                  </div>
-                  <div className="resultado-item">
-                    <span>Alíquota Efetiva</span>
-                    <strong>{resultado.aliquotaEfetiva}%</strong>
-                    <small>Percentual real pago</small>
-                  </div>
-                  <div className="resultado-item">
-                    <span>Renda Líquida Mensal</span>
-                    <strong>{formatarMoeda(parseFloat(resultado.rendaMensal.replace(/[^\d,]/g, '').replace(',', '.')) - parseFloat(resultado.impostoMensal.replace(/[^\d,]/g, '').replace(',', '.')))}</strong>
-                    <small>Valor após desconto do IR</small>
-                  </div>
-                </div>
-
-                {chartData && (
-                  <div className="chart-container">
-                    <h4>Distribuição de Renda vs Imposto</h4>
-                    <Bar data={chartData.data} options={chartData.options} />
-                  </div>
-                )}
-              </>
-            )}
           </div>
         </div>
       </div>

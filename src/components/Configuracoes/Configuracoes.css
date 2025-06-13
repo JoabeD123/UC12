@@ -110,6 +110,8 @@
   flex: 1;
   padding: 2rem;
   background-color: var(--light-color);
+  overflow-y: auto;
+  height: 100vh;
 }
 
 .config-header {
