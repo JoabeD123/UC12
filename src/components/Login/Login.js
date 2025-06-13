@@ -9,56 +9,38 @@ function Login({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const atualizarPermissoes = (perfilId) => {
-    const perfis = JSON.parse(localStorage.getItem('perfis')) || [];
-    const perfilIndex = perfis.findIndex(p => p.id === perfilId);
-    
-    if (perfilIndex !== -1) {
-      perfis[perfilIndex].permissoes = {
-        ...perfis[perfilIndex].permissoes,
-        editarReceitas: true,
-        editarDespesas: true,
-        verImpostoRenda: true
-      };
-      localStorage.setItem('perfis', JSON.stringify(perfis));
-      return perfis[perfilIndex];
-    }
-    return null;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErro(null);
     setLoading(true);
 
     try {
-      // Simular autenticação
-      const userData = {
-        id: 1,
-        nome: 'Usuário Teste',
-        email: email
-      };
-
-      // Salvar dados do usuário
-      localStorage.setItem('currentUser', JSON.stringify(userData));
+      console.log('Iniciando login com:', { email, senha });
       
-      // Criar perfil padrão se não existir
-      const profile = {
-        id: 1,
-        nome: 'Perfil Padrão',
-        permissoes: {
-          verReceitas: true,
-          verDespesas: true,
-          gerenciarPerfis: true
-        }
-      };
-      localStorage.setItem(`profile_${userData.id}`, JSON.stringify(profile));
+      const response = await fetch('http://localhost:3001/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, senha }),
+      });
 
-      // Chamar callback de login com os dados do usuário
-      onLogin(userData);
+      const data = await response.json();
+      console.log('Resposta do servidor:', data);
+
+      if (!response.ok) {
+        // Se a resposta não for OK (ex: 401, 400, 500)
+        throw new Error(data.message || 'Erro ao fazer login');
+      }
+
+      // Se chegou aqui, o login foi bem sucedido
+      console.log('Login bem sucedido, chamando onLogin com:', { user: data.user, profiles: data.profiles });
+      onLogin(data.user, data.profiles);
+      console.log('onLogin chamado com sucesso');
+
     } catch (error) {
-      console.error('Erro ao fazer login:', error);
-      setErro('Erro ao fazer login. Tente novamente.');
+      console.error('Erro detalhado ao fazer login:', error);
+      setErro(error.message || 'Erro ao fazer login. Tente novamente.');
     } finally {
       setLoading(false);
     }

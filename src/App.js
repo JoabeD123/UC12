@@ -41,17 +41,44 @@ function App() {
     loadUserData();
   }, []);
 
-  const handleLogin = (userData) => {
+  const handleLogin = (user, profiles) => {
     try {
-      setCurrentUser(userData);
-      setProfile(JSON.parse(localStorage.getItem(`profile_${userData.id}`)));
+      console.log('handleLogin chamado com:', { user, profiles });
+      
+      // Salvar dados do usuário
+      setCurrentUser(user);
+      console.log('currentUser atualizado:', user);
+      
+      // Se houver perfis, usar o primeiro como perfil atual
+      if (profiles && profiles.length > 0) {
+        const primeiroPerfil = profiles[0];
+        console.log('Usando primeiro perfil:', primeiroPerfil);
+        setProfile(primeiroPerfil);
+        
+        // Adicionar permissões padrão se não existirem
+        if (!primeiroPerfil.permissoes) {
+          console.log('Adicionando permissões padrão ao perfil');
+          primeiroPerfil.permissoes = {
+            verReceitas: true,
+            verDespesas: true,
+            editarReceitas: true,
+            editarDespesas: true,
+            gerenciarPerfis: true,
+            verImpostoRenda: true
+          };
+        }
+      } else {
+        console.log('Nenhum perfil encontrado');
+      }
       
       // Carregar configurações do usuário ao fazer login
-      const userConfig = JSON.parse(localStorage.getItem(`config_${userData.id}`)) || {};
+      const userConfig = JSON.parse(localStorage.getItem(`config_${user.id_usuario}`)) || {};
       setDarkMode(userConfig.darkMode || false);
       document.documentElement.setAttribute('data-theme', userConfig.darkMode ? 'dark' : 'light');
+      
+      console.log('Login processado com sucesso');
     } catch (error) {
-      console.error('Erro ao fazer login:', error);
+      console.error('Erro detalhado no handleLogin:', error);
     }
   };
 
@@ -73,10 +100,10 @@ function App() {
       document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
       
       // Salvar configuração de tema específica do usuário
-      if (currentUser?.id) {
-        const userConfig = JSON.parse(localStorage.getItem(`config_${currentUser.id}`)) || {};
+      if (currentUser?.id_usuario) {
+        const userConfig = JSON.parse(localStorage.getItem(`config_${currentUser.id_usuario}`)) || {};
         userConfig.darkMode = isDark;
-        localStorage.setItem(`config_${currentUser.id}`, JSON.stringify(userConfig));
+        localStorage.setItem(`config_${currentUser.id_usuario}`, JSON.stringify(userConfig));
       }
     } catch (error) {
       console.error('Erro ao alterar tema:', error);
@@ -125,7 +152,7 @@ function App() {
               )
             } 
           />
-          {profile?.permissoes.verReceitas && (
+          {profile?.permissoes?.verReceitas && (
             <Route
               path="/receitas"
               element={
@@ -141,7 +168,7 @@ function App() {
               }
             />
           )}
-          {profile?.permissoes.verDespesas && (
+          {profile?.permissoes?.verDespesas && (
             <Route
               path="/despesas"
               element={
@@ -157,7 +184,7 @@ function App() {
               }
             />
           )}
-          {profile?.permissoes.gerenciarPerfis && (
+          {profile?.permissoes?.gerenciarPerfis && (
             <Route
               path="/gerenciar-perfis"
               element={
@@ -203,10 +230,9 @@ function App() {
             path="/configuracoes"
             element={
               currentUser ? (
-                <Configuracoes 
+                <Configuracoes
                   usuario={currentUser}
                   perfil={profile}
-                  onLogout={handleLogout}
                   darkMode={darkMode}
                   onThemeChange={handleThemeChange}
                 />
@@ -215,16 +241,7 @@ function App() {
               )
             }
           />
-          <Route 
-            path="/" 
-            element={
-              currentUser ? (
-                <Navigate to="/dashboard" replace />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            } 
-          />
+          <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
       </div>
     </Router>
