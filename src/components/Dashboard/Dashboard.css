@@ -59,6 +59,7 @@
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
+  overflow: auto;
 }
 
 .dashboard-content {
@@ -67,7 +68,8 @@
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
-  overflow-y: auto; /* Adicionado para permitir scroll no conteúdo */
+  overflow-y: auto;
+  height: 100vh;
 }
 
 .content-header {
