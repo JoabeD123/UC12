@@ -151,6 +151,7 @@ button:active {
 
 .sidebar .menu li:hover {
   background-color: var(--sidebar-hover);
+  color: #ffffff;
 }
 
 /* Estilos para links */

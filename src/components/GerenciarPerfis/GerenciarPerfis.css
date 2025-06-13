@@ -10,7 +10,7 @@
   --dark-color: #5a5c69;
   --card-bg: #ffffff;
   --sidebar-bg: #4e73df;
-  --sidebar-hover: #2e59d9;
+  --sidebar-hover: #1565C0;
   --text-primary: #5a5c69;
   --text-secondary: #858796;
   --border-color: #e3e6f0;
@@ -32,7 +32,7 @@
   --card-bg: #1a1a1a;
   --text-color: #e0e0e0;
   --border-color: #2d2d2d;
-  --hover-color: #2d2d2d;
+  --hover-color: #1565C0;
   --text-muted: #a0a0a0;
   --light-color: #2d2d2d;
   --secondary-color: #a0a0a0;
@@ -75,6 +75,7 @@
 
 .menu-item:hover {
   background-color: var(--hover-color);
+  color: #ffffff;
 }
 
 .menu-item.active {

@@ -20,6 +20,7 @@
     --progress-fill: #6f42c1;
     --chart-grid-color-light: #e0e0e0;
     --chart-legend-color-light: #6c757d;
+    --sidebar-hover: #1565C0;
 }
 
 [data-theme='light'] {
@@ -48,7 +49,7 @@
     --progress-bg: #4d4d4d;
     --chart-grid-color-light: #4d4d4d;
     --chart-legend-color-light: #a0a0a0;
-    --hover-color: #2d2d2d;
+    --hover-color: #1565C0;
     --light-color: #2d2d2d;
     --secondary-color: #a0a0a0;
 }
@@ -91,6 +92,7 @@
 
 .menu-item:hover {
   background-color: var(--hover-color);
+  color: #ffffff;
 }
 
 .menu-item.active {
