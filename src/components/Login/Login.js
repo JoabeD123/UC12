@@ -43,13 +43,28 @@ function Login({ onLogin }) {
         nome_familia: data.nomeFamilia
       };
 
-      // Salva os dados no localStorage
-      localStorage.setItem('currentUser', JSON.stringify(userLogged));
-      // localStorage.setItem(`profile_${data.user.id_usuario}`, JSON.stringify(data.profile)); // Removido
-      // localStorage.setItem(`permissions_${data.user.id_usuario}`, JSON.stringify(data.permissions)); // Removido
+      // Buscar perfis e permissões do usuário
+      const profilesResponse = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${data.userId}`);
+      const profilesData = await profilesResponse.json();
 
-      // Chama a função onLogin com os dados corretos (passando um array vazio para perfis por enquanto)
-      onLogin(userLogged, []); 
+      if (!profilesResponse.ok) {
+        throw new Error(profilesData.message || 'Erro ao buscar perfis do usuário');
+      }
+
+      // Se houver perfis, usar o primeiro como perfil atual
+      if (profilesData.profiles && profilesData.profiles.length > 0) {
+        const primeiroPerfil = profilesData.profiles[0];
+        console.log('Usando primeiro perfil:', primeiroPerfil);
+        
+        // Salva os dados no localStorage
+        localStorage.setItem('currentUser', JSON.stringify(userLogged));
+        localStorage.setItem(`profile_${data.userId}`, JSON.stringify(primeiroPerfil));
+        
+        // Chama a função onLogin com os dados do usuário e perfil
+        onLogin(userLogged, primeiroPerfil);
+      } else {
+        throw new Error('Nenhum perfil encontrado para este usuário');
+      }
       
       // Navega para o dashboard
       navigate('/dashboard');

@@ -26,8 +26,9 @@ ChartJS.register(
   BarElement
 );
 
-function Dashboard({ usuario, perfil, onLogout }) {
-  const [mesSelecionado, setMesSelecionado] = useState(new Date().getMonth());
+function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [dadosFinanceiros, setDadosFinanceiros] = useState({
     receitas: 0,
     despesas: 0,
@@ -42,37 +43,68 @@ function Dashboard({ usuario, perfil, onLogout }) {
       return;
     }
 
-    // Carregar dados financeiros
-    const receitas = JSON.parse(localStorage.getItem(`receitas_${usuario.id_usuario}`)) || [];
-    const despesas = JSON.parse(localStorage.getItem(`despesas_${usuario.id_usuario}`)) || [];
-
-    // Calcular totais
-    const totalReceitas = receitas.reduce((total, receita) => total + receita.valor, 0);
-    const totalDespesas = despesas.reduce((total, despesa) => total + despesa.valor, 0);
-
-    // Agrupar despesas por categoria
-    const despesasPorCategoria = despesas.reduce((acc, despesa) => {
-      if (!acc[despesa.categoria]) {
-        acc[despesa.categoria] = 0;
-      }
-      acc[despesa.categoria] += despesa.valor;
-      return acc;
-    }, {});
-
-    // Formatar dados para exibição
-    setDadosFinanceiros({
-      receitas: totalReceitas,
-      despesas: totalDespesas,
-      saldo: totalReceitas - totalDespesas,
-      despesasPorCategoria: Object.entries(despesasPorCategoria).map(([categoria, valor]) => ({
-        categoria,
-        valor
-      }))
-    });
+    carregarDadosFinanceiros();
   }, [usuario, perfil, onLogout]);
 
-  if (!usuario || !perfil) {
-    return null;
+  const carregarDadosFinanceiros = async () => {
+    try {
+      // Carregar receitas
+      const receitasResponse = await fetch(`http://localhost:3001/api/receitas/${perfil.id_perfil}`);
+      if (!receitasResponse.ok) throw new Error('Erro ao carregar receitas');
+      const receitas = await receitasResponse.json();
+
+      // Carregar despesas
+      const despesasResponse = await fetch(`http://localhost:3001/api/despesas/${perfil.id_perfil}`);
+      if (!despesasResponse.ok) throw new Error('Erro ao carregar despesas');
+      const despesas = await despesasResponse.json();
+
+      // Calcular totais
+      const totalReceitas = receitas.reduce((total, receita) => total + parseFloat(receita.valor_receita), 0);
+      const totalDespesas = despesas.reduce((total, despesa) => total + parseFloat(despesa.valor_conta), 0);
+
+      // Agrupar despesas por categoria
+      const despesasPorCategoria = despesas.reduce((acc, despesa) => {
+        const categoria = despesa.nome_categoria || 'Sem categoria';
+        if (!acc[categoria]) {
+          acc[categoria] = 0;
+        }
+        acc[categoria] += parseFloat(despesa.valor_conta);
+        return acc;
+      }, {});
+
+      // Formatar dados para exibição
+      setDadosFinanceiros({
+        receitas: totalReceitas,
+        despesas: totalDespesas,
+        saldo: totalReceitas - totalDespesas,
+        despesasPorCategoria: Object.entries(despesasPorCategoria).map(([categoria, valor]) => ({
+          categoria,
+          valor
+        }))
+      });
+    } catch (error) {
+      console.error('Erro ao carregar dados financeiros:', error);
+      setError('Erro ao carregar dados financeiros');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    onLogout();
+    navigate('/login');
+  };
+
+  const handleNavigation = (path) => {
+    navigate(path);
+  };
+
+  if (loading) {
+    return <div className="loading">Carregando...</div>;
+  }
+
+  if (error) {
+    return <div className="error">{error}</div>;
   }
 
   const meses = [
@@ -221,23 +253,6 @@ function Dashboard({ usuario, perfil, onLogout }) {
     }
   };
 
-  const handleLogout = () => {
-    try {
-      // Limpar dados do localStorage
-      localStorage.removeItem('currentUser');
-      localStorage.removeItem(`profile_${usuario.id_usuario}`);
-      localStorage.removeItem(`config_${usuario.id_usuario}`);
-      
-      // Chamar a função de logout do App.js
-      onLogout();
-      
-      // Redirecionar para a página de login
-      navigate('/login');
-    } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-    }
-  };
-
   return (
     <div className="dashboard">
       <div className="sidebar">
@@ -246,37 +261,37 @@ function Dashboard({ usuario, perfil, onLogout }) {
         </div>
         <nav className="menu">
           <ul>
-            <li className="active">
+            <li className="active" onClick={() => handleNavigation('/dashboard')}>
               <FaRegChartBar className="menu-icon" />
               <span className="menu-text">Dashboard</span>
             </li>
             {perfil?.permissoes?.pode_ver_todas_contas && (
-              <li onClick={() => navigate('/receitas')}>
+              <li onClick={() => handleNavigation('/receitas')}>
                 <FaMoneyBillWave className="menu-icon" />
                 <span className="menu-text">Receitas</span>
               </li>
             )}
             {perfil?.permissoes?.pode_ver_todas_contas && (
-              <li onClick={() => navigate('/despesas')}>
+              <li onClick={() => handleNavigation('/despesas')}>
                 <FaWallet className="menu-icon" />
                 <span className="menu-text">Despesas</span>
               </li>
             )}
-            <li onClick={() => navigate('/cartoes')}>
+            <li onClick={() => handleNavigation('/cartoes')}>
               <FaCreditCard className="menu-icon" />
               <span className="menu-text">Cartões</span>
             </li>
-            <li onClick={() => navigate('/imposto-renda')}>
+            <li onClick={() => handleNavigation('/imposto-renda')}>
               <FaPiggyBank className="menu-icon" />
               <span className="menu-text">Imposto Renda</span>
             </li>
-            {perfil?.permissoes?.pode_editar_conta && (
-              <li onClick={() => navigate('/gerenciar-perfis')}>
+            {perfil?.permissoes?.pode_ver_todas_contas && (
+              <li onClick={() => handleNavigation('/gerenciar-perfis')}>
                 <FaUsers className="menu-icon" />
                 <span className="menu-text">Gerenciar Perfis</span>
               </li>
             )}
-            <li onClick={() => navigate('/configuracoes')}>
+            <li onClick={() => handleNavigation('/configuracoes')}>
               <FaCog className="menu-icon" />
               <span className="menu-text">Configurações</span>
             </li>
@@ -296,8 +311,8 @@ function Dashboard({ usuario, perfil, onLogout }) {
           <div className="user-profile-header">
             <select
               className="month-selector"
-              value={mesSelecionado}
-              onChange={(e) => setMesSelecionado(parseInt(e.target.value))}
+              value={new Date().getMonth()}
+              onChange={(e) => {}}
             >
               {meses.map((mes, index) => (
                 <option key={index} value={index}>

@@ -42,43 +42,17 @@ function App() {
     loadUserData();
   }, []);
 
-  const handleLogin = async (user) => {
+  const handleLogin = async (user, userProfile) => {
     try {
-      console.log('handleLogin chamado com:', { user });
+      console.log('handleLogin chamado com:', { user, userProfile });
       
       // Salvar dados do usuário no localStorage e no estado
       setCurrentUser(user);
+      setProfile(userProfile);
       localStorage.setItem('currentUser', JSON.stringify(user));
-      console.log('currentUser atualizado:', user);
+      localStorage.setItem(`profile_${user.id_usuario}`, JSON.stringify(userProfile));
+      console.log('currentUser e profile atualizados:', { user, userProfile });
 
-      // Buscar perfis e permissões do usuário recém-logado
-      const profilesResponse = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${user.id_usuario}`);
-      const profilesData = await profilesResponse.json();
-
-      if (!profilesResponse.ok) {
-        throw new Error(profilesData.message || 'Erro ao buscar perfis do usuário');
-      }
-
-      const fetchedProfiles = profilesData.profiles;
-
-      // Se houver perfis, usar o primeiro como perfil atual
-      if (fetchedProfiles && fetchedProfiles.length > 0) {
-        const primeiroPerfil = fetchedProfiles[0];
-        console.log('Usando primeiro perfil:', primeiroPerfil);
-        setProfile(primeiroPerfil);
-        localStorage.setItem(`profile_${user.id_usuario}`, JSON.stringify(primeiroPerfil));
-        // As permissões já vêm aninhadas no objeto perfil
-        localStorage.setItem(`permissions_${user.id_usuario}`, JSON.stringify(primeiroPerfil.permissoes));
-      } else {
-        console.log('Nenhum perfil encontrado para o usuário. Redirecionando para criação de perfil...');
-        // Se não houver perfis, redirecionar para a tela de criação do primeiro perfil
-        // Isso deve ser tratado no Login.js ou onde o redirecionamento inicial acontece
-        // Por agora, apenas logar. A navegação para /criar-primeiro-perfil é feita no Registro.js.
-        // No caso de um login onde não há perfis, o usuário será levado ao dashboard com profile=null
-        // O que pode causar erros em rotas protegidas por permissões.
-        // Precisamos garantir que, ao logar, um perfil *exista* ou o usuário seja forçado a criar um.
-      }
-      
       // Carregar configurações do usuário ao fazer login
       const userConfig = JSON.parse(localStorage.getItem(`config_${user.id_usuario}`)) || {};
       setDarkMode(userConfig.darkMode || false);
@@ -175,8 +149,24 @@ function App() {
           <Route 
             path="/dashboard" 
             element={
-              currentUser ? (
+              currentUser && profile ? (
                 <Dashboard 
+                  onLogout={handleLogout}
+                  setUsuario={setCurrentUser}
+                  setPerfil={setProfile}
+                  usuario={currentUser}
+                  perfil={profile}
+                />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            } 
+          />
+          <Route
+            path="/receitas"
+            element={
+              currentUser ? (
+                <Receitas 
                   usuario={currentUser}
                   perfil={profile}
                   onLogout={handleLogout}
@@ -184,56 +174,36 @@ function App() {
               ) : (
                 <Navigate to="/login" replace />
               )
-            } 
+            }
           />
-          {profile?.permissoes?.verReceitas && (
-            <Route
-              path="/receitas"
-              element={
-                currentUser ? (
-                  <Receitas 
-                    usuario={currentUser}
-                    perfil={profile}
-                    onLogout={handleLogout}
-                  />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
-          )}
-          {profile?.permissoes?.verDespesas && (
-            <Route
-              path="/despesas"
-              element={
-                currentUser ? (
-                  <Despesas 
-                    usuario={currentUser}
-                    perfil={profile}
-                    onLogout={handleLogout}
-                  />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
-          )}
-          {profile?.permissoes?.gerenciarPerfis && (
-            <Route
-              path="/gerenciar-perfis"
-              element={
-                currentUser ? (
-                  <GerenciarPerfis
-                    usuario={currentUser}
-                    perfil={profile}
-                    onPerfilAtualizado={setProfile}
-                  />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
-          )}
+          <Route
+            path="/despesas"
+            element={
+              currentUser ? (
+                <Despesas 
+                  usuario={currentUser}
+                  perfil={profile}
+                  onLogout={handleLogout}
+                />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/gerenciar-perfis"
+            element={
+              currentUser ? (
+                <GerenciarPerfis
+                  usuario={currentUser}
+                  perfil={profile}
+                  onPerfilAtualizado={setProfile}
+                />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
           <Route
             path="/cartoes"
             element={

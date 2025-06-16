@@ -5,7 +5,7 @@ import './CriarPrimeiroPerfil.css';
 function CriarPrimeiroPerfil() {
   const navigate = useNavigate();
   const location = useLocation();
-  const userId = location.state?.userId; // Obter userId passado pelo Registro.js
+  const userId = location.state?.userId;
 
   const [nomePerfil, setNomePerfil] = useState('');
   const [categoriaFamiliar, setCategoriaFamiliar] = useState('');
@@ -14,13 +14,9 @@ function CriarPrimeiroPerfil() {
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Se não houver userId, redireciona de volta para o registro
   if (!userId) {
-    // navigate('/registro', { replace: true });
-    // return null;
-    // Por enquanto, para facilitar o desenvolvimento, vou permitir continuar sem userId.
-    // Em produção, a linha acima deve ser descomentada.
-    console.warn("Nenhum userId encontrado. Isso pode indicar um fluxo de registro incorreto.");
+    navigate('/registro', { replace: true });
+    return null;
   }
 
   const handleSubmit = async (e) => {
@@ -46,7 +42,7 @@ function CriarPrimeiroPerfil() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          usuario_id: userId, // Usar o userId obtido da rota
+          usuario_id: userId,
           nome_perfil: nomePerfil,
           categoria_familiar: categoriaFamiliar,
           senha_perfil: senhaPerfil,
@@ -59,8 +55,32 @@ function CriarPrimeiroPerfil() {
         throw new Error(data.message || 'Erro ao criar o primeiro perfil.');
       }
 
-      alert('Primeiro perfil criado com sucesso!');
-      navigate('/dashboard'); // Redireciona para o dashboard após criar o perfil
+      // Buscar perfis e permissões do usuário
+      const profilesResponse = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${userId}`);
+      const profilesData = await profilesResponse.json();
+
+      if (!profilesResponse.ok) {
+        throw new Error(profilesData.message || 'Erro ao buscar perfis do usuário');
+      }
+
+      // Se houver perfis, usar o primeiro como perfil atual
+      if (profilesData.profiles && profilesData.profiles.length > 0) {
+        const primeiroPerfil = profilesData.profiles[0];
+        
+        // Salva os dados no localStorage
+        const userLogged = {
+          id_usuario: userId,
+          nome_familia: data.nome_familia
+        };
+        
+        localStorage.setItem('currentUser', JSON.stringify(userLogged));
+        localStorage.setItem(`profile_${userId}`, JSON.stringify(primeiroPerfil));
+        
+        // Recarrega a página para atualizar o estado global
+        window.location.href = '/dashboard';
+      } else {
+        throw new Error('Nenhum perfil encontrado para este usuário');
+      }
 
     } catch (error) {
       console.error('Erro ao criar o primeiro perfil:', error.message);
@@ -95,7 +115,6 @@ function CriarPrimeiroPerfil() {
               required
             >
               <option value="">Selecione uma categoria</option>
-              {/* <option value="Principal">Principal (Administrador)</option> */}
               <option value="Pai">Pai</option>
               <option value="Mãe">Mãe</option>
               <option value="Filho">Filho(a)</option>
@@ -126,7 +145,7 @@ function CriarPrimeiroPerfil() {
           </div>
 
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Criando Perfil...' : 'Criar Perfil'}
+            {loading ? 'Criando...' : 'Criar Perfil'}
           </button>
         </form>
       </div>
