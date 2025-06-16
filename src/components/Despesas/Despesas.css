@@ -267,7 +267,6 @@ tr:last-child td {
   }
 
   .form-group input,
-  .form-group textarea,
   .form-group select {
     padding: 0.8rem;
   }
@@ -303,7 +302,6 @@ tr:last-child td {
   }
 
   .form-group input,
-  .form-group textarea,
   .form-group select {
     font-size: 0.9rem;
   }

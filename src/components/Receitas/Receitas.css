@@ -61,6 +61,26 @@
     --tag-color-dark: var(--text-light);
 }
 
+.layout-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.sidebar {
+  width: 250px;
+  background-color: var(--card-bg);
+  padding: 1rem;
+  border-right: 1px solid var(--border-color);
+}
+
+.receitas-container {
+  flex: 1;
+  padding: 2rem;
+  background-color: var(--bg-color);
+  overflow-y: auto;
+}
+
 .receitas {
   display: flex;
   min-height: 100vh;
@@ -129,8 +149,8 @@
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
-  border-color: var(--primary-purple);
-  box-shadow: 0 0 0 3px var(--primary-shadow); /* Sombra maior e roxa */
+  border-color: var(--success-green); /* Cor verde para receitas */
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.25); /* Sombra maior e verde */
 }
 
 .form-group textarea {
@@ -141,7 +161,7 @@
 .btn-submit {
   grid-column: 1 / -1;
   padding: 1rem; /* Aumentado o padding */
-  background-color: var(--primary-purple);
+  background-color: var(--success-green); /* Cor verde para receitas */
   color: white;
   border: none;
   border-radius: 8px; /* Mais arredondado */
@@ -153,7 +173,7 @@
 }
 
 .btn-submit:hover {
-  background-color: var(--primary-hover);
+  background-color: #218838; /* Um verde ligeiramente mais escuro */
   transform: translateY(-2px);
 }
 
