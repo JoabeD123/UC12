@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaMoneyBillWave, FaWallet, FaCreditCard, FaChartPie, FaCog, FaSignOutAlt, FaRegChartBar, FaPiggyBank, FaUniversity, FaArrowUp, FaArrowDown, FaUsers } from 'react-icons/fa';
+import { FaMoneyBillWave, FaWallet, FaCreditCard, FaCog, FaSignOutAlt, FaRegChartBar, FaPiggyBank, FaUsers } from 'react-icons/fa';
 import './Despesas.css';
 
 function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
@@ -23,14 +23,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const [showCategoriaForm, setShowCategoriaForm] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (usuario && perfil) {
-      carregarDespesas();
-      carregarCategorias();
-    }
-  }, [usuario, perfil]);
-
-  const carregarDespesas = async () => {
+  const carregarDespesas = useCallback(async () => {
     try {
       const response = await fetch(`http://localhost:3001/api/despesas/${perfil.id_perfil}`);
       if (!response.ok) throw new Error('Erro ao carregar despesas');
@@ -42,9 +35,9 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [perfil]);
 
-  const carregarCategorias = async () => {
+  const carregarCategorias = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:3001/api/categorias?tipo=despesa');
       if (!response.ok) throw new Error('Erro ao carregar categorias de despesa');
@@ -54,7 +47,14 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
       console.error('Erro ao carregar categorias de despesa:', error);
       setError('Erro ao carregar categorias de despesa');
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (usuario && perfil) {
+      carregarDespesas();
+      carregarCategorias();
+    }
+  }, [usuario, perfil, carregarDespesas, carregarCategorias]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

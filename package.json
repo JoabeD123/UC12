@@ -25,6 +25,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "server": "nodemon server.js",
+    "dev": "concurrently \"npm run server\" \"npm run start\"",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
@@ -46,5 +48,12 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "dotenv": "^16.5.0",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.0",
+    "nodemon": "^3.1.10"
   }
 }

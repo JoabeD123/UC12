@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Chart as ChartJS,
@@ -11,7 +11,7 @@ import {
   BarElement
 } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
-import { FaPlus, FaMoneyBillWave, FaWallet, FaCreditCard, FaChartPie, FaCog, FaSignOutAlt, FaRegChartBar, FaPiggyBank, FaUniversity, FaArrowUp, FaArrowDown, FaUsers } from 'react-icons/fa';
+import { FaPlus, FaMoneyBillWave, FaWallet, FaCreditCard, FaCog, FaSignOutAlt, FaRegChartBar, FaPiggyBank, FaUniversity, FaArrowUp, FaArrowDown, FaUsers } from 'react-icons/fa';
 import { IoArrowForward } from "react-icons/io5";
 import './Dashboard.css';
 
@@ -37,16 +37,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
   });
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!usuario || !perfil) {
-      onLogout();
-      return;
-    }
-
-    carregarDadosFinanceiros();
-  }, [usuario, perfil, onLogout]);
-
-  const carregarDadosFinanceiros = async () => {
+  const carregarDadosFinanceiros = useCallback(async () => {
     try {
       // Carregar receitas
       const receitasResponse = await fetch(`http://localhost:3001/api/receitas/${perfil.id_perfil}`);
@@ -88,7 +79,16 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [perfil]);
+
+  useEffect(() => {
+    if (!usuario || !perfil) {
+      onLogout();
+      return;
+    }
+
+    carregarDadosFinanceiros();
+  }, [usuario, perfil, onLogout, carregarDadosFinanceiros]);
 
   const handleLogout = () => {
     onLogout();
@@ -337,7 +337,12 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
               </div>
             </div>
             <p className="amount">R$ {dadosFinanceiros.saldo.toFixed(2).replace('.', ',')}</p>
-            <a href="#" className="meu-desempenho">Meu Desempenho <IoArrowForward /></a>
+            <button 
+              onClick={() => handleNavigation('/desempenho')} 
+              className="meu-desempenho"
+            >
+              Meu Desempenho <IoArrowForward />
+            </button>
           </div>
 
           <div className="card">

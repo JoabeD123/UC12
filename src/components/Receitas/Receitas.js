@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaMoneyBillWave, FaWallet, FaCreditCard, FaChartPie, FaCog, FaSignOutAlt, FaRegChartBar, FaPiggyBank, FaUniversity, FaArrowUp, FaArrowDown, FaUsers } from 'react-icons/fa';
+import { FaMoneyBillWave, FaWallet, FaCreditCard, FaCog, FaSignOutAlt, FaRegChartBar, FaPiggyBank, FaUsers } from 'react-icons/fa';
 import './Receitas.css';
 
 function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
@@ -19,17 +19,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const [showCategoriaForm, setShowCategoriaForm] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!usuario || !perfil) {
-      onLogout();
-      return;
-    }
-
-    carregarReceitas();
-    carregarCategorias();
-  }, [usuario, perfil, onLogout]);
-
-  const carregarReceitas = async () => {
+  const carregarReceitas = useCallback(async () => {
     try {
       const response = await fetch(`http://localhost:3001/api/receitas/${perfil.id_perfil}`);
       if (!response.ok) throw new Error('Erro ao carregar receitas');
@@ -41,9 +31,9 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [perfil]);
 
-  const carregarCategorias = async () => {
+  const carregarCategorias = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:3001/api/categorias?tipo=receita');
       if (!response.ok) throw new Error('Erro ao carregar categorias de receita');
@@ -53,7 +43,17 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
       console.error('Erro ao carregar categorias de receita:', error);
       setError('Erro ao carregar categorias de receita');
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!usuario || !perfil) {
+      onLogout();
+      return;
+    }
+
+    carregarReceitas();
+    carregarCategorias();
+  }, [usuario, perfil, onLogout, carregarReceitas, carregarCategorias]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

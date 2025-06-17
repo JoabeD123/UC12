@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaEdit, FaTrash, FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaMoneyBillWave, FaWallet } from 'react-icons/fa';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -212,12 +212,23 @@ const CartoesCredito = () => {
   return (
     <div className="layout-container">
       <div className="sidebar">
+        <div className="logo">
+          <div className="logo-icon">GF</div>
+        </div>
         <div className="menu">
           <div className="menu-item" onClick={() => navigate('/dashboard')}>
             <FaChartBar />
             <span>Dashboard</span>
           </div>
-          <div className="menu-item" onClick={() => navigate('/cartoes')}>
+          <div className="menu-item" onClick={() => navigate('/receitas')}>
+            <FaMoneyBillWave />
+            <span>Receitas</span>
+          </div>
+          <div className="menu-item" onClick={() => navigate('/despesas')}>
+            <FaWallet />
+            <span>Despesas</span>
+          </div>
+          <div className="menu-item active" onClick={() => navigate('/cartoes')}>
             <FaCreditCard />
             <span>Cartões</span>
           </div>

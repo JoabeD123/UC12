@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaPlus, FaEdit, FaTrash, FaSave, FaTimes } from 'react-icons/fa';
+import { FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaMoneyBillWave, FaWallet } from 'react-icons/fa';
 import './GerenciarPerfis.css';
 
 const GerenciarPerfis = () => {
@@ -57,7 +57,7 @@ const GerenciarPerfis = () => {
     const { name, value, type, checked } = e.target;
     
     if (type === 'checkbox') {
-      const [permissao, campo] = name.split('.');
+      const [, campo] = name.split('.');
       setNovoPerfil(prev => ({
         ...prev,
         permissoes: {
@@ -136,10 +136,21 @@ const GerenciarPerfis = () => {
   return (
     <div className="layout-container">
       <div className="sidebar">
+        <div className="logo">
+          <div className="logo-icon">GF</div>
+        </div>
         <div className="menu">
           <div className="menu-item" onClick={() => navigate('/dashboard')}>
             <FaChartBar />
             <span>Dashboard</span>
+          </div>
+          <div className="menu-item" onClick={() => navigate('/receitas')}>
+            <FaMoneyBillWave />
+            <span>Receitas</span>
+          </div>
+          <div className="menu-item" onClick={() => navigate('/despesas')}>
+            <FaWallet />
+            <span>Despesas</span>
           </div>
           <div className="menu-item" onClick={() => navigate('/cartoes')}>
             <FaCreditCard />

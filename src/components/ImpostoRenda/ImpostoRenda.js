@@ -10,7 +10,7 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
-import { FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaInfoCircle } from 'react-icons/fa';
+import { FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaInfoCircle, FaMoneyBillWave, FaWallet } from 'react-icons/fa';
 import './ImpostoRenda.css';
 
 // Registrar os componentes do Chart.js
@@ -220,10 +220,21 @@ const ImpostoRenda = () => {
   return (
     <div className="layout-container">
       <div className="sidebar">
+        <div className="logo">
+          <div className="logo-icon">GF</div>
+        </div>
         <div className="menu">
           <div className="menu-item" onClick={() => navigate('/dashboard')}>
             <FaChartBar />
             <span>Dashboard</span>
+          </div>
+          <div className="menu-item" onClick={() => navigate('/receitas')}>
+            <FaMoneyBillWave />
+            <span>Receitas</span>
+          </div>
+          <div className="menu-item" onClick={() => navigate('/despesas')}>
+            <FaWallet />
+            <span>Despesas</span>
           </div>
           <div className="menu-item" onClick={() => navigate('/cartoes')}>
             <FaCreditCard />
