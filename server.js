@@ -47,6 +47,7 @@ app.get('/init-db', async (req, res) => {
     DROP TABLE IF EXISTS recorrencia_tipo CASCADE;
     DROP TABLE IF EXISTS tabela_afetada_tipo CASCADE;
     DROP TABLE IF EXISTS tipo_acao_tipo CASCADE;
+    DROP TABLE IF EXISTS cartao_credito CASCADE;
   `;
 
   const createSchema = `
@@ -215,6 +216,18 @@ app.get('/init-db', async (req, res) => {
         valor_limite DECIMAL(10,2) NOT NULL,
         FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil),
         UNIQUE (perfil_id, mes_ano)
+    );
+
+    -- Tabela de Cartões de Crédito
+    CREATE TABLE IF NOT EXISTS cartao_credito (
+        id_cartao SERIAL PRIMARY KEY,
+        perfil_id INT NOT NULL,
+        nome VARCHAR(255) NOT NULL,
+        limite DECIMAL(10,2) NOT NULL,
+        dia_vencimento INT NOT NULL,
+        bandeira VARCHAR(50) NOT NULL,
+        gastos DECIMAL(10,2) DEFAULT 0,
+        FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil)
     );
   `;
 
@@ -811,6 +824,70 @@ app.delete('/api/perfis/:id', async (req, res) => {
   } catch (err) {
     console.error('Erro ao excluir perfil:', err);
     res.status(500).json({ message: 'Erro ao excluir perfil.' });
+  }
+});
+
+// Rotas para Cartões de Crédito
+app.get('/api/cartoes/:perfilId', async (req, res) => {
+  const { perfilId } = req.params;
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'SELECT * FROM cartao_credito WHERE perfil_id = $1 ORDER BY id_cartao DESC',
+      [perfilId]
+    );
+    client.release();
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar cartões:', err);
+    res.status(500).json({ message: 'Erro ao buscar cartões.' });
+  }
+});
+
+app.post('/api/cartoes', async (req, res) => {
+  console.log('Recebido no backend:', req.body); // Debug do que chega do frontend
+  const { perfil_id, nome, limite, dia_vencimento, bandeira, gastos } = req.body;
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'INSERT INTO cartao_credito (perfil_id, nome, limite, dia_vencimento, bandeira, gastos) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [perfil_id, nome, limite, dia_vencimento, bandeira, gastos || 0]
+    );
+    client.release();
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao criar cartão:', err);
+    res.status(500).json({ message: 'Erro ao criar cartão.' });
+  }
+});
+
+app.put('/api/cartoes/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nome, limite, dia_vencimento, bandeira, gastos } = req.body;
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'UPDATE cartao_credito SET nome = $1, limite = $2, dia_vencimento = $3, bandeira = $4, gastos = $5 WHERE id_cartao = $6 RETURNING *',
+      [nome, limite, dia_vencimento, bandeira, gastos, id]
+    );
+    client.release();
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao atualizar cartão:', err);
+    res.status(500).json({ message: 'Erro ao atualizar cartão.' });
+  }
+});
+
+app.delete('/api/cartoes/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const client = await pool.connect();
+    await client.query('DELETE FROM cartao_credito WHERE id_cartao = $1', [id]);
+    client.release();
+    res.status(200).json({ message: 'Cartão excluído com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao excluir cartão:', err);
+    res.status(500).json({ message: 'Erro ao excluir cartão.' });
   }
 });
 

@@ -24,7 +24,9 @@ ChartJS.register(
   ArcElement
 );
 
-const CartoesCredito = () => {
+const API_URL = 'http://localhost:3001/api/cartoes';
+
+const CartoesCredito = ({ perfil }) => {
   const navigate = useNavigate();
   const [cartoes, setCartoes] = useState([]);
   const [novoCartao, setNovoCartao] = useState({
@@ -36,29 +38,27 @@ const CartoesCredito = () => {
   const [editandoCartao, setEditandoCartao] = useState(null);
   const [error, setError] = useState('');
   const [gastos, setGastos] = useState({});
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [loading, setLoading] = useState(true);
 
+  // Buscar cartões do banco ao carregar a tela
   useEffect(() => {
-    // Simular carregamento de dados
-    const cartoesMock = [
-      {
-        id: 1,
-        nome: 'Cartão Principal',
-        limite: 5000,
-        diaVencimento: 15,
-        bandeira: 'visa',
-        gastos: 2500
-      },
-      {
-        id: 2,
-        nome: 'Cartão Secundário',
-        limite: 3000,
-        diaVencimento: 20,
-        bandeira: 'mastercard',
-        gastos: 1500
-      }
-    ];
-    setCartoes(cartoesMock);
-  }, []);
+    if (!perfil?.id_perfil) return;
+    setLoading(true);
+    fetch(`${API_URL}/${perfil.id_perfil}`)
+      .then(res => res.json())
+      .then(data => {
+        setCartoes(data);
+        // Preencher gastos iniciais
+        const gastosObj = {};
+        data.forEach(cartao => {
+          gastosObj[cartao.id_cartao] = parseFloat(cartao.gastos) || 0;
+        });
+        setGastos(gastosObj);
+      })
+      .catch(() => setCartoes([]))
+      .finally(() => setLoading(false));
+  }, [perfil]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -68,29 +68,34 @@ const CartoesCredito = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!novoCartao.nome || !novoCartao.limite || !novoCartao.diaVencimento) {
       setError('Por favor, preencha todos os campos');
       return;
     }
-
-    const novoCartaoCompleto = {
-      id: Date.now(),
-      ...novoCartao,
-      limite: parseFloat(novoCartao.limite),
-      diaVencimento: parseInt(novoCartao.diaVencimento),
-      gastos: 0
-    };
-
-    setCartoes(prev => [...prev, novoCartaoCompleto]);
-    setNovoCartao({
-      nome: '',
-      limite: '',
-      diaVencimento: '',
-      bandeira: 'visa'
-    });
-    setError('');
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          perfil_id: perfil.id_perfil,
+          nome: novoCartao.nome,
+          limite: Number(novoCartao.limite) > 0 ? Number(novoCartao.limite) : 0,
+          dia_vencimento: parseInt(novoCartao.diaVencimento),
+          bandeira: novoCartao.bandeira,
+          gastos: 0
+        })
+      });
+      const novo = await response.json();
+      setCartoes(prev => [novo, ...prev]);
+      setGastos(prev => ({ ...prev, [novo.id_cartao]: 0 }));
+      setNovoCartao({ nome: '', limite: '', diaVencimento: '', bandeira: 'visa' });
+      setError('');
+      setMostrarFormulario(false);
+    } catch {
+      setError('Erro ao adicionar cartão');
+    }
   };
 
   const handleEditar = (cartao) => {
@@ -98,48 +103,77 @@ const CartoesCredito = () => {
     setNovoCartao({
       nome: cartao.nome,
       limite: cartao.limite.toString(),
-      diaVencimento: cartao.diaVencimento.toString(),
+      diaVencimento: cartao.dia_vencimento.toString(),
       bandeira: cartao.bandeira
     });
+    setMostrarFormulario(true);
   };
 
-  const handleSalvarEdicao = () => {
+  const handleSalvarEdicao = async () => {
     if (!novoCartao.nome || !novoCartao.limite || !novoCartao.diaVencimento) {
       setError('Por favor, preencha todos os campos');
       return;
     }
-
-    setCartoes(prev => prev.map(cartao => 
-      cartao.id === editandoCartao.id
-        ? {
-            ...cartao,
-            nome: novoCartao.nome,
-            limite: parseFloat(novoCartao.limite),
-            diaVencimento: parseInt(novoCartao.diaVencimento),
-            bandeira: novoCartao.bandeira
-          }
-        : cartao
-    ));
-
-    setEditandoCartao(null);
-    setNovoCartao({
-      nome: '',
-      limite: '',
-      diaVencimento: '',
-      bandeira: 'visa'
-    });
-    setError('');
+    try {
+      const response = await fetch(`${API_URL}/${editandoCartao.id_cartao}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: novoCartao.nome,
+          limite: parseFloat(novoCartao.limite),
+          dia_vencimento: parseInt(novoCartao.diaVencimento),
+          bandeira: novoCartao.bandeira,
+          gastos: gastos[editandoCartao.id_cartao] || 0
+        })
+      });
+      const atualizado = await response.json();
+      setCartoes(prev => prev.map(c => c.id_cartao === atualizado.id_cartao ? atualizado : c));
+      setEditandoCartao(null);
+      setNovoCartao({ nome: '', limite: '', diaVencimento: '', bandeira: 'visa' });
+      setError('');
+      setMostrarFormulario(false);
+    } catch {
+      setError('Erro ao editar cartão');
+    }
   };
 
-  const handleExcluir = (id) => {
-    setCartoes(prev => prev.filter(cartao => cartao.id !== id));
+  const handleExcluir = async (id) => {
+    try {
+      await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+      setCartoes(prev => prev.filter(cartao => cartao.id_cartao !== id));
+      setGastos(prev => {
+        const novo = { ...prev };
+        delete novo[id];
+        return novo;
+      });
+    } catch {
+      setError('Erro ao excluir cartão');
+    }
   };
 
-  const handleGastoChange = (id, valor) => {
-    setGastos(prev => ({
-      ...prev,
-      [id]: parseFloat(valor) || 0
-    }));
+  const handleGastoChange = async (id, valor) => {
+    const valorNum = parseFloat(valor) || 0;
+    setGastos(prev => ({ ...prev, [id]: valorNum }));
+    // Atualizar no banco
+    const cartao = cartoes.find(c => c.id_cartao === id);
+    if (cartao) {
+      try {
+        await fetch(`${API_URL}/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nome: cartao.nome,
+            limite: cartao.limite,
+            dia_vencimento: cartao.dia_vencimento,
+            bandeira: cartao.bandeira,
+            gastos: valorNum
+          })
+        });
+        setCartoes(prev => prev.map(c => c.id_cartao === id ? { ...c, gastos: valorNum } : c));
+      } catch {
+        setError('Erro ao atualizar gastos');
+      }
+    }
   };
 
   const chartData = {
@@ -154,7 +188,7 @@ const CartoesCredito = () => {
       },
       {
         label: 'Gastos',
-        data: cartoes.map(cartao => gastos[cartao.id] || cartao.gastos),
+        data: cartoes.map(cartao => gastos[cartao.id_cartao] || cartao.gastos),
         backgroundColor: 'rgba(28, 200, 138, 0.5)',
         borderColor: 'rgba(28, 200, 138, 1)',
         borderWidth: 1
@@ -184,7 +218,7 @@ const CartoesCredito = () => {
     labels: cartoes.map(cartao => cartao.nome),
     datasets: [
       {
-        data: cartoes.map(cartao => gastos[cartao.id] || cartao.gastos),
+        data: cartoes.map(cartao => gastos[cartao.id_cartao] || cartao.gastos),
         backgroundColor: [
           'rgba(111, 66, 193, 0.8)',
           'rgba(28, 200, 138, 0.8)',
@@ -197,7 +231,7 @@ const CartoesCredito = () => {
   };
 
   const doughnutOptions = {
-    responsive: true,
+    responsive: false,
     plugins: {
       legend: {
         position: 'right'
@@ -208,6 +242,8 @@ const CartoesCredito = () => {
       }
     }
   };
+
+  console.log('doughnutData', doughnutData);
 
   return (
     <div className="layout-container">
@@ -250,56 +286,26 @@ const CartoesCredito = () => {
       <div className="cartoes-credito">
         <div className="cartoes-header">
           <h2>Cartões de Crédito</h2>
-          <button className="btn-novo-cartao" onClick={() => setNovoCartao({ nome: '', limite: '', diaVencimento: '', bandeira: 'visa' })}>
+          <button 
+            className="btn-novo-cartao" 
+            onClick={() => {
+              setMostrarFormulario(true);
+              setEditandoCartao(null);
+              setNovoCartao({
+                nome: '',
+                limite: '',
+                diaVencimento: '',
+                bandeira: 'visa'
+              });
+            }}
+          >
             <FaPlus /> Novo Cartão
           </button>
         </div>
 
         {error && <div className="error-message">{error}</div>}
 
-        <div className="cartoes-grid">
-          {cartoes.map(cartao => (
-            <div key={cartao.id} className="cartao-card">
-              <div className="cartao-header">
-                <h3>{cartao.nome}</h3>
-                <div className="cartao-acoes">
-                  <button onClick={() => handleEditar(cartao)}>
-                    <FaEdit />
-                  </button>
-                  <button onClick={() => handleExcluir(cartao.id)}>
-                    <FaTrash />
-                  </button>
-                </div>
-              </div>
-              <div className="cartao-info">
-                <p><strong>Limite:</strong> R$ {cartao.limite.toFixed(2)}</p>
-                <p><strong>Vencimento:</strong> Dia {cartao.diaVencimento}</p>
-                <p><strong>Bandeira:</strong> {cartao.bandeira}</p>
-                <div className="gastos-input">
-                  <label>Gastos Atuais:</label>
-                  <input
-                    type="number"
-                    value={gastos[cartao.id] || cartao.gastos}
-                    onChange={(e) => handleGastoChange(cartao.id, e.target.value)}
-                    min="0"
-                    max={cartao.limite}
-                  />
-                </div>
-                <div className="progress-bar">
-                  <div 
-                    className="progress-fill"
-                    style={{ 
-                      width: `${((gastos[cartao.id] || cartao.gastos) / cartao.limite) * 100}%`,
-                      backgroundColor: ((gastos[cartao.id] || cartao.gastos) / cartao.limite) > 0.8 ? 'var(--danger-color)' : 'var(--success-color)'
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {(novoCartao.nome || editandoCartao) && (
+        {mostrarFormulario && (
           <div className="novo-cartao-form">
             <h3>{editandoCartao ? 'Editar Cartão' : 'Novo Cartão'}</h3>
             <form onSubmit={editandoCartao ? handleSalvarEdicao : handleSubmit}>
@@ -358,7 +364,13 @@ const CartoesCredito = () => {
                   type="button"
                   className="btn-secondary"
                   onClick={() => {
-                    setNovoCartao({ nome: '', limite: '', diaVencimento: '', bandeira: 'visa' });
+                    setMostrarFormulario(false);
+                    setNovoCartao({
+                      nome: '',
+                      limite: '',
+                      diaVencimento: '',
+                      bandeira: 'visa'
+                    });
                     setEditandoCartao(null);
                   }}
                 >
@@ -369,14 +381,58 @@ const CartoesCredito = () => {
           </div>
         )}
 
-        <div className="charts-container">
-          <div className="chart-wrapper">
-            <Bar data={chartData} options={chartOptions} />
-          </div>
-          <div className="chart-wrapper">
-            <Doughnut data={doughnutData} options={doughnutOptions} />
-          </div>
+        <div className="cartoes-grid">
+          {cartoes.map(cartao => (
+            <div key={cartao.id_cartao} className="cartao-card">
+              <div className="cartao-header">
+                <h3>{cartao.nome}</h3>
+                <div className="cartao-acoes">
+                  <button onClick={() => handleEditar(cartao)}>
+                    <FaEdit />
+                  </button>
+                  <button onClick={() => handleExcluir(cartao.id_cartao)}>
+                    <FaTrash />
+                  </button>
+                </div>
+              </div>
+              <div className="cartao-info">
+                <p><strong>Limite:</strong> R$ {Number(cartao.limite ?? 0).toFixed(2)}</p>
+                <p><strong>Vencimento:</strong> Dia {cartao.dia_vencimento}</p>
+                <p><strong>Bandeira:</strong> {cartao.bandeira}</p>
+                <div className="gastos-input">
+                  <label>Gastos Atuais:</label>
+                  <input
+                    type="number"
+                    value={gastos[cartao.id_cartao] ?? cartao.gastos ?? 0}
+                    onChange={(e) => handleGastoChange(cartao.id_cartao, e.target.value)}
+                    min="0"
+                    max={Number(cartao.limite ?? 0)}
+                  />
+                </div>
+                <div className="progress-bar">
+                  <div 
+                    className="progress-fill"
+                    style={{ 
+                      width: `${((gastos[cartao.id_cartao] ?? cartao.gastos ?? 0) / Number(cartao.limite ?? 1)) * 100}%`,
+                      backgroundColor: ((gastos[cartao.id_cartao] ?? cartao.gastos ?? 0) / Number(cartao.limite ?? 1)) > 0.8 ? 'var(--danger-color)' : 'var(--success-color)'
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
+
+        {cartoes.length > 0 && (
+          <div className="charts-container">
+            <div className="chart-wrapper">
+              <Bar data={chartData} options={chartOptions} />
+            </div>
+            <div className="donut-chart-wrapper">
+              <Doughnut data={doughnutData} options={doughnutOptions} width={367} height={367} />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
