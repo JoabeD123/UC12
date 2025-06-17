@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaMoon, FaSun, FaSignOutAlt, FaMoneyBillWave, FaWallet } from 'react-icons/fa';
 import './Configuracoes.css';
 
-const Configuracoes = () => {
+const Configuracoes = ({ usuario, perfil, darkMode, onThemeChange, onLogout }) => {
   const navigate = useNavigate();
   const [config, setConfig] = useState({
     darkMode: false,
@@ -26,6 +26,7 @@ const Configuracoes = () => {
 
     if (campo === 'darkMode') {
       document.documentElement.setAttribute('data-theme', valor ? 'dark' : 'light');
+      onThemeChange(valor);
     }
 
     if (campo === 'zoom') {
@@ -34,8 +35,7 @@ const Configuracoes = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('usuario');
-    localStorage.removeItem('perfil');
+    onLogout();
     navigate('/login');
   };
 

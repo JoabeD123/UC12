@@ -239,6 +239,7 @@ function App() {
                   perfil={profile}
                   darkMode={darkMode}
                   onThemeChange={handleThemeChange}
+                  onLogout={handleLogout}
                 />
               ) : (
                 <Navigate to="/login" replace />

@@ -11,7 +11,7 @@ import {
   BarElement
 } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
-import { FaPlus, FaMoneyBillWave, FaWallet, FaCreditCard, FaCog, FaSignOutAlt, FaRegChartBar, FaPiggyBank, FaUniversity, FaArrowUp, FaArrowDown, FaUsers } from 'react-icons/fa';
+import { FaMoneyBillWave, FaWallet, FaCreditCard, FaCog, FaRegChartBar, FaPiggyBank, FaUniversity, FaArrowUp, FaArrowDown, FaUsers } from 'react-icons/fa';
 import { IoArrowForward } from "react-icons/io5";
 import './Dashboard.css';
 
@@ -89,11 +89,6 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
 
     carregarDadosFinanceiros();
   }, [usuario, perfil, onLogout, carregarDadosFinanceiros]);
-
-  const handleLogout = () => {
-    onLogout();
-    navigate('/login');
-  };
 
   const handleNavigation = (path) => {
     navigate(path);
@@ -254,178 +249,172 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
   };
 
   return (
-    <div className="dashboard">
+    <div className="layout-container">
       <div className="sidebar">
         <div className="logo">
           <div className="logo-icon">GF</div>
         </div>
-        <nav className="menu">
-          <ul>
-            <li className="active" onClick={() => handleNavigation('/dashboard')}>
-              <FaRegChartBar className="menu-icon" />
-              <span className="menu-text">Dashboard</span>
-            </li>
-            {perfil?.permissoes?.pode_ver_todas_contas && (
-              <li onClick={() => handleNavigation('/receitas')}>
-                <FaMoneyBillWave className="menu-icon" />
-                <span className="menu-text">Receitas</span>
-              </li>
-            )}
-            {perfil?.permissoes?.pode_ver_todas_contas && (
-              <li onClick={() => handleNavigation('/despesas')}>
-                <FaWallet className="menu-icon" />
-                <span className="menu-text">Despesas</span>
-              </li>
-            )}
-            <li onClick={() => handleNavigation('/cartoes')}>
-              <FaCreditCard className="menu-icon" />
-              <span className="menu-text">Cartões</span>
-            </li>
-            <li onClick={() => handleNavigation('/imposto-renda')}>
-              <FaPiggyBank className="menu-icon" />
-              <span className="menu-text">Imposto Renda</span>
-            </li>
-            {perfil?.permissoes?.pode_ver_todas_contas && (
-              <li onClick={() => handleNavigation('/gerenciar-perfis')}>
-                <FaUsers className="menu-icon" />
-                <span className="menu-text">Gerenciar Perfis</span>
-              </li>
-            )}
-            <li onClick={() => handleNavigation('/configuracoes')}>
-              <FaCog className="menu-icon" />
-              <span className="menu-text">Configurações</span>
-            </li>
-            <li onClick={handleLogout}>
-              <FaSignOutAlt className="menu-icon" />
-              <span className="menu-text">Sair</span>
-            </li>
-          </ul>
-        </nav>
-        <div className="add-button">
-          <FaPlus />
+        <div className="menu">
+          <div className="menu-item active" onClick={() => handleNavigation('/dashboard')}>
+            <FaRegChartBar />
+            <span>Dashboard</span>
+          </div>
+          {perfil?.permissoes?.pode_ver_todas_contas && (
+            <div className="menu-item" onClick={() => handleNavigation('/receitas')}>
+              <FaMoneyBillWave />
+              <span>Receitas</span>
+            </div>
+          )}
+          {perfil?.permissoes?.pode_ver_todas_contas && (
+            <div className="menu-item" onClick={() => handleNavigation('/despesas')}>
+              <FaWallet />
+              <span>Despesas</span>
+            </div>
+          )}
+          <div className="menu-item" onClick={() => handleNavigation('/cartoes')}>
+            <FaCreditCard />
+            <span>Cartões</span>
+          </div>
+          <div className="menu-item" onClick={() => handleNavigation('/imposto-renda')}>
+            <FaPiggyBank />
+            <span>Imposto Renda</span>
+          </div>
+          {perfil?.permissoes?.pode_ver_todas_contas && (
+            <div className="menu-item" onClick={() => handleNavigation('/gerenciar-perfis')}>
+              <FaUsers />
+              <span>Gerenciar Perfis</span>
+            </div>
+          )}
+          <div className="menu-item" onClick={() => handleNavigation('/configuracoes')}>
+            <FaCog />
+            <span>Configurações</span>
+          </div>
         </div>
       </div>
-      <div className="dashboard-content">
-        <div className="content-header">
-          <h1>Dashboard</h1>
-          <div className="user-profile-header">
-            <select
-              className="month-selector"
-              value={new Date().getMonth()}
-              onChange={(e) => {}}
-            >
-              {meses.map((mes, index) => (
-                <option key={index} value={index}>
-                  {mes}
-                </option>
-              ))}
-            </select>
-            <div className="user-profile-icon">
-              {usuario?.nome_familia ? usuario.nome_familia.charAt(0).toUpperCase() : 'U'}
-            </div>
-            <span className="user-name">{usuario?.nome_familia || 'Usuário'}</span>
-            <span className="joranda">Jornada</span>
-          </div>
-        </div>
 
-        <div className="cards">
-          <div className="card saldo-atual">
-            <div className="card-header">
-              <span className="card-title">Saldo atual</span>
-              <div className="card-icon-wrapper default">
-                <FaUniversity />
+      <div className="dashboard">
+        <div className="dashboard-content">
+          <div className="content-header">
+            <h1>Dashboard</h1>
+            <div className="user-profile-header">
+              <select
+                className="month-selector"
+                value={new Date().getMonth()}
+                onChange={(e) => {}}
+              >
+                {meses.map((mes, index) => (
+                  <option key={index} value={index}>
+                    {mes}
+                  </option>
+                ))}
+              </select>
+              <div className="user-profile-icon">
+                {usuario?.nome_familia ? usuario.nome_familia.charAt(0).toUpperCase() : 'U'}
               </div>
+              <span className="user-name">{usuario?.nome_familia || 'Usuário'}</span>
+              <span className="joranda">Jornada</span>
             </div>
-            <p className="amount">R$ {dadosFinanceiros.saldo.toFixed(2).replace('.', ',')}</p>
-            <button 
-              onClick={() => handleNavigation('/desempenho')} 
-              className="meu-desempenho"
-            >
-              Meu Desempenho <IoArrowForward />
-            </button>
           </div>
 
-          <div className="card">
-            <div className="card-header">
-              <span className="card-title">Receitas</span>
-              <div className="card-icon-wrapper green">
-                <FaArrowUp />
-              </div>
-            </div>
-            <p className="amount positive">R$ {dadosFinanceiros.receitas.toFixed(2).replace('.', ',')}</p>
-          </div>
-
-          <div className="card">
-            <div className="card-header">
-              <span className="card-title">Despesas</span>
-              <div className="card-icon-wrapper red">
-                <FaArrowDown />
-              </div>
-            </div>
-            <p className="amount negative">R$ {dadosFinanceiros.despesas.toFixed(2).replace('.', ',')}</p>
-          </div>
-
-          <div className="card">
-            <div className="card-header">
-              <span className="card-title">Cartão de crédito</span>
-              <div className="card-icon-wrapper blue">
-                <FaCreditCard />
-              </div>
-            </div>
-            <p className="amount">R$ 0,00</p>
-          </div>
-        </div>
-
-        <div className="charts">
-          <div className="chart-container">
-            <h2>Despesas por Categoria</h2>
-            <div className="chart-wrapper">
-              <Doughnut data={despesasChartData} options={chartOptions} />
-            </div>
-            <div className="doughnut-summary">
-              <div className="doughnut-center-text">R$ {dadosFinanceiros.despesas.toFixed(2).replace('.', ',')}</div>
-              <div className="doughnut-center-subtext">Total</div>
-            </div>
-            <button className="ver-mais-btn">VER MAIS</button>
-          </div>
-
-          <div className="chart-container">
-            <h2>Balanço Mensal</h2>
-            <div className="chart-wrapper">
-              <Bar data={comparacaoChartData} options={barChartOptions} />
-            </div>
-            <button className="ver-mais-btn">VER MAIS</button>
-          </div>
-        </div>
-
-        <div className="credit-card-section">
-          <h2>Cartões de crédito</h2>
-          <div className="credit-card-tabs">
-            <div className="credit-card-tab active">Faturas abertas</div>
-            <div className="credit-card-tab">Faturas fechadas</div>
-          </div>
-          <div className="credit-card-list">
-            <div className="card-item">
-              <div className="card-info">
-                <div className="card-logo">N</div>
-                <div className="card-details">
-                  <span className="card-name">Nubank</span>
-                  <span className="card-due-date">Vence amanhã</span>
+          <div className="cards">
+            <div className="card saldo-atual">
+              <div className="card-header">
+                <span className="card-title">Saldo atual</span>
+                <div className="card-icon-wrapper default">
+                  <FaUniversity />
                 </div>
               </div>
-              <span className="card-amount negative">R$30,00</span>
-              <button className="pay-bill-btn">Pagar fatura</button>
+              <p className="amount">R$ {dadosFinanceiros.saldo.toFixed(2).replace('.', ',')}</p>
+              <button 
+                onClick={() => handleNavigation('/desempenho')} 
+                className="meu-desempenho"
+              >
+                Meu Desempenho <IoArrowForward />
+              </button>
             </div>
-            <div className="card-item">
-              <div className="card-info">
-                <div className="card-logo">C</div>
-                <div className="card-details">
-                  <span className="card-name">Caixa</span>
-                  <span className="card-due-date">Vence em 10/09</span>
+
+            <div className="card">
+              <div className="card-header">
+                <span className="card-title">Receitas</span>
+                <div className="card-icon-wrapper green">
+                  <FaArrowUp />
                 </div>
               </div>
-              <span className="card-amount negative">R$150,00</span>
-              <button className="pay-bill-btn">Pagar fatura</button>
+              <p className="amount positive">R$ {dadosFinanceiros.receitas.toFixed(2).replace('.', ',')}</p>
+            </div>
+
+            <div className="card">
+              <div className="card-header">
+                <span className="card-title">Despesas</span>
+                <div className="card-icon-wrapper red">
+                  <FaArrowDown />
+                </div>
+              </div>
+              <p className="amount negative">R$ {dadosFinanceiros.despesas.toFixed(2).replace('.', ',')}</p>
+            </div>
+
+            <div className="card">
+              <div className="card-header">
+                <span className="card-title">Cartão de crédito</span>
+                <div className="card-icon-wrapper blue">
+                  <FaCreditCard />
+                </div>
+              </div>
+              <p className="amount">R$ 0,00</p>
+            </div>
+          </div>
+
+          <div className="charts">
+            <div className="chart-container">
+              <h2>Despesas por Categoria</h2>
+              <div className="chart-wrapper">
+                <Doughnut data={despesasChartData} options={chartOptions} />
+              </div>
+              <div className="doughnut-summary">
+                <div className="doughnut-center-text">R$ {dadosFinanceiros.despesas.toFixed(2).replace('.', ',')}</div>
+                <div className="doughnut-center-subtext">Total</div>
+              </div>
+              <button className="ver-mais-btn">VER MAIS</button>
+            </div>
+
+            <div className="chart-container">
+              <h2>Balanço Mensal</h2>
+              <div className="chart-wrapper">
+                <Bar data={comparacaoChartData} options={barChartOptions} />
+              </div>
+              <button className="ver-mais-btn">VER MAIS</button>
+            </div>
+          </div>
+
+          <div className="credit-card-section">
+            <h2>Cartões de crédito</h2>
+            <div className="credit-card-tabs">
+              <div className="credit-card-tab active">Faturas abertas</div>
+              <div className="credit-card-tab">Faturas fechadas</div>
+            </div>
+            <div className="credit-card-list">
+              <div className="card-item">
+                <div className="card-info">
+                  <div className="card-logo">N</div>
+                  <div className="card-details">
+                    <span className="card-name">Nubank</span>
+                    <span className="card-due-date">Vence amanhã</span>
+                  </div>
+                </div>
+                <span className="card-amount negative">R$30,00</span>
+                <button className="pay-bill-btn">Pagar fatura</button>
+              </div>
+              <div className="card-item">
+                <div className="card-info">
+                  <div className="card-logo">C</div>
+                  <div className="card-details">
+                    <span className="card-name">Caixa</span>
+                    <span className="card-due-date">Vence em 10/09</span>
+                  </div>
+                </div>
+                <span className="card-amount negative">R$150,00</span>
+                <button className="pay-bill-btn">Pagar fatura</button>
+              </div>
             </div>
           </div>
         </div>
