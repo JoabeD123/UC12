@@ -232,6 +232,7 @@ const CartoesCredito = ({ perfil }) => {
 
   const doughnutOptions = {
     responsive: false,
+    cutout: '30%',
     plugins: {
       legend: {
         position: 'right'
@@ -429,7 +430,7 @@ const CartoesCredito = ({ perfil }) => {
               <Bar data={chartData} options={chartOptions} />
             </div>
             <div className="donut-chart-wrapper">
-              <Doughnut data={doughnutData} options={doughnutOptions} width={367} height={367} />
+              <Doughnut data={doughnutData} options={doughnutOptions} width={550} height={550} />
             </div>
           </div>
         )}

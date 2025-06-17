@@ -403,19 +403,16 @@
 }
 
 .donut-chart-wrapper {
-  width: 367px;
-  height: 367px;
-  min-width: unset;
-  min-height: unset;
-  padding: 1rem;
   background-color: var(--card-bg);
   border-radius: 15px;
+  padding: 2.76rem;
   box-shadow: var(--card-shadow);
   border: 1px solid var(--border-color);
+  min-width: 594px;
+  min-height: 468px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto;
 }
 
 @media (max-width: 768px) {
