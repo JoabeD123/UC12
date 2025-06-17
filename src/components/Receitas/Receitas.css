@@ -428,8 +428,19 @@
     padding: 20px;
   }
 
+  .receitas-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
   .receitas-grid {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .receita-card {
+    width: 100%;
+    box-sizing: border-box;
   }
 }
 
