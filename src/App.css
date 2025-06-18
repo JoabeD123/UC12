@@ -7,7 +7,7 @@
 
 html, body {
   height: 100%;
-  overflow: hidden;
+  overflow: hidden; /* Impede rolagem global */
 }
 
 body {
@@ -35,12 +35,12 @@ body {
 /* Layout principal */
 .layout-container {
   display: flex;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden; /* Impede rolagem na estrutura principal */
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
-  overflow: hidden;
 }
 
 /* Sidebar */
