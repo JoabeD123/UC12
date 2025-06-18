@@ -535,4 +535,103 @@
 
 .empty-list-message p {
   margin: 0;
+}
+
+/* Responsividade para Despesas */
+@media screen and (max-width: 1200px) {
+  .despesas-content {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  .despesa-card {
+    min-width: 280px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .despesas {
+    padding: 20px;
+  }
+
+  .despesas-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .despesas-header h2 {
+    font-size: 24px;
+  }
+
+  .despesas-form,
+  .despesas-list {
+    width: 100%;
+  }
+
+  .despesas-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .despesa-card {
+    width: 100%;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    margin: 5px 0;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .despesas {
+    padding: 15px;
+  }
+
+  .despesas-header h2 {
+    font-size: 20px;
+  }
+
+  .despesas-form,
+  .despesas-list {
+    padding: 15px;
+  }
+
+  .form-group input,
+  .form-group select {
+    font-size: 16px;
+    padding: 8px;
+  }
+
+  .despesa-card {
+    padding: 15px;
+  }
+
+  .despesa-titulo {
+    font-size: 18px;
+  }
+
+  .despesa-valor {
+    font-size: 20px;
+  }
+
+  .despesa-info p {
+    font-size: 14px;
+  }
+
+  .btn-delete {
+    padding: 8px;
+    font-size: 14px;
+  }
 } 

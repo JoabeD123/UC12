@@ -191,6 +191,67 @@
   }
 }
 
+/* Responsividade para Login */
+@media screen and (max-width: 768px) {
+  .auth-container {
+    padding: 1rem;
+  }
+
+  .auth-box {
+    padding: 1.5rem;
+    max-width: 100%;
+    margin: 1rem;
+  }
+
+  .auth-box h2 {
+    font-size: 24px;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-group label {
+    font-size: 14px;
+  }
+
+  .form-group input {
+    padding: 0.8rem;
+    font-size: 16px;
+  }
+
+  .btn-primary {
+    padding: 0.8rem;
+    font-size: 16px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .auth-container {
+    padding: 0.5rem;
+  }
+
+  .auth-box {
+    padding: 1rem;
+    border-radius: 10px;
+  }
+
+  .auth-box h2 {
+    font-size: 20px;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-group input {
+    padding: 0.7rem;
+  }
+
+  .btn-primary,
+  .btn-link {
+    padding: 0.7rem;
+    font-size: 14px;
+  }
+}
+
 .perfis-lista {
   display: flex;
   flex-direction: column;

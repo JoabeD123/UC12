@@ -59,7 +59,6 @@
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
-  overflow: auto;
 }
 
 .dashboard-content {
@@ -68,8 +67,29 @@
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
-  overflow-y: auto;
+  overflow-y: scroll;
   height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Estilização da Scrollbar específica para o Dashboard */
+.dashboard-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dashboard-content::-webkit-scrollbar-track {
+  background: var(--light-grey);
+  border-radius: 4px;
+}
+
+.dashboard-content::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 4px;
+}
+
+.dashboard-content::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-hover);
 }
 
 .content-header {
@@ -77,7 +97,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
-  padding: 0 10px; /* Adicionado padding para alinhar com o design */
+  padding: 0 10px;
 }
 
 .content-header h1 {

@@ -967,3 +967,214 @@ input:focus, select:focus {
   color: white;
   border-color: #6c5ce7;
 }
+
+/* Media Queries para Responsividade */
+@media screen and (max-width: 1200px) {
+  .layout-container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .menu-item {
+    margin: 5px;
+  }
+
+  .dashboard,
+  .receitas,
+  .despesas,
+  .cartoes,
+  .imposto-renda,
+  .gerenciar-perfis,
+  .configuracoes {
+    padding: 20px;
+  }
+
+  .cards {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .layout-container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    padding: 10px;
+  }
+
+  .menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .menu-item {
+    padding: 10px;
+    margin: 5px;
+  }
+
+  .dashboard,
+  .receitas,
+  .despesas,
+  .cartoes,
+  .imposto-renda,
+  .gerenciar-perfis,
+  .configuracoes {
+    padding: 15px;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-container {
+    width: 100%;
+    margin: 10px 0;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px;
+  }
+
+  .header-right {
+    margin-top: 10px;
+    width: 100%;
+  }
+
+  .month-selector {
+    width: 100%;
+    margin: 10px 0;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .menu-item {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .menu-icon {
+    margin-right: 8px;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .card {
+    padding: 15px;
+  }
+
+  .amount {
+    font-size: 1.2rem;
+  }
+
+  .chart-container h2 {
+    font-size: 1.2rem;
+  }
+
+  .config-section {
+    padding: 15px;
+  }
+
+  .form-group input,
+  .form-group select {
+    width: 100%;
+  }
+
+  .btn-primary,
+  .btn-link,
+  .btn-adicionar {
+    width: 100%;
+    margin: 5px 0;
+  }
+}
+
+/* Ajustes para telas muito pequenas */
+@media screen and (max-width: 320px) {
+  .menu-item {
+    padding: 8px;
+  }
+
+  .header h1 {
+    font-size: 1.2rem;
+  }
+
+  .card {
+    padding: 10px;
+  }
+
+  .amount {
+    font-size: 1rem;
+  }
+}
+
+/* Responsividade para Formulários e Tabelas */
+@media screen and (max-width: 768px) {
+  .form-group {
+    width: 100%;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .item-list {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .item-list-header,
+  .item {
+    min-width: 600px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 16px; /* Evita zoom em dispositivos móveis */
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .pagination button {
+    margin: 2px;
+  }
+}

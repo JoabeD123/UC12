@@ -177,8 +177,11 @@
 .receitas {
   flex: 1;
   padding: 40px;
-  overflow-y: auto;
+  overflow-y: scroll;
   background-color: var(--light-grey);
+  height: 100vh;
+  box-sizing: border-box;
+  position: relative;
 }
 
 .receitas-header {
@@ -604,4 +607,123 @@
     opacity: 1;
     transform: scale(1);
   }
+}
+
+/* Responsividade para Receitas */
+@media screen and (max-width: 1200px) {
+  .receitas-content {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  .receita-card {
+    min-width: 280px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .receitas {
+    padding: 20px;
+  }
+
+  .receitas-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .receitas-header h2 {
+    font-size: 24px;
+  }
+
+  .receitas-form,
+  .receitas-list {
+    width: 100%;
+  }
+
+  .receitas-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .receita-card {
+    width: 100%;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    margin: 5px 0;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .receitas {
+    padding: 15px;
+  }
+
+  .receitas-header h2 {
+    font-size: 20px;
+  }
+
+  .receitas-form,
+  .receitas-list {
+    padding: 15px;
+  }
+
+  .form-group input,
+  .form-group select {
+    font-size: 16px;
+    padding: 8px;
+  }
+
+  .receita-card {
+    padding: 15px;
+  }
+
+  .receita-titulo {
+    font-size: 18px;
+  }
+
+  .receita-valor {
+    font-size: 20px;
+  }
+
+  .receita-info p {
+    font-size: 14px;
+  }
+
+  .btn-delete {
+    padding: 8px;
+    font-size: 14px;
+  }
+}
+
+/* Estilização da Scrollbar específica para a tela de receitas */
+.receitas::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.receitas::-webkit-scrollbar-track {
+  background: var(--light-grey);
+  border-radius: 4px;
+}
+
+.receitas::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 4px;
+}
+
+.receitas::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-hover);
 } 
