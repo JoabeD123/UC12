@@ -41,17 +41,18 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
   const [cartaoAviso, setCartaoAviso] = useState(null);
   const [faturasFechadas, setFaturasFechadas] = useState([]);
   const [cartoesLoading, setCartoesLoading] = useState(true);
+  const [anoSelecionado] = useState(new Date().getFullYear());
   const navigate = useNavigate();
 
   const carregarDadosFinanceiros = useCallback(async () => {
     try {
       // Carregar receitas
-      const receitasResponse = await fetch(`http://localhost:3001/api/receitas/${perfil.id_perfil}?mes=${mesSelecionado+1}`);
+      const receitasResponse = await fetch(`http://localhost:3001/api/receitas/${perfil.id_perfil}?mes=${mesSelecionado+1}&ano=${anoSelecionado}`);
       if (!receitasResponse.ok) throw new Error('Erro ao carregar receitas');
       const receitas = await receitasResponse.json();
 
       // Carregar despesas
-      const despesasResponse = await fetch(`http://localhost:3001/api/despesas/${perfil.id_perfil}?mes=${mesSelecionado+1}`);
+      const despesasResponse = await fetch(`http://localhost:3001/api/despesas/${perfil.id_perfil}?mes=${mesSelecionado+1}&ano=${anoSelecionado}`);
       if (!despesasResponse.ok) throw new Error('Erro ao carregar despesas');
       const despesas = await despesasResponse.json();
 
@@ -84,7 +85,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
     } finally {
       // Não setar loading aqui, só após cartões
     }
-  }, [perfil, mesSelecionado]);
+  }, [perfil, mesSelecionado, anoSelecionado]);
 
   useEffect(() => {
     if (!usuario || !perfil) {
