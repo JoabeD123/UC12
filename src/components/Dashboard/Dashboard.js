@@ -37,17 +37,18 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
   });
   const [cartoes, setCartoes] = useState([]);
   const [gastosCartoes, setGastosCartoes] = useState(0);
+  const [mesSelecionado, setMesSelecionado] = useState(new Date().getMonth());
   const navigate = useNavigate();
 
   const carregarDadosFinanceiros = useCallback(async () => {
     try {
       // Carregar receitas
-      const receitasResponse = await fetch(`http://localhost:3001/api/receitas/${perfil.id_perfil}`);
+      const receitasResponse = await fetch(`http://localhost:3001/api/receitas/${perfil.id_perfil}?mes=${mesSelecionado+1}`);
       if (!receitasResponse.ok) throw new Error('Erro ao carregar receitas');
       const receitas = await receitasResponse.json();
 
       // Carregar despesas
-      const despesasResponse = await fetch(`http://localhost:3001/api/despesas/${perfil.id_perfil}`);
+      const despesasResponse = await fetch(`http://localhost:3001/api/despesas/${perfil.id_perfil}?mes=${mesSelecionado+1}`);
       if (!despesasResponse.ok) throw new Error('Erro ao carregar despesas');
       const despesas = await despesasResponse.json();
 
@@ -80,14 +81,13 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
     } finally {
       setLoading(false);
     }
-  }, [perfil]);
+  }, [perfil, mesSelecionado]);
 
   useEffect(() => {
     if (!usuario || !perfil) {
       onLogout();
       return;
     }
-
     carregarDadosFinanceiros();
   }, [usuario, perfil, onLogout, carregarDadosFinanceiros]);
 
@@ -95,7 +95,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
     const fetchCartoes = async () => {
       if (!perfil?.id_perfil) return;
       try {
-        const res = await fetch(`http://localhost:3001/api/cartoes/${perfil.id_perfil}`);
+        const res = await fetch(`http://localhost:3001/api/cartoes/${perfil.id_perfil}?mes=${mesSelecionado+1}`);
         if (!res.ok) throw new Error('Erro ao buscar cartões de crédito');
         const data = await res.json();
         setCartoes(data);
@@ -107,7 +107,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
       }
     };
     fetchCartoes();
-  }, [perfil]);
+  }, [perfil, mesSelecionado]);
 
   const handleNavigation = (path) => {
     navigate(path);
@@ -342,8 +342,8 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
             <div className="user-profile-header">
               <select
                 className="month-selector"
-                value={new Date().getMonth()}
-                onChange={(e) => {}}
+                value={mesSelecionado}
+                onChange={e => setMesSelecionado(Number(e.target.value))}
               >
                 {meses.map((mes, index) => (
                   <option key={index} value={index}>

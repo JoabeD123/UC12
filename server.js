@@ -533,16 +533,20 @@ app.delete('/api/contas/:id', async (req, res) => {
 // Endpoints para Receitas
 app.get('/api/receitas/:perfilId', async (req, res) => {
   const { perfilId } = req.params;
+  const { mes, ano } = req.query;
   try {
     const client = await pool.connect();
-    const result = await client.query(
-      `SELECT r.*, cat.nome_categoria
+    let query = `SELECT r.*, cat.nome_categoria
        FROM receita r
        LEFT JOIN categoria cat ON r.categoria_id = cat.id_categoria
-       WHERE r.perfil_id = $1 AND cat.tipo_categoria = 'receita'
-       ORDER BY r.data_recebimento DESC`,
-      [perfilId]
-    );
+       WHERE r.perfil_id = $1 AND cat.tipo_categoria = 'receita'`;
+    const params = [perfilId];
+    if (mes && ano) {
+      query += ` AND EXTRACT(MONTH FROM r.data_recebimento) = $2 AND EXTRACT(YEAR FROM r.data_recebimento) = $3`;
+      params.push(mes, ano);
+    }
+    query += ' ORDER BY r.data_recebimento DESC';
+    const result = await client.query(query, params);
     client.release();
     res.status(200).json(result.rows);
   } catch (err) {
@@ -584,16 +588,20 @@ app.delete('/api/receitas/:id', async (req, res) => {
 // Endpoints para Despesas
 app.get('/api/despesas/:perfilId', async (req, res) => {
   const { perfilId } = req.params;
+  const { mes, ano } = req.query;
   try {
     const client = await pool.connect();
-    const result = await client.query(
-      `SELECT c.*, cat.nome_categoria 
+    let query = `SELECT c.*, cat.nome_categoria 
        FROM contas c 
        LEFT JOIN categoria cat ON c.categoria_id = cat.id_categoria 
-       WHERE c.perfil_id = $1 AND cat.tipo_categoria = 'despesa'
-       ORDER BY c.data_vencimento DESC`,
-      [perfilId]
-    );
+       WHERE c.perfil_id = $1 AND cat.tipo_categoria = 'despesa'`;
+    const params = [perfilId];
+    if (mes && ano) {
+      query += ` AND EXTRACT(MONTH FROM c.data_vencimento) = $2 AND EXTRACT(YEAR FROM c.data_vencimento) = $3`;
+      params.push(mes, ano);
+    }
+    query += ' ORDER BY c.data_vencimento DESC';
+    const result = await client.query(query, params);
     client.release();
     res.status(200).json(result.rows);
   } catch (err) {
@@ -830,6 +838,8 @@ app.delete('/api/perfis/:id', async (req, res) => {
 // Rotas para Cartões de Crédito
 app.get('/api/cartoes/:perfilId', async (req, res) => {
   const { perfilId } = req.params;
+  // Para cartões, normalmente não há filtro de mês/ano, pois o cartão existe independente do mês.
+  // Se quiser filtrar gastos por mês, seria necessário uma tabela de gastos mensais por cartão.
   try {
     const client = await pool.connect();
     const result = await client.query(
