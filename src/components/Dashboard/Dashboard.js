@@ -35,6 +35,8 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
     saldo: 0,
     despesasPorCategoria: []
   });
+  const [cartoes, setCartoes] = useState([]);
+  const [gastosCartoes, setGastosCartoes] = useState(0);
   const navigate = useNavigate();
 
   const carregarDadosFinanceiros = useCallback(async () => {
@@ -63,7 +65,6 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
         return acc;
       }, {});
 
-      // Formatar dados para exibição
       setDadosFinanceiros({
         receitas: totalReceitas,
         despesas: totalDespesas,
@@ -90,8 +91,50 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
     carregarDadosFinanceiros();
   }, [usuario, perfil, onLogout, carregarDadosFinanceiros]);
 
+  useEffect(() => {
+    const fetchCartoes = async () => {
+      if (!perfil?.id_perfil) return;
+      try {
+        const res = await fetch(`http://localhost:3001/api/cartoes/${perfil.id_perfil}`);
+        if (!res.ok) throw new Error('Erro ao buscar cartões de crédito');
+        const data = await res.json();
+        setCartoes(data);
+        const totalGastos = data.reduce((acc, cartao) => acc + (parseFloat(cartao.gastos) || 0), 0);
+        setGastosCartoes(totalGastos);
+      } catch (err) {
+        setCartoes([]);
+        setGastosCartoes(0);
+      }
+    };
+    fetchCartoes();
+  }, [perfil]);
+
   const handleNavigation = (path) => {
     navigate(path);
+  };
+
+  // Função para pagar fatura (zerar gastos)
+  const handlePagarFatura = async (cartao) => {
+    try {
+      const res = await fetch(`http://localhost:3001/api/cartoes/${cartao.id_cartao}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: cartao.nome,
+          limite: cartao.limite,
+          dia_vencimento: cartao.dia_vencimento,
+          bandeira: cartao.bandeira,
+          gastos: 0
+        })
+      });
+      if (!res.ok) throw new Error('Erro ao pagar fatura');
+      // Atualizar localmente
+      setCartoes(prev => prev.map(c => c.id_cartao === cartao.id_cartao ? { ...c, gastos: 0 } : c));
+      // Atualizar o total de gastos
+      setGastosCartoes(prev => prev - (parseFloat(cartao.gastos) || 0));
+    } catch (err) {
+      alert('Erro ao pagar fatura!');
+    }
   };
 
   if (loading) {
@@ -360,7 +403,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
                   <FaCreditCard />
                 </div>
               </div>
-              <p className="amount">R$ 0,00</p>
+              <p className="amount">R$ {gastosCartoes.toFixed(2).replace('.', ',')}</p>
             </div>
           </div>
 
@@ -393,28 +436,23 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
               <div className="credit-card-tab">Faturas fechadas</div>
             </div>
             <div className="credit-card-list">
-              <div className="card-item">
-                <div className="card-info">
-                  <div className="card-logo">N</div>
-                  <div className="card-details">
-                    <span className="card-name">Nubank</span>
-                    <span className="card-due-date">Vence amanhã</span>
+              {cartoes.length === 0 ? (
+                <div style={{ padding: '1rem', color: '#888' }}>Nenhum cartão cadastrado.</div>
+              ) : (
+                cartoes.map((cartao) => (
+                  <div className="card-item" key={cartao.id_cartao}>
+                    <div className="card-info">
+                      <div className="card-logo">{cartao.nome.charAt(0).toUpperCase()}</div>
+                      <div className="card-details">
+                        <span className="card-name">{cartao.nome}</span>
+                        <span className="card-due-date">Vence dia {cartao.dia_vencimento}</span>
+                      </div>
+                    </div>
+                    <span className="card-amount negative">R$ {Number(cartao.gastos ?? 0).toFixed(2).replace('.', ',')}</span>
+                    <button className="pay-bill-btn" onClick={() => handlePagarFatura(cartao)}>Pagar fatura</button>
                   </div>
-                </div>
-                <span className="card-amount negative">R$30,00</span>
-                <button className="pay-bill-btn">Pagar fatura</button>
-              </div>
-              <div className="card-item">
-                <div className="card-info">
-                  <div className="card-logo">C</div>
-                  <div className="card-details">
-                    <span className="card-name">Caixa</span>
-                    <span className="card-due-date">Vence em 10/09</span>
-                  </div>
-                </div>
-                <span className="card-amount negative">R$150,00</span>
-                <button className="pay-bill-btn">Pagar fatura</button>
-              </div>
+                ))
+              )}
             </div>
           </div>
         </div>
