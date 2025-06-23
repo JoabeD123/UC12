@@ -39,6 +39,8 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
   const [gastosCartoes, setGastosCartoes] = useState(0);
   const [mesSelecionado, setMesSelecionado] = useState(new Date().getMonth());
   const [cartaoAviso, setCartaoAviso] = useState(null);
+  const [faturasFechadas, setFaturasFechadas] = useState([]);
+  const [cartoesLoading, setCartoesLoading] = useState(true);
   const navigate = useNavigate();
 
   const carregarDadosFinanceiros = useCallback(async () => {
@@ -80,7 +82,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
       console.error('Erro ao carregar dados financeiros:', error);
       setError('Erro ao carregar dados financeiros');
     } finally {
-      setLoading(false);
+      // Não setar loading aqui, só após cartões
     }
   }, [perfil, mesSelecionado]);
 
@@ -89,12 +91,17 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
       onLogout();
       return;
     }
+    setLoading(true);
+    setCartoesLoading(true);
     carregarDadosFinanceiros();
   }, [usuario, perfil, onLogout, carregarDadosFinanceiros]);
 
   useEffect(() => {
     const fetchCartoes = async () => {
-      if (!perfil?.id_perfil) return;
+      if (!perfil?.id_perfil) {
+        setCartoesLoading(false);
+        return;
+      }
       try {
         const res = await fetch(`http://localhost:3001/api/cartoes/${perfil.id_perfil}?mes=${mesSelecionado+1}`);
         if (!res.ok) throw new Error('Erro ao buscar cartões de crédito');
@@ -105,10 +112,20 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
       } catch (err) {
         setCartoes([]);
         setGastosCartoes(0);
+        console.error('Erro ao buscar cartões:', err);
+      } finally {
+        setCartoesLoading(false);
       }
     };
     fetchCartoes();
   }, [perfil, mesSelecionado]);
+
+  // Quando ambos carregarem, libera o loading principal
+  useEffect(() => {
+    if (!cartoesLoading) {
+      setLoading(false);
+    }
+  }, [cartoesLoading]);
 
   useEffect(() => {
     if (cartoes.length > 0) {
@@ -131,6 +148,65 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
       }
     }
   }, [cartoes]);
+
+  // Fechamento automático de faturas
+  useEffect(() => {
+    if (!perfil?.id_perfil || cartoes.length === 0) return;
+    const hoje = new Date();
+    const diaHoje = hoje.getDate();
+    const mesHoje = hoje.getMonth() + 1;
+    const anoHoje = hoje.getFullYear();
+    const fecharFaturas = async () => {
+      let houveFechamento = false;
+      for (const cartao of cartoes) {
+        let diaVenc = Number(cartao.dia_vencimento);
+        if (!diaVenc || diaVenc < 1 || diaVenc > 31) continue;
+        if (parseFloat(cartao.gastos) > 0 && diaHoje > diaVenc) {
+          // Verifica se já existe fatura fechada para este cartão neste mês
+          const jaFechada = faturasFechadas.some(f => f.id_cartao === cartao.id_cartao && new Date(f.data_fechamento).getMonth() + 1 === mesHoje && new Date(f.data_fechamento).getFullYear() === anoHoje);
+          if (!jaFechada) {
+            // Cria fatura fechada
+            await fetch('http://localhost:3001/api/faturas-fechadas', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id_cartao: cartao.id_cartao,
+                nome_cartao: cartao.nome,
+                valor: cartao.gastos,
+                data_fechamento: `${anoHoje}-${String(mesHoje).padStart(2, '0')}-${String(diaVenc).padStart(2, '0')}`,
+                perfil_id: perfil.id_perfil
+              })
+            });
+            // Zera o valor gasto do cartão
+            await fetch(`http://localhost:3001/api/cartoes/${cartao.id_cartao}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                nome: cartao.nome,
+                limite: cartao.limite,
+                dia_vencimento: cartao.dia_vencimento,
+                bandeira: cartao.bandeira,
+                gastos: 0
+              })
+            });
+            houveFechamento = true;
+          }
+        }
+      }
+      // Se houve fechamento, atualize as faturas fechadas
+      if (houveFechamento) {
+        try {
+          const res = await fetch(`http://localhost:3001/api/faturas-fechadas/${perfil.id_perfil}`);
+          if (res.ok) {
+            const data = await res.json();
+            setFaturasFechadas(data);
+          }
+        } catch {}
+      }
+    };
+    fecharFaturas();
+    // eslint-disable-next-line
+  }, [cartoes, perfil]);
 
   const handleNavigation = (path) => {
     navigate(path);
