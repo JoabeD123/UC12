@@ -39,12 +39,10 @@ const CartoesCredito = ({ perfil }) => {
   const [error, setError] = useState('');
   const [gastos, setGastos] = useState({});
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   // Buscar cartões do banco ao carregar a tela
   useEffect(() => {
     if (!perfil?.id_perfil) return;
-    setLoading(true);
     fetch(`${API_URL}/${perfil.id_perfil}`)
       .then(res => res.json())
       .then(data => {
@@ -56,8 +54,7 @@ const CartoesCredito = ({ perfil }) => {
         });
         setGastos(gastosObj);
       })
-      .catch(() => setCartoes([]))
-      .finally(() => setLoading(false));
+      .catch(() => setCartoes([]));
   }, [perfil]);
 
   const handleInputChange = (e) => {

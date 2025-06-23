@@ -38,6 +38,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
   const [cartoes, setCartoes] = useState([]);
   const [gastosCartoes, setGastosCartoes] = useState(0);
   const [mesSelecionado, setMesSelecionado] = useState(new Date().getMonth());
+  const [cartaoAviso, setCartaoAviso] = useState(null);
   const navigate = useNavigate();
 
   const carregarDadosFinanceiros = useCallback(async () => {
@@ -108,6 +109,28 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
     };
     fetchCartoes();
   }, [perfil, mesSelecionado]);
+
+  useEffect(() => {
+    if (cartoes.length > 0) {
+      const hoje = new Date();
+      const diaHoje = hoje.getDate();
+      // Para cada cartão, calcular diferença de dias
+      for (const cartao of cartoes) {
+        let diaVenc = Number(cartao.dia_vencimento);
+        // Se o vencimento já passou neste mês, não avisar
+        if (diaVenc < diaHoje) continue;
+        // Se o vencimento não existe (inválido), ignorar
+        if (!diaVenc || diaVenc < 1 || diaVenc > 31) continue;
+        // Só avisar se houver valor gasto
+        if (!(parseFloat(cartao.gastos) > 0)) continue;
+        // Se está a 3 dias ou menos do vencimento, avisar
+        if (diaVenc - diaHoje <= 3 && diaVenc - diaHoje >= 0) {
+          setCartaoAviso(cartao);
+          break; // Só mostra um aviso por vez
+        }
+      }
+    }
+  }, [cartoes]);
 
   const handleNavigation = (path) => {
     navigate(path);
@@ -293,6 +316,16 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
 
   return (
     <div className="layout-container">
+      {/* Pop-up de aviso de vencimento */}
+      {cartaoAviso && (
+        <div className="modal-aviso-vencimento">
+          <div className="modal-content">
+            <h3>Atenção!</h3>
+            <p>O cartão <b>{cartaoAviso.nome}</b> vence em {cartaoAviso.dia_vencimento - new Date().getDate()} dia(s)!</p>
+            <button onClick={() => setCartaoAviso(null)}>OK</button>
+          </div>
+        </div>
+      )}
       <div className="sidebar">
         <div className="logo">
           <div className="logo-icon">GF</div>
