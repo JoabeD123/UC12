@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaMoneyBillWave, FaWallet, FaCreditCard, FaCog, FaSignOutAlt, FaRegChartBar, FaPiggyBank, FaUsers } from 'react-icons/fa';
+import { FaMoneyBillWave, FaWallet, FaCreditCard, FaCog, FaRegChartBar, FaPiggyBank, FaUsers } from 'react-icons/fa';
 import './Receitas.css';
 
 function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
@@ -96,20 +96,15 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   };
 
   const handleExcluir = async (id) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta receita?')) {
-      return;
-    }
-
+    // Exclusão imediata, sem confirmação
     try {
       const response = await fetch(`http://localhost:3001/api/receitas/${id}`, {
         method: 'DELETE',
       });
-
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.message || 'Erro ao excluir receita');
       }
-
       // Recarregar receitas
       await carregarReceitas();
     } catch (error) {
