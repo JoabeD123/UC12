@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bar } from 'react-chartjs-2';
 import {
@@ -23,7 +23,7 @@ ChartJS.register(
   Legend
 );
 
-const ImpostoRenda = () => {
+const ImpostoRenda = ({ usuario, perfil }) => {
   const navigate = useNavigate();
   const [rendaInfo, setRendaInfo] = useState({
     rendaFixa: '',
@@ -43,6 +43,37 @@ const ImpostoRenda = () => {
     { limite: 4664.68, aliquota: 0.225, deducao: 662.77 },
     { limite: Infinity, aliquota: 0.275, deducao: 896.00 }
   ];
+
+  useEffect(() => {
+    const carregarReceitas = async () => {
+      if (!perfil?.id_perfil) return;
+      try {
+        const response = await fetch(`http://localhost:3001/api/receitas/${perfil.id_perfil}`);
+        if (!response.ok) throw new Error('Erro ao carregar receitas');
+        const receitas = await response.json();
+        let somaFixa = 0;
+        let somaVariavel = 0;
+        receitas.forEach(r => {
+          const valor = Number(r.valor_receita);
+          if (r.fixa) {
+            somaFixa += valor;
+          } else {
+            somaVariavel += valor;
+          }
+        });
+        // Formatar para moeda brasileira
+        const formatar = v => v > 0 ? `R$ ${v.toFixed(2).replace('.', ',')}` : '';
+        setRendaInfo(prev => ({
+          ...prev,
+          rendaFixa: formatar(somaFixa),
+          rendaVariavel: formatar(somaVariavel)
+        }));
+      } catch (e) {
+        setErro('Erro ao buscar receitas para cálculo automático.');
+      }
+    };
+    carregarReceitas();
+  }, [perfil]);
 
   // Calcular imposto total
   const calcularImposto = () => {
