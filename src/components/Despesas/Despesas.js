@@ -14,7 +14,8 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     categoria_id: '',
     tipo_conta_id: 1,
     recorrencia_id: 1,
-    status_pagamento_id: 1
+    status_pagamento_id: 1,
+    fixa: false
   });
   const [categorias, setCategorias] = useState([]);
   const [novaCategoria, setNovaCategoria] = useState('');
@@ -90,7 +91,8 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
         categoria_id: '',
         tipo_conta_id: 1,
         recorrencia_id: 1,
-        status_pagamento_id: 1
+        status_pagamento_id: 1,
+        fixa: false
       });
     } catch (error) {
       console.error('Erro ao criar despesa:', error);
@@ -315,6 +317,16 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                 ></textarea>
               </div>
 
+              <div className="form-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={novaDespesa.fixa}
+                    onChange={e => setNovaDespesa({ ...novaDespesa, fixa: e.target.checked })}
+                  /> Despesa fixa (recorrente todo mês)
+                </label>
+              </div>
+
               <button type="submit" className="btn-primary">
                 Adicionar Despesa
               </button>
@@ -333,7 +345,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                 {despesas.map((despesa) => (
                   <div key={despesa.id_conta} className="despesa-card">
                     <div className="despesa-header">
-                      <h4 className="despesa-titulo">{despesa.nome_conta}</h4>
+                      <h4 className="despesa-titulo">{despesa.nome_conta} {despesa.fixa && <span title="Despesa fixa" style={{color: '#e74a3b', fontSize: '1.1em', marginLeft: 4}}>📌</span>}</h4>
                       <span className="despesa-valor">R$ {Number(despesa.valor_conta).toFixed(2).replace('.', ',')}</span>
                     </div>
                     <div className="despesa-info">

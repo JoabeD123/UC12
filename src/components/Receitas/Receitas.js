@@ -10,7 +10,8 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     valor_receita: '',
     data_recebimento: '',
     descricao: '',
-    categoria_id: ''
+    categoria_id: '',
+    fixa: false
   });
   const [categorias, setCategorias] = useState([]);
   const [novaCategoria, setNovaCategoria] = useState('');
@@ -82,7 +83,8 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
         valor_receita: '',
         data_recebimento: '',
         descricao: '',
-        categoria_id: ''
+        categoria_id: '',
+        fixa: false
       });
 
       // Recarregar receitas
@@ -304,6 +306,16 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                 ></textarea>
               </div>
 
+              <div className="form-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={novaReceita.fixa}
+                    onChange={e => setNovaReceita({ ...novaReceita, fixa: e.target.checked })}
+                  /> Receita fixa (recorrente todo mês)
+                </label>
+              </div>
+
               <button type="submit" className="btn-primary">
                 Adicionar Receita
               </button>
@@ -322,7 +334,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                 {receitas.map((receita) => (
                   <div key={receita.id_receita} className="receita-card">
                     <div className="receita-header">
-                      <h4 className="receita-titulo">{receita.nome_receita}</h4>
+                      <h4 className="receita-titulo">{receita.nome_receita} {receita.fixa && <span title="Receita fixa" style={{color: '#1cc88a', fontSize: '1.1em', marginLeft: 4}}>📌</span>}</h4>
                       <span className="receita-valor">R$ {Number(receita.valor_receita).toFixed(2).replace('.', ',')}</span>
                     </div>
                     <div className="receita-info">

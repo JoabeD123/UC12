@@ -110,6 +110,7 @@ CREATE TABLE IF NOT EXISTS contas (
     recorrencia_id INT,
     perfil_id INT,
     categoria_id INT,
+    fixa BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil),
     FOREIGN KEY (categoria_id) REFERENCES categoria(id_categoria),
     FOREIGN KEY (status_pagamento_id) REFERENCES status_pagamento_tipo(id_status_pagamento_tipo),
@@ -126,6 +127,7 @@ CREATE TABLE IF NOT EXISTS receita (
     data_recebimento DATE NOT NULL,
     descricao TEXT,
     categoria_id INT,
+    fixa BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil),
     FOREIGN KEY (categoria_id) REFERENCES categoria(id_categoria)
 );

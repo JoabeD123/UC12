@@ -554,7 +554,7 @@ app.get('/api/receitas/:perfilId', async (req, res) => {
        WHERE r.perfil_id = $1 AND cat.tipo_categoria = 'receita'`;
     const params = [perfilId];
     if (mes && ano) {
-      query += ` AND EXTRACT(MONTH FROM r.data_recebimento) = $2 AND EXTRACT(YEAR FROM r.data_recebimento) = $3`;
+      query += ` AND ((EXTRACT(MONTH FROM r.data_recebimento) = $2 AND EXTRACT(YEAR FROM r.data_recebimento) = $3) OR r.fixa = TRUE)`;
       params.push(mes, ano);
     }
     query += ' ORDER BY r.data_recebimento DESC';
@@ -568,13 +568,13 @@ app.get('/api/receitas/:perfilId', async (req, res) => {
 });
 
 app.post('/api/receitas', async (req, res) => {
-  const { perfil_id, nome_receita, valor_receita, data_recebimento, descricao, categoria_id } = req.body;
+  const { perfil_id, nome_receita, valor_receita, data_recebimento, descricao, categoria_id, fixa } = req.body;
 
   try {
     const client = await pool.connect();
     const result = await client.query(
-      'INSERT INTO receita (perfil_id, nome_receita, valor_receita, data_recebimento, descricao, categoria_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [perfil_id, nome_receita, valor_receita, data_recebimento, descricao, categoria_id]
+      'INSERT INTO receita (perfil_id, nome_receita, valor_receita, data_recebimento, descricao, categoria_id, fixa) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [perfil_id, nome_receita, valor_receita, data_recebimento, descricao, categoria_id, fixa]
     );
     client.release();
     res.status(201).json(result.rows[0]);
@@ -609,7 +609,7 @@ app.get('/api/despesas/:perfilId', async (req, res) => {
        WHERE c.perfil_id = $1 AND cat.tipo_categoria = 'despesa'`;
     const params = [perfilId];
     if (mes && ano) {
-      query += ` AND EXTRACT(MONTH FROM c.data_vencimento) = $2 AND EXTRACT(YEAR FROM c.data_vencimento) = $3`;
+      query += ` AND ((EXTRACT(MONTH FROM c.data_vencimento) = $2 AND EXTRACT(YEAR FROM c.data_vencimento) = $3) OR c.fixa = TRUE)`;
       params.push(mes, ano);
     }
     query += ' ORDER BY c.data_vencimento DESC';
@@ -633,7 +633,8 @@ app.post('/api/despesas', async (req, res) => {
     categoria_id,
     tipo_conta_id,
     recorrencia_id,
-    status_pagamento_id 
+    status_pagamento_id,
+    fixa
   } = req.body;
 
   try {
@@ -641,11 +642,11 @@ app.post('/api/despesas', async (req, res) => {
     const result = await client.query(
       `INSERT INTO contas (
         perfil_id, nome_conta, valor_conta, data_entrega, data_vencimento, 
-        descricao, categoria_id, tipo_conta_id, recorrencia_id, status_pagamento_id
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+        descricao, categoria_id, tipo_conta_id, recorrencia_id, status_pagamento_id, fixa
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
       [
         perfil_id, nome_conta, valor_conta, data_entrega, data_vencimento,
-        descricao, categoria_id, tipo_conta_id, recorrencia_id, status_pagamento_id
+        descricao, categoria_id, tipo_conta_id, recorrencia_id, status_pagamento_id, fixa
       ]
     );
     client.release();
