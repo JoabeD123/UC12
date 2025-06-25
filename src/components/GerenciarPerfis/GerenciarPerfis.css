@@ -56,8 +56,25 @@
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
-  overflow-y: auto;
+  overflow-y: scroll;
   height: 100vh;
+  box-sizing: border-box;
+}
+
+.gerenciar-perfis-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.gerenciar-perfis-content::-webkit-scrollbar-track {
+  background: var(--light-grey);
+  border-radius: 4px;
+}
+.gerenciar-perfis-content::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 4px;
+}
+.gerenciar-perfis-content::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-hover);
 }
 
 .layout-container {

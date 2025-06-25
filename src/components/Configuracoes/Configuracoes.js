@@ -77,7 +77,7 @@ const Configuracoes = ({ usuario, perfil, darkMode, onThemeChange, onLogout }) =
         </div>
       </div>
 
-      <div className="config-container">
+      <div className="configuracoes-content">
         <div className="config-header">
           <h2>Configurações</h2>
         </div>

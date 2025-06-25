@@ -132,8 +132,25 @@
   flex: 1;
   padding: 2rem;
   background-color: var(--light-grey);
-  height: 100%;
-  overflow-y: auto;
+  height: 100vh;
+  overflow-y: scroll;
+  box-sizing: border-box;
+}
+
+.cartoes-credito::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.cartoes-credito::-webkit-scrollbar-track {
+  background: var(--light-grey);
+  border-radius: 4px;
+}
+.cartoes-credito::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 4px;
+}
+.cartoes-credito::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-hover);
 }
 
 .cartoes-header {

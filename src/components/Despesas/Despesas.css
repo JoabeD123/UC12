@@ -177,8 +177,26 @@
 .despesas {
   flex: 1;
   padding: 40px;
-  overflow-y: auto;
+  overflow-y: scroll;
   background-color: var(--light-grey);
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+.despesas::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.despesas::-webkit-scrollbar-track {
+  background: var(--light-grey);
+  border-radius: 4px;
+}
+.despesas::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 4px;
+}
+.despesas::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-hover);
 }
 
 .despesas-header {
