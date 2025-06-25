@@ -229,6 +229,18 @@ app.get('/init-db', async (req, res) => {
         gastos DECIMAL(10,2) DEFAULT 0,
         FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil)
     );
+
+    -- Tabela de Faturas de Cartão de Crédito
+    CREATE TABLE IF NOT EXISTS fatura_cartao (
+        id_fatura SERIAL PRIMARY KEY,
+        id_cartao INT NOT NULL,
+        mes_ano VARCHAR(7) NOT NULL, -- 'AAAA-MM' do mês de vencimento
+        valor_fechado DECIMAL(10,2) NOT NULL,
+        valor_pago DECIMAL(10,2) DEFAULT 0,
+        data_fechamento DATE NOT NULL,
+        paga BOOLEAN DEFAULT FALSE,
+        FOREIGN KEY (id_cartao) REFERENCES cartao_credito(id_cartao)
+    );
   `;
 
   try {
@@ -898,6 +910,105 @@ app.delete('/api/cartoes/:id', async (req, res) => {
   } catch (err) {
     console.error('Erro ao excluir cartão:', err);
     res.status(500).json({ message: 'Erro ao excluir cartão.' });
+  }
+});
+
+// ENDPOINTS DE FATURAS DE CARTÃO DE CRÉDITO
+
+// Criar fatura fechada (fechamento automático)
+app.post('/api/faturas-cartao', async (req, res) => {
+  const { id_cartao, mes_ano, valor_fechado, data_fechamento } = req.body;
+  if (!id_cartao || !mes_ano || !valor_fechado || !data_fechamento) {
+    return res.status(400).json({ message: 'Dados obrigatórios faltando.' });
+  }
+  try {
+    const client = await pool.connect();
+    // Verifica se já existe fatura para esse cartão e mês
+    const existe = await client.query(
+      'SELECT * FROM fatura_cartao WHERE id_cartao = $1 AND mes_ano = $2',
+      [id_cartao, mes_ano]
+    );
+    if (existe.rows.length > 0) {
+      client.release();
+      return res.status(409).json({ message: 'Fatura já existe para este cartão e mês.' });
+    }
+    const result = await client.query(
+      'INSERT INTO fatura_cartao (id_cartao, mes_ano, valor_fechado, data_fechamento) VALUES ($1, $2, $3, $4) RETURNING *',
+      [id_cartao, mes_ano, valor_fechado, data_fechamento]
+    );
+    client.release();
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao criar fatura:', err);
+    res.status(500).json({ message: 'Erro ao criar fatura.' });
+  }
+});
+
+// Listar faturas por perfil (todas faturas dos cartões do perfil)
+app.get('/api/faturas-cartao/perfil/:perfilId', async (req, res) => {
+  const { perfilId } = req.params;
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      `SELECT f.*, c.nome as nome_cartao, c.bandeira FROM fatura_cartao f
+       JOIN cartao_credito c ON f.id_cartao = c.id_cartao
+       WHERE c.perfil_id = $1
+       ORDER BY f.data_fechamento DESC`,
+      [perfilId]
+    );
+    client.release();
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar faturas:', err);
+    res.status(500).json({ message: 'Erro ao buscar faturas.' });
+  }
+});
+
+// Listar faturas por cartão
+app.get('/api/faturas-cartao/cartao/:idCartao', async (req, res) => {
+  const { idCartao } = req.params;
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'SELECT * FROM fatura_cartao WHERE id_cartao = $1 ORDER BY data_fechamento DESC',
+      [idCartao]
+    );
+    client.release();
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar faturas do cartão:', err);
+    res.status(500).json({ message: 'Erro ao buscar faturas do cartão.' });
+  }
+});
+
+// Pagar fatura (total ou parcial)
+app.put('/api/faturas-cartao/:idFatura/pagar', async (req, res) => {
+  const { idFatura } = req.params;
+  const { valor_pago } = req.body;
+  if (valor_pago === undefined) {
+    return res.status(400).json({ message: 'Valor pago é obrigatório.' });
+  }
+  try {
+    const client = await pool.connect();
+    // Busca a fatura
+    const faturaResult = await client.query('SELECT * FROM fatura_cartao WHERE id_fatura = $1', [idFatura]);
+    if (faturaResult.rows.length === 0) {
+      client.release();
+      return res.status(404).json({ message: 'Fatura não encontrada.' });
+    }
+    const fatura = faturaResult.rows[0];
+    let novoValorPago = parseFloat(valor_pago);
+    if (novoValorPago > fatura.valor_fechado) novoValorPago = fatura.valor_fechado;
+    const paga = novoValorPago >= fatura.valor_fechado;
+    const result = await client.query(
+      'UPDATE fatura_cartao SET valor_pago = $1, paga = $2 WHERE id_fatura = $3 RETURNING *',
+      [novoValorPago, paga, idFatura]
+    );
+    client.release();
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao pagar fatura:', err);
+    res.status(500).json({ message: 'Erro ao pagar fatura.' });
   }
 });
 

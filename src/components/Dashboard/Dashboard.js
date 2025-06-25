@@ -42,6 +42,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
   const [faturasFechadas, setFaturasFechadas] = useState([]);
   const [cartoesLoading, setCartoesLoading] = useState(true);
   const [anoSelecionado] = useState(new Date().getFullYear());
+  const [abaFatura, setAbaFatura] = useState('abertas'); // 'abertas' ou 'fechadas'
   const navigate = useNavigate();
 
   const carregarDadosFinanceiros = useCallback(async () => {
@@ -163,19 +164,18 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
         let diaVenc = Number(cartao.dia_vencimento);
         if (!diaVenc || diaVenc < 1 || diaVenc > 31) continue;
         if (parseFloat(cartao.gastos) > 0 && diaHoje > diaVenc) {
-          // Verifica se já existe fatura fechada para este cartão neste mês
-          const jaFechada = faturasFechadas.some(f => f.id_cartao === cartao.id_cartao && new Date(f.data_fechamento).getMonth() + 1 === mesHoje && new Date(f.data_fechamento).getFullYear() === anoHoje);
+          // Verifica se já existe fatura fechada para este cartão e mês
+          const jaFechada = faturasFechadas.some(f => f.id_cartao === cartao.id_cartao && f.mes_ano === `${anoHoje}-${String(mesHoje).padStart(2, '0')}`);
           if (!jaFechada) {
-            // Cria fatura fechada
-            await fetch('http://localhost:3001/api/faturas-fechadas', {
+            // Cria fatura fechada usando o novo endpoint
+            await fetch('http://localhost:3001/api/faturas-cartao', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 id_cartao: cartao.id_cartao,
-                nome_cartao: cartao.nome,
-                valor: cartao.gastos,
-                data_fechamento: `${anoHoje}-${String(mesHoje).padStart(2, '0')}-${String(diaVenc).padStart(2, '0')}`,
-                perfil_id: perfil.id_perfil
+                mes_ano: `${anoHoje}-${String(mesHoje).padStart(2, '0')}`,
+                valor_fechado: cartao.gastos,
+                data_fechamento: `${anoHoje}-${String(mesHoje).padStart(2, '0')}-${String(diaVenc).padStart(2, '0')}`
               })
             });
             // Zera o valor gasto do cartão
@@ -197,7 +197,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
       // Se houve fechamento, atualize as faturas fechadas
       if (houveFechamento) {
         try {
-          const res = await fetch(`http://localhost:3001/api/faturas-fechadas/${perfil.id_perfil}`);
+          const res = await fetch(`http://localhost:3001/api/faturas-cartao/perfil/${perfil.id_perfil}`);
           if (res.ok) {
             const data = await res.json();
             setFaturasFechadas(data);
@@ -208,6 +208,20 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
     fecharFaturas();
     // eslint-disable-next-line
   }, [cartoes, perfil]);
+
+  useEffect(() => {
+    if (!perfil?.id_perfil) return;
+    const fetchFaturasFechadas = async () => {
+      try {
+        const res = await fetch(`http://localhost:3001/api/faturas-cartao/perfil/${perfil.id_perfil}`);
+        if (res.ok) {
+          const data = await res.json();
+          setFaturasFechadas(data);
+        }
+      } catch {}
+    };
+    fetchFaturasFechadas();
+  }, [perfil]);
 
   const handleNavigation = (path) => {
     navigate(path);
@@ -542,28 +556,53 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
           <div className="credit-card-section">
             <h2>Cartões de crédito</h2>
             <div className="credit-card-tabs">
-              <div className="credit-card-tab active">Faturas abertas</div>
-              <div className="credit-card-tab">Faturas fechadas</div>
+              <div className={`credit-card-tab${abaFatura === 'abertas' ? ' active' : ''}`} onClick={() => setAbaFatura('abertas')}>Faturas abertas</div>
+              <div className={`credit-card-tab${abaFatura === 'fechadas' ? ' active' : ''}`} onClick={() => setAbaFatura('fechadas')}>Faturas fechadas</div>
             </div>
-            <div className="credit-card-list">
-              {cartoes.length === 0 ? (
-                <div style={{ padding: '1rem', color: '#888' }}>Nenhum cartão cadastrado.</div>
-              ) : (
-                cartoes.map((cartao) => (
-                  <div className="card-item" key={cartao.id_cartao}>
-                    <div className="card-info">
-                      <div className="card-logo">{cartao.nome.charAt(0).toUpperCase()}</div>
-                      <div className="card-details">
-                        <span className="card-name">{cartao.nome}</span>
-                        <span className="card-due-date">Vence dia {cartao.dia_vencimento}</span>
+            {abaFatura === 'abertas' ? (
+              <div className="credit-card-list">
+                {cartoes.length === 0 ? (
+                  <div style={{ padding: '1rem', color: '#888' }}>Nenhum cartão cadastrado.</div>
+                ) : (
+                  cartoes.map((cartao) => (
+                    <div className="card-item" key={cartao.id_cartao}>
+                      <div className="card-info">
+                        <div className="card-logo">{cartao.nome.charAt(0).toUpperCase()}</div>
+                        <div className="card-details">
+                          <span className="card-name">{cartao.nome}</span>
+                          <span className="card-due-date">Vence dia {cartao.dia_vencimento}</span>
+                        </div>
                       </div>
+                      <span className="card-amount negative">R$ {Number(cartao.gastos ?? 0).toFixed(2).replace('.', ',')}</span>
+                      <button className="pay-bill-btn" onClick={() => handlePagarFatura(cartao)}>Pagar fatura</button>
                     </div>
-                    <span className="card-amount negative">R$ {Number(cartao.gastos ?? 0).toFixed(2).replace('.', ',')}</span>
-                    <button className="pay-bill-btn" onClick={() => handlePagarFatura(cartao)}>Pagar fatura</button>
-                  </div>
-                ))
-              )}
-            </div>
+                  ))
+                )}
+              </div>
+            ) : (
+              <div className="credit-card-list">
+                {faturasFechadas.length === 0 ? (
+                  <div style={{ padding: '1rem', color: '#888' }}>Nenhuma fatura fechada encontrada.</div>
+                ) : (
+                  faturasFechadas.map((fatura) => (
+                    <div className="card-item" key={fatura.id_fatura}>
+                      <div className="card-info">
+                        <div className="card-logo">{fatura.nome_cartao ? fatura.nome_cartao.charAt(0).toUpperCase() : '?'}</div>
+                        <div className="card-details">
+                          <span className="card-name">{fatura.nome_cartao || 'Cartão'}</span>
+                          <span className="card-due-date">Referente: {fatura.mes_ano}</span>
+                          <span className="card-due-date">Fechada em: {fatura.data_fechamento}</span>
+                        </div>
+                      </div>
+                      <span className="card-amount negative">R$ {Number(fatura.valor_fechado ?? 0).toFixed(2).replace('.', ',')}</span>
+                      <span style={{ color: fatura.paga ? 'green' : 'red', fontWeight: 600, marginLeft: 10 }}>
+                        {fatura.paga ? 'Paga' : `Pendente (Pago: R$ ${Number(fatura.valor_pago ?? 0).toFixed(2).replace('.', ',')})`}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
