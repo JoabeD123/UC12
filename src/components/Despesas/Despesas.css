@@ -420,6 +420,24 @@
   transform: translateY(-2px);
 }
 
+.btn-edit {
+  background-color: var(--secondary-color);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-edit:hover {
+  background-color: var(--primary-hover);
+}
+
 .error {
   background-color: var(--error-bg);
   color: var(--error-color);

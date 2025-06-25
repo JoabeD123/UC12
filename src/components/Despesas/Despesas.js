@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaMoneyBillWave, FaWallet, FaCreditCard, FaCog, FaSignOutAlt, FaRegChartBar, FaPiggyBank, FaUsers } from 'react-icons/fa';
+import { FaMoneyBillWave, FaWallet, FaCreditCard, FaCog, FaSignOutAlt, FaRegChartBar, FaPiggyBank, FaUsers, FaEdit } from 'react-icons/fa';
 import './Despesas.css';
 
 function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
@@ -22,6 +22,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showCategoriaForm, setShowCategoriaForm] = useState(false);
+  const [editandoDespesa, setEditandoDespesa] = useState(null);
   const navigate = useNavigate();
 
   const carregarDespesas = useCallback(async () => {
@@ -63,25 +64,38 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
       alert('Você não tem permissão para adicionar despesas.');
       return;
     }
-
     try {
-      const response = await fetch('http://localhost:3001/api/despesas', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          perfil_id: perfil.id_perfil,
-          ...novaDespesa,
-          valor_conta: parseFloat(novaDespesa.valor_conta)
-        }),
-      });
-
-      if (!response.ok) throw new Error('Erro ao criar despesa');
-      
-      const novaDespesaCriada = await response.json();
-      setDespesas([...despesas, novaDespesaCriada]);
-      
+      if (editandoDespesa) {
+        // Edição de despesa existente
+        const response = await fetch(`http://localhost:3001/api/despesas/${editandoDespesa.id_conta}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            perfil_id: perfil.id_perfil,
+            ...novaDespesa,
+            valor_conta: parseFloat(novaDespesa.valor_conta)
+          })
+        });
+        if (!response.ok) throw new Error('Erro ao editar despesa');
+        await carregarDespesas();
+        setEditandoDespesa(null);
+      } else {
+        // Adição normal
+        const response = await fetch('http://localhost:3001/api/despesas', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            perfil_id: perfil.id_perfil,
+            ...novaDespesa,
+            valor_conta: parseFloat(novaDespesa.valor_conta)
+          }),
+        });
+        if (!response.ok) throw new Error('Erro ao criar despesa');
+        const novaDespesaCriada = await response.json();
+        setDespesas([...despesas, novaDespesaCriada]);
+      }
       setNovaDespesa({
         nome_conta: '',
         valor_conta: '',
@@ -95,8 +109,8 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
         fixa: false
       });
     } catch (error) {
-      console.error('Erro ao criar despesa:', error);
-      alert('Erro ao criar despesa. Tente novamente.');
+      console.error('Erro ao criar/editar despesa:', error);
+      alert('Erro ao criar/editar despesa. Tente novamente.');
     }
   };
 
@@ -327,8 +341,11 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                 </label>
               </div>
 
-              <button type="submit" className="btn-primary">
-                Adicionar Despesa
+              <button
+                type="submit"
+                className="btn-primary"
+              >
+                {editandoDespesa ? 'Salvar' : 'Adicionar Despesa'}
               </button>
             </form>
           </div>
@@ -360,6 +377,35 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                     <div className="despesa-actions">
                       <button onClick={() => handleExcluir(despesa.id_conta)} className="btn-delete">
                         Excluir
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditandoDespesa(despesa);
+                          // Corrigir formato das datas para yyyy-MM-dd
+                          const formatarData = (data) => {
+                            if (!data) return '';
+                            const d = new Date(data);
+                            const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                            const day = d.getDate().toString().padStart(2, '0');
+                            return `${d.getFullYear()}-${month}-${day}`;
+                          };
+                          setNovaDespesa({
+                            nome_conta: despesa.nome_conta,
+                            valor_conta: despesa.valor_conta,
+                            data_entrega: formatarData(despesa.data_entrega),
+                            data_vencimento: formatarData(despesa.data_vencimento),
+                            descricao: despesa.descricao || '',
+                            categoria_id: despesa.categoria_id || '',
+                            tipo_conta_id: despesa.tipo_conta_id || 1,
+                            recorrencia_id: despesa.recorrencia_id || 1,
+                            status_pagamento_id: despesa.status_pagamento_id || 1,
+                            fixa: despesa.fixa || false
+                          });
+                        }}
+                        className="btn-edit"
+                        style={{ marginLeft: 8 }}
+                      >
+                        <FaEdit style={{ marginRight: 4 }} /> Editar
                       </button>
                     </div>
                   </div>

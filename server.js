@@ -597,6 +597,30 @@ app.delete('/api/receitas/:id', async (req, res) => {
   }
 });
 
+app.put('/api/receitas/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nome_receita, valor_receita, data_recebimento, descricao, categoria_id, fixa } = req.body;
+
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      `UPDATE receita
+       SET nome_receita = $1, valor_receita = $2, data_recebimento = $3, descricao = $4, categoria_id = $5, fixa = $6
+       WHERE id_receita = $7
+       RETURNING *`,
+      [nome_receita, valor_receita, data_recebimento, descricao, categoria_id, fixa, id]
+    );
+    client.release();
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Receita não encontrada.' });
+    }
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao atualizar receita:', err);
+    res.status(500).json({ message: 'Erro ao atualizar receita.' });
+  }
+});
+
 // Endpoints para Despesas
 app.get('/api/despesas/:perfilId', async (req, res) => {
   const { perfilId } = req.params;
@@ -667,6 +691,33 @@ app.delete('/api/despesas/:id', async (req, res) => {
   } catch (err) {
     console.error('Erro ao excluir despesa:', err);
     res.status(500).json({ message: 'Erro ao excluir despesa.' });
+  }
+});
+
+app.put('/api/despesas/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nome_conta, valor_conta, data_entrega, data_vencimento, status_pagamento_id,
+          descricao, tipo_conta_id, recorrencia_id, categoria_id, fixa } = req.body;
+
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      `UPDATE contas 
+       SET nome_conta = $1, valor_conta = $2, data_entrega = $3, data_vencimento = $4,
+           status_pagamento_id = $5, descricao = $6, tipo_conta_id = $7, 
+           recorrencia_id = $8, categoria_id = $9, fixa = $10
+       WHERE id_conta = $11 RETURNING *`,
+      [nome_conta, valor_conta, data_entrega, data_vencimento, status_pagamento_id,
+       descricao, tipo_conta_id, recorrencia_id, categoria_id, fixa, id]
+    );
+    client.release();
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Despesa não encontrada.' });
+    }
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao atualizar despesa:', err);
+    res.status(500).json({ message: 'Erro ao atualizar despesa.' });
   }
 });
 

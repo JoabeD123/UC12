@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaMoneyBillWave, FaWallet, FaCreditCard, FaCog, FaRegChartBar, FaPiggyBank, FaUsers } from 'react-icons/fa';
+import { FaMoneyBillWave, FaWallet, FaCreditCard, FaCog, FaRegChartBar, FaPiggyBank, FaUsers, FaEdit } from 'react-icons/fa';
 import './Receitas.css';
 
 function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
@@ -18,6 +18,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showCategoriaForm, setShowCategoriaForm] = useState(false);
+  const [editandoReceita, setEditandoReceita] = useState(null);
   const navigate = useNavigate();
 
   const carregarReceitas = useCallback(async () => {
@@ -59,25 +60,39 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-
     try {
-      const response = await fetch('http://localhost:3001/api/receitas', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...novaReceita,
-          perfil_id: perfil.id_perfil
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Erro ao adicionar receita');
+      if (editandoReceita) {
+        // Edição
+        const response = await fetch(`http://localhost:3001/api/receitas/${editandoReceita.id_receita}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...novaReceita,
+            perfil_id: perfil.id_perfil
+          })
+        });
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.message || 'Erro ao editar receita');
+        }
+        setEditandoReceita(null);
+      } else {
+        // Adição
+        const response = await fetch('http://localhost:3001/api/receitas', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...novaReceita,
+            perfil_id: perfil.id_perfil
+          }),
+        });
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.message || 'Erro ao adicionar receita');
+        }
       }
-
-      // Limpar formulário
       setNovaReceita({
         nome_receita: '',
         valor_receita: '',
@@ -86,12 +101,10 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
         categoria_id: '',
         fixa: false
       });
-
-      // Recarregar receitas
       await carregarReceitas();
     } catch (error) {
-      console.error('Erro ao adicionar receita:', error);
-      setError(error.message || 'Erro ao adicionar receita');
+      console.error('Erro ao adicionar/editar receita:', error);
+      setError(error.message || 'Erro ao adicionar/editar receita');
     }
   };
 
@@ -312,8 +325,23 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
               </div>
 
               <button type="submit" className="btn-primary">
-                Adicionar Receita
+                {editandoReceita ? 'Salvar' : 'Adicionar Receita'}
               </button>
+              {editandoReceita && (
+                <button type="button" className="btn-secondary" style={{marginTop: 10}} onClick={() => {
+                  setEditandoReceita(null);
+                  setNovaReceita({
+                    nome_receita: '',
+                    valor_receita: '',
+                    data_recebimento: '',
+                    descricao: '',
+                    categoria_id: '',
+                    fixa: false
+                  });
+                }}>
+                  Cancelar Edição
+                </button>
+              )}
             </form>
           </div>
 
@@ -340,6 +368,26 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                     <div className="receita-actions">
                       <button onClick={() => handleExcluir(receita.id_receita)} className="btn-delete">
                         Excluir
+                      </button>
+                      <button onClick={() => {
+                        setEditandoReceita(receita);
+                        const formatarData = (data) => {
+                          if (!data) return '';
+                          const d = new Date(data);
+                          const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                          const day = d.getDate().toString().padStart(2, '0');
+                          return `${d.getFullYear()}-${month}-${day}`;
+                        };
+                        setNovaReceita({
+                          nome_receita: receita.nome_receita,
+                          valor_receita: receita.valor_receita,
+                          data_recebimento: formatarData(receita.data_recebimento),
+                          descricao: receita.descricao || '',
+                          categoria_id: receita.categoria_id || '',
+                          fixa: receita.fixa || false
+                        });
+                      }} className="btn-edit" style={{marginLeft: 8}}>
+                        <FaEdit style={{marginRight: 4}} /> Editar
                       </button>
                     </div>
                   </div>
