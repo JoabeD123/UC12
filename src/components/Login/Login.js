@@ -65,9 +65,6 @@ function Login({ onLogin }) {
       } else {
         throw new Error('Nenhum perfil encontrado para este usuário');
       }
-      
-      // Navega para o dashboard
-      navigate('/dashboard');
 
     } catch (error) {
       console.error('Erro detalhado ao fazer login:', error);

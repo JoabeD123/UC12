@@ -286,6 +286,10 @@ const CartoesCredito = ({ perfil }) => {
             <FaCog />
             <span>Configurações</span>
           </div>
+          <div className="menu-item" onClick={() => navigate('/selecionar-perfil')}>
+            <FaUsers />
+            <span>Trocar de Perfil</span>
+          </div>
         </div>
       </div>
 

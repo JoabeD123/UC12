@@ -70,6 +70,10 @@ const Configuracoes = ({ usuario, perfil, darkMode, onThemeChange, onLogout }) =
             <FaUsers />
             <span>Gerenciar Perfis</span>
           </div>
+          <div className="menu-item" onClick={() => navigate('/selecionar-perfil')}>
+            <FaUsers />
+            <span>Trocar de Perfil</span>
+          </div>
           <div className="menu-item active" onClick={() => navigate('/configuracoes')}>
             <FaCog />
             <span>Configurações</span>

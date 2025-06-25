@@ -275,9 +275,9 @@ const ImpostoRenda = ({ usuario, perfil }) => {
             <FaChartPie />
             <span>Imposto de Renda</span>
           </div>
-          <div className="menu-item" onClick={() => navigate('/gerenciar-perfis')}>
+          <div className="menu-item" onClick={() => navigate('/selecionar-perfil')}>
             <FaUsers />
-            <span>Gerenciar Perfis</span>
+            <span>Trocar de Perfil</span>
           </div>
           <div className="menu-item" onClick={() => navigate('/configuracoes')}>
             <FaCog />

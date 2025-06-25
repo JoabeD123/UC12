@@ -243,6 +243,16 @@ app.get('/init-db', async (req, res) => {
     );
   `;
 
+  // Adicionar colunas de permissões de acesso às telas, se não existirem
+  const alterPermissoesTable = `
+    ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS acesso_dashboard BOOLEAN DEFAULT TRUE;
+    ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS acesso_receitas BOOLEAN DEFAULT TRUE;
+    ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS acesso_despesas BOOLEAN DEFAULT TRUE;
+    ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS acesso_cartoes BOOLEAN DEFAULT TRUE;
+    ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS acesso_imposto BOOLEAN DEFAULT TRUE;
+    ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS acesso_configuracoes BOOLEAN DEFAULT TRUE;
+  `;
+
   try {
     const client = await pool.connect();
     console.log('Conexão com o banco estabelecida para init-db.');
@@ -255,6 +265,9 @@ app.get('/init-db', async (req, res) => {
     console.log('Criando tabelas...');
     await client.query(createSchema);
     console.log('Tabelas criadas com sucesso.');
+    
+    await client.query(alterPermissoesTable); // <-- Adiciona as colunas se não existirem
+    console.log('Colunas de permissões adicionadas com sucesso.');
     
     client.release();
     res.status(200).send('Banco de dados inicializado/reiniciado com sucesso.');
@@ -333,36 +346,36 @@ app.post('/api/register', async (req, res) => {
 
 // Novo Endpoint para criar o primeiro perfil após o registro
 app.post('/api/perfil/primeiro', async (req, res) => {
-  const { usuario_id, nome_perfil, categoria_familiar, senha_perfil } = req.body; // Adicione senha_perfil aqui
+  const { usuario_id, nome_perfil, categoria_familiar, senha_perfil,
+    acesso_dashboard = true, acesso_receitas = true, acesso_despesas = true, acesso_cartoes = true, acesso_imposto = true, acesso_configuracoes = true } = req.body;
   console.log('Recebendo requisição para criar primeiro perfil:', { usuario_id, nome_perfil, categoria_familiar });
 
-  if (!usuario_id || !nome_perfil || !categoria_familiar || !senha_perfil) { // Verifique também a senha_perfil
+  if (!usuario_id || !nome_perfil || !categoria_familiar || !senha_perfil) {
     return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
   }
 
-  let client; // Declarar client fora do try para ser acessível no finally
+  let client;
   try {
-    const hashedPasswordPerfil = await bcrypt.hash(senha_perfil, 10); // Hashear a senha do perfil
+    const hashedPasswordPerfil = await bcrypt.hash(senha_perfil, 10);
     client = await pool.connect();
     await client.query('BEGIN');
 
-    // Gerar um código único para o perfil
     const timestamp = Date.now().toString();
-    const codPerfil = `PERF${timestamp.slice(-6)}`; // Usar PERF para perfis
+    const codPerfil = `PERF${timestamp.slice(-6)}`;
 
-    // Inserir o perfil
     const perfilResult = await client.query(
       `INSERT INTO perfil (usuario_id, nome, categoria_familiar, cod_perfil, renda, is_admin, senha) 
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id_perfil`,
-      [usuario_id, nome_perfil, categoria_familiar, codPerfil, 0.00, true, hashedPasswordPerfil] // Definir renda inicial como 0.00 e is_admin como true
+      [usuario_id, nome_perfil, categoria_familiar, codPerfil, 0.00, true, hashedPasswordPerfil]
     );
     const id_perfil = perfilResult.rows[0].id_perfil;
 
     // Inserir todas as permissões como ativas para o primeiro perfil
     await client.query(
-      `INSERT INTO permissoes (perfil_id, pode_criar_conta, pode_editar_conta, pode_excluir_conta, pode_ver_todas_contas) 
-       VALUES ($1, $2, $3, $4, $5)`,
-      [id_perfil, true, true, true, true] // Todas as permissões ativas
+      `INSERT INTO permissoes (perfil_id, pode_criar_conta, pode_editar_conta, pode_excluir_conta, pode_ver_todas_contas,
+        acesso_dashboard, acesso_receitas, acesso_despesas, acesso_cartoes, acesso_imposto, acesso_configuracoes) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+      [id_perfil, true, true, true, true, acesso_dashboard, acesso_receitas, acesso_despesas, acesso_cartoes, acesso_imposto, acesso_configuracoes]
     );
 
     await client.query('COMMIT');
@@ -446,9 +459,21 @@ app.get('/api/user/profiles-and-permissions/:userId', async (req, res) => {
     // Para cada perfil, buscar suas permissões
     const profilesWithPermissions = await Promise.all(profiles.map(async (profile) => {
       const permissionsResult = await client.query('SELECT * FROM permissoes WHERE perfil_id = $1', [profile.id_perfil]);
-      const permissions = permissionsResult.rows[0]; // Assumindo 1:1 perfil-permissões
-
-      return { ...profile, permissoes: permissions || {} }; // Garante que permissoes seja um objeto mesmo se não houver
+      const permissions = permissionsResult.rows[0];
+      // Garante que todas as permissões estejam presentes (mesmo se nulas)
+      const defaultPerms = {
+        pode_criar_conta: true,
+        pode_editar_conta: true,
+        pode_excluir_conta: true,
+        pode_ver_todas_contas: true,
+        acesso_dashboard: true,
+        acesso_receitas: true,
+        acesso_despesas: true,
+        acesso_cartoes: true,
+        acesso_imposto: true,
+        acesso_configuracoes: true
+      };
+      return { ...profile, permissoes: { ...defaultPerms, ...permissions } };
     }));
 
     client.release();
@@ -819,17 +844,19 @@ app.post('/api/categorias', async (req, res) => {
 
 // Rotas para Gerenciamento de Perfis
 app.post('/api/perfis', async (req, res) => {
-  const { usuario_id, nome, categoria_familiar, senha, renda } = req.body;
+  const { usuario_id, nome, categoria_familiar, senha, renda,
+    pode_criar_conta, pode_editar_conta, pode_excluir_conta, pode_ver_todas_contas,
+    acesso_dashboard = true, acesso_receitas = true, acesso_despesas = true, acesso_cartoes = true, acesso_imposto = true, acesso_configuracoes = true } = req.body;
 
+  let client;
   try {
-    const client = await pool.connect();
+    client = await pool.connect();
     await client.query('BEGIN');
 
     const hashedPassword = await bcrypt.hash(senha, 10);
     const timestamp = Date.now().toString();
     const codPerfil = `PERF${timestamp.slice(-6)}`;
 
-    // Busca o nome_familia do usuário
     const userResult = await client.query('SELECT nome_familia FROM usuario WHERE id_usuario = $1', [usuario_id]);
     if (userResult.rows.length === 0) {
       throw new Error('Usuário não encontrado.');
@@ -845,9 +872,22 @@ app.post('/api/perfis', async (req, res) => {
     const id_perfil = perfilResult.rows[0].id_perfil;
 
     await client.query(
-      `INSERT INTO permissoes (perfil_id, pode_criar_conta, pode_editar_conta, pode_excluir_conta, pode_ver_todas_contas)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [id_perfil, true, true, true, true]
+      `INSERT INTO permissoes (perfil_id, pode_criar_conta, pode_editar_conta, pode_excluir_conta, pode_ver_todas_contas,
+        acesso_dashboard, acesso_receitas, acesso_despesas, acesso_cartoes, acesso_imposto, acesso_configuracoes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+      [
+        id_perfil,
+        typeof pode_criar_conta === 'boolean' ? pode_criar_conta : true,
+        typeof pode_editar_conta === 'boolean' ? pode_editar_conta : true,
+        typeof pode_excluir_conta === 'boolean' ? pode_excluir_conta : true,
+        typeof pode_ver_todas_contas === 'boolean' ? pode_ver_todas_contas : true,
+        acesso_dashboard,
+        acesso_receitas,
+        acesso_despesas,
+        acesso_cartoes,
+        acesso_imposto,
+        acesso_configuracoes
+      ]
     );
 
     await client.query('COMMIT');
@@ -868,18 +908,41 @@ app.post('/api/perfis', async (req, res) => {
 
 app.put('/api/perfis/:id', async (req, res) => {
   const { id } = req.params;
-  const { nome, categoria_familiar, renda } = req.body;
+  const { nome, categoria_familiar, renda,
+    pode_criar_conta, pode_editar_conta, pode_excluir_conta, pode_ver_todas_contas,
+    acesso_dashboard = true, acesso_receitas = true, acesso_despesas = true, acesso_cartoes = true, acesso_imposto = true, acesso_configuracoes = true } = req.body;
 
   try {
     const client = await pool.connect();
-    const result = await client.query(
+    // Atualiza perfil
+    await client.query(
       `UPDATE perfil 
        SET nome = $1, categoria_familiar = $2, renda = $3
-       WHERE id_perfil = $4 RETURNING *`,
+       WHERE id_perfil = $4`,
       [nome, categoria_familiar, renda, id]
     );
+    // Atualiza permissões
+    await client.query(
+      `UPDATE permissoes SET 
+        pode_criar_conta = $1, pode_editar_conta = $2, pode_excluir_conta = $3, pode_ver_todas_contas = $4,
+        acesso_dashboard = $5, acesso_receitas = $6, acesso_despesas = $7, acesso_cartoes = $8, acesso_imposto = $9, acesso_configuracoes = $10
+       WHERE perfil_id = $11`,
+      [
+        typeof pode_criar_conta === 'boolean' ? pode_criar_conta : true,
+        typeof pode_editar_conta === 'boolean' ? pode_editar_conta : true,
+        typeof pode_excluir_conta === 'boolean' ? pode_excluir_conta : true,
+        typeof pode_ver_todas_contas === 'boolean' ? pode_ver_todas_contas : true,
+        acesso_dashboard,
+        acesso_receitas,
+        acesso_despesas,
+        acesso_cartoes,
+        acesso_imposto,
+        acesso_configuracoes,
+        id
+      ]
+    );
     client.release();
-    res.status(200).json(result.rows[0]);
+    res.status(200).json({ message: 'Perfil e permissões atualizados com sucesso.' });
   } catch (err) {
     console.error('Erro ao atualizar perfil:', err);
     res.status(500).json({ message: 'Erro ao atualizar perfil.' });
@@ -888,14 +951,25 @@ app.put('/api/perfis/:id', async (req, res) => {
 
 app.delete('/api/perfis/:id', async (req, res) => {
   const { id } = req.params;
+  let client;
   try {
-    const client = await pool.connect();
+    client = await pool.connect();
+    await client.query('BEGIN');
+    await client.query('DELETE FROM permissoes WHERE perfil_id = $1', [id]);
     await client.query('DELETE FROM perfil WHERE id_perfil = $1', [id]);
-    client.release();
+    await client.query('COMMIT');
     res.status(200).json({ message: 'Perfil excluído com sucesso.' });
   } catch (err) {
+    if (client) {
+      await client.query('ROLLBACK');
+      client.release();
+    }
     console.error('Erro ao excluir perfil:', err);
     res.status(500).json({ message: 'Erro ao excluir perfil.' });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 });
 
@@ -1093,6 +1167,30 @@ app.get('/api/perfil/:id', async (req, res) => {
     res.status(200).json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ message: 'Erro ao buscar perfil.' });
+  }
+});
+
+app.post('/api/perfil/validar-senha', async (req, res) => {
+  const { perfil_id, senha } = req.body;
+  if (!perfil_id || !senha) {
+    return res.status(400).json({ message: 'Perfil e senha são obrigatórios.' });
+  }
+  try {
+    const client = await pool.connect();
+    const result = await client.query('SELECT senha FROM perfil WHERE id_perfil = $1', [perfil_id]);
+    client.release();
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Perfil não encontrado.' });
+    }
+    const senhaHash = result.rows[0].senha;
+    const isMatch = await bcrypt.compare(senha, senhaHash);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Senha incorreta.' });
+    }
+    res.status(200).json({ message: 'Senha válida.' });
+  } catch (err) {
+    console.error('Erro ao validar senha do perfil:', err);
+    res.status(500).json({ message: 'Erro ao validar senha do perfil.' });
   }
 });
 

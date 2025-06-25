@@ -11,12 +11,14 @@ import CartoesCredito from './components/CartoesCredito/CartoesCredito';
 import Configuracoes from './components/Configuracoes/Configuracoes';
 import ImpostoRenda from './components/ImpostoRenda/ImpostoRenda';
 import CriarPrimeiroPerfil from './components/CriarPrimeiroPerfil/CriarPrimeiroPerfil';
+import SelecionarPerfil from './components/SelecionarPerfil/SelecionarPerfil';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+  const [precisaSelecionarPerfil, setPrecisaSelecionarPerfil] = useState(false);
 
   useEffect(() => {
     // Carregar usuário e configurações ao iniciar
@@ -61,21 +63,27 @@ function App() {
 
   const handleLogin = async (user, userProfile) => {
     try {
-      console.log('handleLogin chamado com:', { user, userProfile });
-      
-      // Salvar dados do usuário no localStorage e no estado
-      setCurrentUser(user);
-      setProfile(userProfile);
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      localStorage.setItem(`profile_${user.id_usuario}`, JSON.stringify(userProfile));
-      console.log('currentUser e profile atualizados:', { user, userProfile });
-
+      // Buscar perfis do usuário
+      const profilesResponse = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${user.id_usuario}`);
+      const profilesData = await profilesResponse.json();
+      if (!profilesResponse.ok) {
+        throw new Error(profilesData.message || 'Erro ao buscar perfis do usuário');
+      }
+      if (profilesData.profiles && profilesData.profiles.length > 1) {
+        // Mais de um perfil: forçar seleção
+        setCurrentUser(user);
+        setPrecisaSelecionarPerfil(true);
+        return;
+      } else if (profilesData.profiles && profilesData.profiles.length === 1) {
+        setCurrentUser(user);
+        setProfile(profilesData.profiles[0]);
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        localStorage.setItem(`profile_${user.id_usuario}`, JSON.stringify(profilesData.profiles[0]));
+      }
       // Carregar configurações do usuário ao fazer login
       const userConfig = JSON.parse(localStorage.getItem(`config_${user.id_usuario}`)) || {};
       setDarkMode(userConfig.darkMode || false);
       document.documentElement.setAttribute('data-theme', userConfig.darkMode ? 'dark' : 'light');
-      
-      console.log('Login processado com sucesso');
     } catch (error) {
       console.error('Erro detalhado no handleLogin:', error);
     }
@@ -123,6 +131,11 @@ function App() {
     } catch (error) {
       console.error('Erro ao alterar tema:', error);
     }
+  };
+
+  const handlePerfilSelecionado = (perfil) => {
+    setProfile(perfil);
+    setPrecisaSelecionarPerfil(false);
   };
 
   if (loading) {
@@ -263,8 +276,20 @@ function App() {
               )
             }
           />
+          <Route
+            path="/selecionar-perfil"
+            element={
+              currentUser ? (
+                <SelecionarPerfil usuario={currentUser} onPerfilSelecionado={handlePerfilSelecionado} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
+        {/* Redirecionamento automático para seleção de perfil se necessário */}
+        {precisaSelecionarPerfil && <Navigate to="/selecionar-perfil" replace />}
       </div>
     </Router>
   );

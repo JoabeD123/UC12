@@ -1,135 +1,140 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaMoneyBillWave, FaWallet } from 'react-icons/fa';
 import './GerenciarPerfis.css';
 
-const GerenciarPerfis = () => {
+const GerenciarPerfis = ({ usuario }) => {
   const navigate = useNavigate();
-  const [perfis, setPerfis] = useState([
-    {
-      id: 1,
-      nome: 'Administrador',
-      descricao: 'Acesso total ao sistema',
-      permissoes: {
-        verDashboard: true,
-        verReceitas: true,
-        verDespesas: true,
-        verCartoes: true,
-        verImpostoRenda: true,
-        gerenciarPerfis: true,
-        verConfiguracoes: true
-      }
-    },
-    {
-      id: 2,
-      nome: 'Usuário',
-      descricao: 'Acesso básico ao sistema',
-      permissoes: {
-        verDashboard: true,
-        verReceitas: true,
-        verDespesas: true,
-        verCartoes: true,
-        verImpostoRenda: false,
-        gerenciarPerfis: false,
-        verConfiguracoes: true
-      }
-    }
-  ]);
-
+  const [perfis, setPerfis] = useState([]);
   const [novoPerfil, setNovoPerfil] = useState({
     nome: '',
-    descricao: '',
-    permissoes: {
-      verDashboard: true,
-      verReceitas: true,
-      verDespesas: true,
-      verCartoes: true,
-      verImpostoRenda: false,
-      gerenciarPerfis: false,
-      verConfiguracoes: true
-    }
+    categoria_familiar: '',
+    senha: '',
+    renda: '',
+    pode_criar_conta: true,
+    pode_editar_conta: true,
+    pode_excluir_conta: true,
+    pode_ver_todas_contas: true
   });
-
   const [perfilEditando, setPerfilEditando] = useState(null);
   const [erro, setErro] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!usuario?.id_usuario) return;
+    const fetchPerfis = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${usuario.id_usuario}`);
+        const data = await res.json();
+        if (res.ok) {
+          setPerfis(data.profiles);
+        } else {
+          setPerfis([]);
+        }
+      } catch {
+        setPerfis([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPerfis();
+  }, [usuario]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
-    if (type === 'checkbox') {
-      const [, campo] = name.split('.');
-      setNovoPerfil(prev => ({
-        ...prev,
-        permissoes: {
-          ...prev.permissoes,
-          [campo]: checked
-        }
-      }));
-    } else {
-      setNovoPerfil(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
+    setNovoPerfil(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!novoPerfil.nome.trim()) {
-      setErro('O nome do perfil é obrigatório');
+    if (!novoPerfil.nome.trim() || !novoPerfil.categoria_familiar.trim() || !novoPerfil.senha.trim()) {
+      setErro('Preencha todos os campos obrigatórios.');
       return;
     }
-
-    if (perfilEditando) {
-      setPerfis(prev => prev.map(perfil => 
-        perfil.id === perfilEditando.id ? { ...novoPerfil, id: perfil.id } : perfil
-      ));
-      setPerfilEditando(null);
-    } else {
-      setPerfis(prev => [...prev, { ...novoPerfil, id: Date.now() }]);
-    }
-
-    setNovoPerfil({
-      nome: '',
-      descricao: '',
-      permissoes: {
-        verDashboard: true,
-        verReceitas: true,
-        verDespesas: true,
-        verCartoes: true,
-        verImpostoRenda: false,
-        gerenciarPerfis: false,
-        verConfiguracoes: true
-      }
-    });
     setErro('');
+    setLoading(true);
+    try {
+      if (perfilEditando) {
+        // Editar perfil (não permite editar senha por aqui)
+        const res = await fetch(`http://localhost:3001/api/perfis/${perfilEditando.id_perfil}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nome: novoPerfil.nome,
+            categoria_familiar: novoPerfil.categoria_familiar,
+            renda: novoPerfil.renda || 0,
+            pode_criar_conta: novoPerfil.pode_criar_conta,
+            pode_editar_conta: novoPerfil.pode_editar_conta,
+            pode_excluir_conta: novoPerfil.pode_excluir_conta,
+            pode_ver_todas_contas: novoPerfil.pode_ver_todas_contas
+          })
+        });
+        if (!res.ok) throw new Error('Erro ao editar perfil');
+      } else {
+        // Criar perfil
+        const res = await fetch('http://localhost:3001/api/perfis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            usuario_id: usuario.id_usuario,
+            nome: novoPerfil.nome,
+            categoria_familiar: novoPerfil.categoria_familiar,
+            senha: novoPerfil.senha,
+            renda: novoPerfil.renda || 0,
+            pode_criar_conta: novoPerfil.pode_criar_conta,
+            pode_editar_conta: novoPerfil.pode_editar_conta,
+            pode_excluir_conta: novoPerfil.pode_excluir_conta,
+            pode_ver_todas_contas: novoPerfil.pode_ver_todas_contas
+          })
+        });
+        if (!res.ok) throw new Error('Erro ao criar perfil');
+      }
+      setNovoPerfil({ nome: '', categoria_familiar: '', senha: '', renda: '', pode_criar_conta: true, pode_editar_conta: true, pode_excluir_conta: true, pode_ver_todas_contas: true });
+      setPerfilEditando(null);
+      // Atualizar lista
+      const res = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${usuario.id_usuario}`);
+      const data = await res.json();
+      setPerfis(data.profiles);
+    } catch (err) {
+      setErro('Erro ao salvar perfil.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEdit = (perfil) => {
     setPerfilEditando(perfil);
-    setNovoPerfil(perfil);
+    setNovoPerfil({
+      nome: perfil.nome,
+      categoria_familiar: perfil.categoria_familiar,
+      senha: '',
+      renda: perfil.renda || '',
+      pode_criar_conta: perfil.pode_criar_conta,
+      pode_editar_conta: perfil.pode_editar_conta,
+      pode_excluir_conta: perfil.pode_excluir_conta,
+      pode_ver_todas_contas: perfil.pode_ver_todas_contas
+    });
   };
 
-  const handleDelete = (id) => {
-    setPerfis(prev => prev.filter(perfil => perfil.id !== id));
+  const handleDelete = async (id) => {
+    setLoading(true);
+    try {
+      await fetch(`http://localhost:3001/api/perfis/${id}`, { method: 'DELETE' });
+      setPerfis(prev => prev.filter(perfil => perfil.id_perfil !== id));
+    } catch {
+      setErro('Erro ao excluir perfil.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
     setPerfilEditando(null);
-    setNovoPerfil({
-      nome: '',
-      descricao: '',
-      permissoes: {
-        verDashboard: true,
-        verReceitas: true,
-        verDespesas: true,
-        verCartoes: true,
-        verImpostoRenda: false,
-        gerenciarPerfis: false,
-        verConfiguracoes: true
-      }
-    });
+    setNovoPerfil({ nome: '', categoria_familiar: '', senha: '', renda: '', pode_criar_conta: true, pode_editar_conta: true, pode_excluir_conta: true, pode_ver_todas_contas: true });
     setErro('');
   };
 
@@ -194,95 +199,53 @@ const GerenciarPerfis = () => {
               </div>
 
               <div className="form-group">
-                <label>Descrição</label>
-                <textarea
-                  name="descricao"
-                  value={novoPerfil.descricao}
+                <label>Categoria Familiar</label>
+                <input
+                  type="text"
+                  name="categoria_familiar"
+                  value={novoPerfil.categoria_familiar}
                   onChange={handleInputChange}
-                  placeholder="Digite a descrição do perfil"
+                  placeholder="Digite a categoria familiar do perfil"
                 />
               </div>
 
-              <div className="permissoes-section">
-                <h4>Permissões</h4>
-                <div className="permissoes-grid">
-                  <div className="permissao-item">
-                    <label>
-                      <input
-                        type="checkbox"
-                        name="permissoes.verDashboard"
-                        checked={novoPerfil.permissoes.verDashboard}
-                        onChange={handleInputChange}
-                      />
-                      Ver Dashboard
-                    </label>
-                  </div>
-                  <div className="permissao-item">
-                    <label>
-                      <input
-                        type="checkbox"
-                        name="permissoes.verReceitas"
-                        checked={novoPerfil.permissoes.verReceitas}
-                        onChange={handleInputChange}
-                      />
-                      Ver Receitas
-                    </label>
-                  </div>
-                  <div className="permissao-item">
-                    <label>
-                      <input
-                        type="checkbox"
-                        name="permissoes.verDespesas"
-                        checked={novoPerfil.permissoes.verDespesas}
-                        onChange={handleInputChange}
-                      />
-                      Ver Despesas
-                    </label>
-                  </div>
-                  <div className="permissao-item">
-                    <label>
-                      <input
-                        type="checkbox"
-                        name="permissoes.verCartoes"
-                        checked={novoPerfil.permissoes.verCartoes}
-                        onChange={handleInputChange}
-                      />
-                      Ver Cartões
-                    </label>
-                  </div>
-                  <div className="permissao-item">
-                    <label>
-                      <input
-                        type="checkbox"
-                        name="permissoes.verImpostoRenda"
-                        checked={novoPerfil.permissoes.verImpostoRenda}
-                        onChange={handleInputChange}
-                      />
-                      Ver Imposto de Renda
-                    </label>
-                  </div>
-                  <div className="permissao-item">
-                    <label>
-                      <input
-                        type="checkbox"
-                        name="permissoes.gerenciarPerfis"
-                        checked={novoPerfil.permissoes.gerenciarPerfis}
-                        onChange={handleInputChange}
-                      />
-                      Gerenciar Perfis
-                    </label>
-                  </div>
-                  <div className="permissao-item">
-                    <label>
-                      <input
-                        type="checkbox"
-                        name="permissoes.verConfiguracoes"
-                        checked={novoPerfil.permissoes.verConfiguracoes}
-                        onChange={handleInputChange}
-                      />
-                      Ver Configurações
-                    </label>
-                  </div>
+              <div className="form-group">
+                <label>Senha</label>
+                <input
+                  type="password"
+                  name="senha"
+                  value={novoPerfil.senha}
+                  onChange={handleInputChange}
+                  placeholder="Digite a senha do perfil"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Renda</label>
+                <input
+                  type="text"
+                  name="renda"
+                  value={novoPerfil.renda}
+                  onChange={handleInputChange}
+                  placeholder="Digite a renda do perfil"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Permissões</label>
+                <div className="permissoes-checkboxes">
+                  <label>
+                    <input type="checkbox" name="pode_criar_conta" checked={novoPerfil.pode_criar_conta} onChange={handleInputChange} /> Pode criar contas
+                  </label>
+                  <label>
+                    <input type="checkbox" name="pode_editar_conta" checked={novoPerfil.pode_editar_conta} onChange={handleInputChange} /> Pode editar contas
+                  </label>
+                  <label>
+                    <input type="checkbox" name="pode_excluir_conta" checked={novoPerfil.pode_excluir_conta} onChange={handleInputChange} /> Pode excluir contas
+                  </label>
+                  <label>
+                    <input type="checkbox" name="pode_ver_todas_contas" checked={novoPerfil.pode_ver_todas_contas} onChange={handleInputChange} /> Pode ver todas as contas
+                  </label>
                 </div>
               </div>
 
@@ -305,19 +268,19 @@ const GerenciarPerfis = () => {
             <h3>Perfis Existentes</h3>
             <div className="perfis-grid">
               {perfis.map(perfil => (
-                <div key={perfil.id} className="perfil-card">
+                <div key={perfil.id_perfil} className="perfil-card">
                   <div className="perfil-header">
                     <h4>{perfil.nome}</h4>
                     <div className="perfil-actions">
                       <button onClick={() => handleEdit(perfil)} className="btn-icon">
                         <FaEdit />
                       </button>
-                      <button onClick={() => handleDelete(perfil.id)} className="btn-icon">
+                      <button onClick={() => handleDelete(perfil.id_perfil)} className="btn-icon">
                         <FaTrash />
                       </button>
                     </div>
                   </div>
-                  <p className="perfil-descricao">{perfil.descricao}</p>
+                  <p className="perfil-descricao">{perfil.categoria_familiar}</p>
                   <div className="perfil-permissoes">
                     <h5>Permissões:</h5>
                     <ul>
