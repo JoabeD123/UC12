@@ -226,6 +226,18 @@
   font-weight: 500;
 }
 
+.form-group label > input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.form-group label:has(input[type="checkbox"]) {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 500;
+  margin-bottom: 8px;
+  white-space: nowrap;
+}
+
 .form-group input,
 .form-group select,
 .form-group textarea {
