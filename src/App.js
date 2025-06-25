@@ -20,13 +20,29 @@ function App() {
 
   useEffect(() => {
     // Carregar usuário e configurações ao iniciar
-    const loadUserData = () => {
+    const loadUserData = async () => {
       try {
         const userData = JSON.parse(localStorage.getItem('currentUser'));
         if (userData) {
+          // Verifica se o usuário ainda existe no backend
+          const res = await fetch(`http://localhost:3001/api/usuario/${userData.id_usuario}`);
+          if (!res.ok) {
+            handleLogout();
+            setLoading(false);
+            return;
+          }
           setCurrentUser(userData);
-          setProfile(JSON.parse(localStorage.getItem(`profile_${userData.id_usuario}`)));
-          
+          const profileData = JSON.parse(localStorage.getItem(`profile_${userData.id_usuario}`));
+          if (profileData) {
+            // Verifica se o perfil ainda existe no backend
+            const resPerfil = await fetch(`http://localhost:3001/api/perfil/${profileData.id_perfil}`);
+            if (!resPerfil.ok) {
+              handleLogout();
+              setLoading(false);
+              return;
+            }
+            setProfile(profileData);
+          }
           // Carregar configurações específicas do usuário
           const userConfig = JSON.parse(localStorage.getItem(`config_${userData.id_usuario}`)) || {};
           setDarkMode(userConfig.darkMode || false);
@@ -34,6 +50,7 @@ function App() {
         }
       } catch (error) {
         console.error('Erro ao carregar dados do usuário:', error);
+        handleLogout();
       } finally {
         setLoading(false);
       }

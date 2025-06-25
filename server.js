@@ -1064,6 +1064,38 @@ app.put('/api/faturas-cartao/:idFatura/pagar', async (req, res) => {
   }
 });
 
+// Endpoint para validar usuário
+app.get('/api/usuario/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const client = await pool.connect();
+    const result = await client.query('SELECT * FROM usuario WHERE id_usuario = $1', [id]);
+    client.release();
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuário não encontrado.' });
+    }
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ message: 'Erro ao buscar usuário.' });
+  }
+});
+
+// Endpoint para validar perfil
+app.get('/api/perfil/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const client = await pool.connect();
+    const result = await client.query('SELECT * FROM perfil WHERE id_perfil = $1', [id]);
+    client.release();
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Perfil não encontrado.' });
+    }
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ message: 'Erro ao buscar perfil.' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Servidor backend rodando em http://localhost:${port}`);
 });
