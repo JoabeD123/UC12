@@ -689,6 +689,7 @@
   text-align: center;
   min-width: 300px;
   max-width: 90vw;
+  color: #111 !important;
 }
 
 .modal-aviso-vencimento .modal-content h3 {

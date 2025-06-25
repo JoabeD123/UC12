@@ -39,6 +39,7 @@ const CartoesCredito = ({ perfil }) => {
   const [error, setError] = useState('');
   const [gastos, setGastos] = useState({});
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [gastoInput, setGastoInput] = useState({});
 
   // Buscar cartões do banco ao carregar a tela
   useEffect(() => {
@@ -148,28 +149,35 @@ const CartoesCredito = ({ perfil }) => {
     }
   };
 
-  const handleGastoChange = async (id, valor) => {
-    const valorNum = parseFloat(valor) || 0;
-    setGastos(prev => ({ ...prev, [id]: valorNum }));
-    // Atualizar no banco
+  const handleGastoInputChange = (id, valor) => {
+    setGastoInput(prev => ({ ...prev, [id]: valor }));
+  };
+
+  const handleGastoInputSubmit = async (id) => {
+    const valor = parseFloat(gastoInput[id]);
+    if (!valor || isNaN(valor)) return;
     const cartao = cartoes.find(c => c.id_cartao === id);
-    if (cartao) {
-      try {
-        await fetch(`${API_URL}/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nome: cartao.nome,
-            limite: cartao.limite,
-            dia_vencimento: cartao.dia_vencimento,
-            bandeira: cartao.bandeira,
-            gastos: valorNum
-          })
-        });
-        setCartoes(prev => prev.map(c => c.id_cartao === id ? { ...c, gastos: valorNum } : c));
-      } catch {
-        setError('Erro ao atualizar gastos');
-      }
+    if (!cartao) return;
+    const valorAtual = parseFloat(gastos[id] ?? cartao.gastos ?? 0);
+    let novoValor = valorAtual + valor;
+    if (novoValor < 0) novoValor = 0;
+    try {
+      await fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: cartao.nome,
+          limite: cartao.limite,
+          dia_vencimento: cartao.dia_vencimento,
+          bandeira: cartao.bandeira,
+          gastos: novoValor
+        })
+      });
+      setGastos(prev => ({ ...prev, [id]: novoValor }));
+      setCartoes(prev => prev.map(c => c.id_cartao === id ? { ...c, gastos: novoValor } : c));
+      setGastoInput(prev => ({ ...prev, [id]: '' }));
+    } catch {
+      setError('Erro ao atualizar gasto');
     }
   };
 
@@ -402,10 +410,25 @@ const CartoesCredito = ({ perfil }) => {
                   <input
                     type="number"
                     value={gastos[cartao.id_cartao] ?? cartao.gastos ?? 0}
-                    onChange={(e) => handleGastoChange(cartao.id_cartao, e.target.value)}
+                    readOnly
                     min="0"
                     max={Number(cartao.limite ?? 0)}
                   />
+                  <div className="gasto-unificado">
+                    <input
+                      type="number"
+                      placeholder="Adicionar (+) ou Diminuir (-)"
+                      value={gastoInput[cartao.id_cartao] || ''}
+                      step="0.01"
+                      onChange={e => handleGastoInputChange(cartao.id_cartao, e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') handleGastoInputSubmit(cartao.id_cartao);
+                      }}
+                    />
+                    <button onClick={() => handleGastoInputSubmit(cartao.id_cartao)}>
+                      <FaPlus />
+                    </button>
+                  </div>
                 </div>
                 <div className="progress-bar">
                   <div 
