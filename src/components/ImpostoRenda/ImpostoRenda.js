@@ -47,9 +47,9 @@ const ImpostoRenda = ({ usuario, perfil }) => {
 
   useEffect(() => {
     const carregarReceitas = async () => {
-      if (!perfil?.id_perfil) return;
+      if (!usuario?.id_usuario) return;
       try {
-        const response = await fetch(`http://localhost:3001/api/receitas/${perfil.id_perfil}`);
+        const response = await fetch(`http://localhost:3001/api/receitas/${usuario.id_usuario}`);
         if (!response.ok) throw new Error('Erro ao carregar receitas');
         const receitas = await response.json();
         let somaFixa = 0;
@@ -74,7 +74,7 @@ const ImpostoRenda = ({ usuario, perfil }) => {
       }
     };
     carregarReceitas();
-  }, [perfil]);
+  }, [usuario]);
 
   // Calcular imposto total
   const calcularImposto = () => {

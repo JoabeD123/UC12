@@ -101,12 +101,12 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
 
   useEffect(() => {
     const fetchCartoes = async () => {
-      if (!perfil?.id_perfil) {
+      if (!usuario?.id_usuario) {
         setCartoesLoading(false);
         return;
       }
       try {
-        const res = await fetch(`http://localhost:3001/api/cartoes/${perfil.id_perfil}?mes=${mesSelecionado+1}`);
+        const res = await fetch(`http://localhost:3001/api/cartoes/${usuario.id_usuario}?mes=${mesSelecionado+1}`);
         if (!res.ok) throw new Error('Erro ao buscar cartões de crédito');
         const data = await res.json();
         setCartoes(data);
@@ -121,7 +121,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
       }
     };
     fetchCartoes();
-  }, [perfil, mesSelecionado]);
+  }, [usuario, mesSelecionado]);
 
   // Quando ambos carregarem, libera o loading principal
   useEffect(() => {
@@ -154,7 +154,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
 
   // Fechamento automático de faturas
   useEffect(() => {
-    if (!perfil?.id_perfil || cartoes.length === 0) return;
+    if (!usuario?.id_usuario || cartoes.length === 0) return;
     const hoje = new Date();
     const diaHoje = hoje.getDate();
     const mesHoje = hoje.getMonth() + 1;
@@ -198,7 +198,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
       // Se houve fechamento, atualize as faturas fechadas
       if (houveFechamento) {
         try {
-          const res = await fetch(`http://localhost:3001/api/faturas-cartao/perfil/${perfil.id_perfil}`);
+          const res = await fetch(`http://localhost:3001/api/faturas-cartao/usuario/${usuario.id_usuario}`);
           if (res.ok) {
             const data = await res.json();
             setFaturasFechadas(data);
@@ -208,13 +208,13 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
     };
     fecharFaturas();
     // eslint-disable-next-line
-  }, [cartoes, perfil]);
+  }, [cartoes, usuario]);
 
   useEffect(() => {
-    if (!perfil?.id_perfil) return;
+    if (!usuario?.id_usuario) return;
     const fetchFaturasFechadas = async () => {
       try {
-        const res = await fetch(`http://localhost:3001/api/faturas-cartao/perfil/${perfil.id_perfil}`);
+        const res = await fetch(`http://localhost:3001/api/faturas-cartao/usuario/${usuario.id_usuario}`);
         if (res.ok) {
           const data = await res.json();
           setFaturasFechadas(data);
@@ -222,7 +222,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
       } catch {}
     };
     fetchFaturasFechadas();
-  }, [perfil]);
+  }, [usuario]);
 
   const handleNavigation = (path) => {
     navigate(path);

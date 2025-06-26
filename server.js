@@ -1116,6 +1116,26 @@ app.put('/api/faturas-cartao/:idFatura/pagar', async (req, res) => {
   }
 });
 
+// Listar faturas por usuario (todas faturas dos cartões do usuario)
+app.get('/api/faturas-cartao/usuario/:usuarioId', async (req, res) => {
+  const { usuarioId } = req.params;
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      `SELECT f.*, c.nome as nome_cartao, c.bandeira FROM fatura_cartao f
+       JOIN cartao_credito c ON f.id_cartao = c.id_cartao
+       WHERE c.usuario_id = $1
+       ORDER BY f.data_fechamento DESC`,
+      [usuarioId]
+    );
+    client.release();
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar faturas por usuario:', err);
+    res.status(500).json({ message: 'Erro ao buscar faturas por usuario.' });
+  }
+});
+
 // Endpoint para validar usuário
 app.get('/api/usuario/:id', async (req, res) => {
   const { id } = req.params;
