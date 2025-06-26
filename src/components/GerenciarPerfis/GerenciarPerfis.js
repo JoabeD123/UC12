@@ -18,12 +18,10 @@ const GerenciarPerfis = ({ usuario }) => {
   });
   const [perfilEditando, setPerfilEditando] = useState(null);
   const [erro, setErro] = useState('');
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!usuario?.id_usuario) return;
     const fetchPerfis = async () => {
-      setLoading(true);
       try {
         const res = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${usuario.id_usuario}`);
         const data = await res.json();
@@ -34,8 +32,6 @@ const GerenciarPerfis = ({ usuario }) => {
         }
       } catch {
         setPerfis([]);
-      } finally {
-        setLoading(false);
       }
     };
     fetchPerfis();
@@ -56,7 +52,6 @@ const GerenciarPerfis = ({ usuario }) => {
       return;
     }
     setErro('');
-    setLoading(true);
     try {
       if (perfilEditando) {
         // Editar perfil (não permite editar senha por aqui)
@@ -101,8 +96,6 @@ const GerenciarPerfis = ({ usuario }) => {
       setPerfis(data.profiles);
     } catch (err) {
       setErro('Erro ao salvar perfil.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -121,14 +114,11 @@ const GerenciarPerfis = ({ usuario }) => {
   };
 
   const handleDelete = async (id) => {
-    setLoading(true);
     try {
       await fetch(`http://localhost:3001/api/perfis/${id}`, { method: 'DELETE' });
       setPerfis(prev => prev.filter(perfil => perfil.id_perfil !== id));
     } catch {
       setErro('Erro ao excluir perfil.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -269,37 +259,41 @@ const GerenciarPerfis = ({ usuario }) => {
             <div className="perfis-grid">
               {perfis.map(perfil => (
                 <div key={perfil.id_perfil} className="perfil-card">
-                  <div className="perfil-header">
-                    <h4>{perfil.nome}</h4>
-                    <div className="perfil-actions">
-                      <button onClick={() => handleEdit(perfil)} className="btn-icon">
-                        <FaEdit />
-                      </button>
-                      <button onClick={() => handleDelete(perfil.id_perfil)} className="btn-icon">
-                        <FaTrash />
-                      </button>
+                  <div className="perfil-header" style={{display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1.5rem'}}>
+                    <div style={{flex: '1 1 40%', minWidth: 0}}>
+                      <h4>{perfil.nome}</h4>
+                    </div>
+                    <div style={{flex: '2 1 60%', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
+                      <p className="perfil-descricao">{perfil.categoria_familiar}</p>
+                      <div className="perfil-permissoes">
+                        <h5>Permissões:</h5>
+                        <ul>
+                          {Object.entries(perfil.permissoes)
+                            .filter(([permissao]) => ['ver_receitas','ver_despesas','ver_cartoes','gerenciar_perfis'].includes(permissao))
+                            .map(([permissao, valor]) => (
+                              <li key={permissao} className={valor ? 'permitido' : 'negado'}>
+                                {(() => {
+                                  switch(permissao) {
+                                    case 'ver_receitas': return 'Ver Receitas';
+                                    case 'ver_despesas': return 'Ver Despesas';
+                                    case 'ver_cartoes': return 'Ver Cartões';
+                                    case 'gerenciar_perfis': return 'Gerenciar Perfis';
+                                    default: return permissao;
+                                  }
+                                })()}
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
                     </div>
                   </div>
-                  <p className="perfil-descricao">{perfil.categoria_familiar}</p>
-                  <div className="perfil-permissoes">
-                    <h5>Permissões:</h5>
-                    <ul>
-                      {Object.entries(perfil.permissoes)
-                        .filter(([permissao]) => ['ver_receitas','ver_despesas','ver_cartoes','gerenciar_perfis'].includes(permissao))
-                        .map(([permissao, valor]) => (
-                          <li key={permissao} className={valor ? 'permitido' : 'negado'}>
-                            {(() => {
-                              switch(permissao) {
-                                case 'ver_receitas': return 'Ver Receitas';
-                                case 'ver_despesas': return 'Ver Despesas';
-                                case 'ver_cartoes': return 'Ver Cartões';
-                                case 'gerenciar_perfis': return 'Gerenciar Perfis';
-                                default: return permissao;
-                              }
-                            })()}
-                          </li>
-                        ))}
-                    </ul>
+                  <div className="perfil-actions">
+                    <button onClick={() => handleEdit(perfil)} className="btn-icon">
+                      <FaEdit /> Editar
+                    </button>
+                    <button onClick={() => handleDelete(perfil.id_perfil)} className="btn-icon excluir">
+                      <FaTrash /> Excluir
+                    </button>
                   </div>
                 </div>
               ))}
