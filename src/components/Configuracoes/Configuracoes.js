@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaMoon, FaSun, FaSignOutAlt, FaMoneyBillWave, FaWallet, FaPiggyBank } from 'react-icons/fa';
 import './Configuracoes.css';
+import Sidebar from '../Sidebar/Sidebar';
+import { FaSun, FaMoon, FaSignOutAlt } from 'react-icons/fa';
 
 const Configuracoes = ({ usuario, perfil, darkMode, onThemeChange, onLogout }) => {
   const navigate = useNavigate();
@@ -41,55 +42,7 @@ const Configuracoes = ({ usuario, perfil, darkMode, onThemeChange, onLogout }) =
 
   return (
     <div className="layout-container">
-      <div className="sidebar">
-        <div className="logo">
-          <div className="logo-icon">GF</div>
-        </div>
-        <div className="menu">
-          <div className="menu-item" onClick={() => navigate('/dashboard')}>
-            <FaChartBar />
-            <span>Dashboard</span>
-          </div>
-          {perfil?.permissoes?.ver_receitas && (
-            <div className="menu-item" onClick={() => navigate('/receitas')}>
-              <FaMoneyBillWave />
-              <span>Receitas</span>
-            </div>
-          )}
-          {perfil?.permissoes?.ver_despesas && (
-            <div className="menu-item" onClick={() => navigate('/despesas')}>
-              <FaWallet />
-              <span>Despesas</span>
-            </div>
-          )}
-          {perfil?.permissoes?.ver_cartoes && (
-            <div className="menu-item" onClick={() => navigate('/cartoes')}>
-              <FaCreditCard />
-              <span>Cartões</span>
-            </div>
-          )}
-          {perfil?.permissoes?.ver_imposto && (
-            <div className="menu-item" onClick={() => navigate('/imposto-renda')}>
-              <FaPiggyBank />
-              <span>Imposto de Renda</span>
-            </div>
-          )}
-          {perfil?.permissoes?.gerenciar_perfis && (
-            <div className="menu-item" onClick={() => navigate('/gerenciar-perfis')}>
-              <FaUsers />
-              <span>Gerenciar Perfis</span>
-            </div>
-          )}
-          <div className="menu-item active" onClick={() => navigate('/configuracoes')}>
-            <FaCog />
-            <span>Configurações</span>
-          </div>
-          <div className="menu-item" onClick={() => navigate('/selecionar-perfil')}>
-            <FaUsers />
-            <span>Trocar de Perfil</span>
-          </div>
-        </div>
-      </div>
+      <Sidebar perfil={perfil} />
 
       <div className="configuracoes-content">
         <div className="config-header">

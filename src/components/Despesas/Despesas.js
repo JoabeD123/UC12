@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaMoneyBillWave, FaWallet, FaCreditCard, FaCog, FaSignOutAlt, FaRegChartBar, FaPiggyBank, FaUsers, FaEdit } from 'react-icons/fa';
 import './Despesas.css';
+import Sidebar from '../Sidebar/Sidebar';
 
 function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const [despesas, setDespesas] = useState([]);
@@ -198,55 +198,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
 
   return (
     <div className="layout-container">
-      <div className="sidebar">
-        <div className="logo">
-          <div className="logo-icon">GF</div>
-        </div>
-        <div className="menu">
-          <div className="menu-item" onClick={() => handleNavigation('/dashboard')}>
-            <FaRegChartBar />
-            <span>Dashboard</span>
-          </div>
-          {perfil?.permissoes?.ver_receitas && (
-            <div className="menu-item" onClick={() => handleNavigation('/receitas')}>
-              <FaMoneyBillWave />
-              <span>Receitas</span>
-            </div>
-          )}
-          {perfil?.permissoes?.ver_despesas && (
-            <div className="menu-item active" onClick={() => handleNavigation('/despesas')}>
-              <FaWallet />
-              <span>Despesas</span>
-            </div>
-          )}
-          {perfil?.permissoes?.ver_cartoes && (
-            <div className="menu-item" onClick={() => handleNavigation('/cartoes')}>
-              <FaCreditCard />
-              <span>Cartões</span>
-            </div>
-          )}
-          {perfil?.permissoes?.ver_imposto && (
-            <div className="menu-item" onClick={() => handleNavigation('/imposto-renda')}>
-              <FaPiggyBank />
-              <span>Imposto Renda</span>
-            </div>
-          )}
-          {perfil?.permissoes?.gerenciar_perfis && (
-            <div className="menu-item" onClick={() => handleNavigation('/gerenciar-perfis')}>
-              <FaUsers />
-              <span>Gerenciar Perfis</span>
-            </div>
-          )}
-          <div className="menu-item" onClick={() => handleNavigation('/configuracoes')}>
-            <FaCog />
-            <span>Configurações</span>
-          </div>
-          <div className="menu-item" onClick={() => handleNavigation('/selecionar-perfil')}>
-            <FaUsers />
-            <span>Trocar de Perfil</span>
-          </div>
-        </div>
-      </div>
+      <Sidebar perfil={perfil} />
 
       <div className="despesas">
         <div className="despesas-header">
@@ -422,7 +374,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                         className="btn-edit"
                         style={{ marginLeft: 8 }}
                       >
-                        <FaEdit style={{ marginRight: 4 }} /> Editar
+                        Editar
                       </button>
                     </div>
                   </div>

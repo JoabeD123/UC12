@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaMoneyBillWave, FaWallet, FaCreditCard, FaCog, FaRegChartBar, FaPiggyBank, FaUsers, FaEdit } from 'react-icons/fa';
+import { FaEdit } from 'react-icons/fa';
 import './Receitas.css';
+import Sidebar from '../Sidebar/Sidebar';
 
 function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const [receitas, setReceitas] = useState([]);
@@ -157,10 +158,6 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     }
   };
 
-  const handleNavigation = (path) => {
-    navigate(path);
-  };
-
   if (!usuario || !perfil) {
     return null;
   }
@@ -187,55 +184,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
 
   return (
     <div className="layout-container">
-      <div className="sidebar">
-        <div className="logo">
-          <div className="logo-icon">GF</div>
-        </div>
-        <div className="menu">
-          <div className="menu-item" onClick={() => handleNavigation('/dashboard')}>
-            <FaRegChartBar />
-            <span>Dashboard</span>
-          </div>
-          {perfil?.permissoes?.ver_receitas && (
-            <div className="menu-item active" onClick={() => handleNavigation('/receitas')}>
-              <FaMoneyBillWave />
-              <span>Receitas</span>
-            </div>
-          )}
-          {perfil?.permissoes?.ver_despesas && (
-            <div className="menu-item" onClick={() => handleNavigation('/despesas')}>
-              <FaWallet />
-              <span>Despesas</span>
-            </div>
-          )}
-          {perfil?.permissoes?.ver_cartoes && (
-            <div className="menu-item" onClick={() => handleNavigation('/cartoes')}>
-              <FaCreditCard />
-              <span>Cartões</span>
-            </div>
-          )}
-          {perfil?.permissoes?.ver_imposto && (
-            <div className="menu-item" onClick={() => handleNavigation('/imposto-renda')}>
-              <FaPiggyBank />
-              <span>Imposto Renda</span>
-            </div>
-          )}
-          {perfil?.permissoes?.gerenciar_perfis && (
-            <div className="menu-item" onClick={() => handleNavigation('/gerenciar-perfis')}>
-              <FaUsers />
-              <span>Gerenciar Perfis</span>
-            </div>
-          )}
-          <div className="menu-item" onClick={() => handleNavigation('/configuracoes')}>
-            <FaCog />
-            <span>Configurações</span>
-          </div>
-          <div className="menu-item" onClick={() => handleNavigation('/selecionar-perfil')}>
-            <FaUsers />
-            <span>Trocar de Perfil</span>
-          </div>
-        </div>
-      </div>
+      <Sidebar perfil={perfil} />
 
       <div className="receitas">
         <div className="receitas-header">

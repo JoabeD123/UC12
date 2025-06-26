@@ -11,9 +11,10 @@ import {
   BarElement
 } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
-import { FaMoneyBillWave, FaWallet, FaCreditCard, FaCog, FaRegChartBar, FaPiggyBank, FaUniversity, FaArrowUp, FaArrowDown, FaUsers } from 'react-icons/fa';
-import { IoArrowForward } from "react-icons/io5";
 import './Dashboard.css';
+import Sidebar from '../Sidebar/Sidebar';
+import { FaUniversity, FaArrowUp, FaArrowDown, FaCreditCard } from 'react-icons/fa';
+import { IoArrowForward } from 'react-icons/io5';
 
 // Registrar os componentes necessários do Chart.js
 ChartJS.register(
@@ -417,52 +418,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
           </div>
         </div>
       )}
-      <div className="sidebar">
-        <div className="logo">
-          <div className="logo-icon">GF</div>
-        </div>
-        <div className="menu">
-          <div className="menu-item active" onClick={() => handleNavigation('/dashboard')}>
-            <FaRegChartBar />
-            <span>Dashboard</span>
-          </div>
-          {perfil?.permissoes?.ver_receitas && (
-            <div className="menu-item" onClick={() => handleNavigation('/receitas')}>
-              <FaMoneyBillWave />
-              <span>Receitas</span>
-            </div>
-          )}
-          {perfil?.permissoes?.ver_despesas && (
-            <div className="menu-item" onClick={() => handleNavigation('/despesas')}>
-              <FaWallet />
-              <span>Despesas</span>
-            </div>
-          )}
-          <div className="menu-item" onClick={() => handleNavigation('/cartoes')}>
-            <FaCreditCard />
-            <span>Cartões</span>
-          </div>
-          <div className="menu-item" onClick={() => handleNavigation('/imposto-renda')}>
-            <FaPiggyBank />
-            <span>Imposto Renda</span>
-          </div>
-          {perfil?.permissoes?.gerenciar_perfis && (
-            <div className="menu-item" onClick={() => handleNavigation('/gerenciar-perfis')}>
-              <FaUsers />
-              <span>Gerenciar Perfis</span>
-            </div>
-          )}
-          <div className="menu-item" onClick={() => handleNavigation('/configuracoes')}>
-            <FaCog />
-            <span>Configurações</span>
-          </div>
-          <div className="menu-item" onClick={() => handleNavigation('/selecionar-perfil')}>
-            <FaUsers />
-            <span>Trocar de Perfil</span>
-          </div>
-        </div>
-      </div>
-
+      <Sidebar perfil={perfil} />
       <div className="dashboard">
         <div className="dashboard-content">
           <div className="content-header">

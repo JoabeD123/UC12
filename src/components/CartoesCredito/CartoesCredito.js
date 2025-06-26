@@ -1,28 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaEdit, FaTrash, FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaMoneyBillWave, FaWallet, FaPiggyBank } from 'react-icons/fa';
-import { Bar, Doughnut } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-} from 'chart.js';
 import './CartoesCredito.css';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-);
+import Sidebar from '../Sidebar/Sidebar';
+import { Bar, Doughnut } from 'react-chartjs-2';
 
 const API_URL = 'http://localhost:3001/api/cartoes';
 
@@ -266,55 +246,7 @@ const CartoesCredito = ({ perfil }) => {
 
   return (
     <div className="layout-container">
-      <div className="sidebar">
-        <div className="logo">
-          <div className="logo-icon">GF</div>
-        </div>
-        <div className="menu">
-          <div className="menu-item" onClick={() => navigate('/dashboard')}>
-            <FaChartBar />
-            <span>Dashboard</span>
-          </div>
-          {perfil?.permissoes?.ver_receitas && (
-            <div className="menu-item" onClick={() => navigate('/receitas')}>
-              <FaMoneyBillWave />
-              <span>Receitas</span>
-            </div>
-          )}
-          {perfil?.permissoes?.ver_despesas && (
-            <div className="menu-item" onClick={() => navigate('/despesas')}>
-              <FaWallet />
-              <span>Despesas</span>
-            </div>
-          )}
-          {perfil?.permissoes?.ver_cartoes && (
-            <div className="menu-item active" onClick={() => navigate('/cartoes')}>
-              <FaCreditCard />
-              <span>Cartões</span>
-            </div>
-          )}
-          {perfil?.permissoes?.ver_imposto && (
-            <div className="menu-item" onClick={() => navigate('/imposto-renda')}>
-              <FaPiggyBank />
-              <span>Imposto de Renda</span>
-            </div>
-          )}
-          {perfil?.permissoes?.gerenciar_perfis && (
-            <div className="menu-item" onClick={() => navigate('/gerenciar-perfis')}>
-              <FaUsers />
-              <span>Gerenciar Perfis</span>
-            </div>
-          )}
-          <div className="menu-item" onClick={() => navigate('/configuracoes')}>
-            <FaCog />
-            <span>Configurações</span>
-          </div>
-          <div className="menu-item" onClick={() => navigate('/selecionar-perfil')}>
-            <FaUsers />
-            <span>Trocar de Perfil</span>
-          </div>
-        </div>
-      </div>
+      <Sidebar perfil={perfil} />
 
       <div className="cartoes-credito">
         <div className="cartoes-header">
@@ -332,7 +264,7 @@ const CartoesCredito = ({ perfil }) => {
               });
             }}
           >
-            <FaPlus /> Novo Cartão
+            Novo Cartão
           </button>
         </div>
 
@@ -421,10 +353,10 @@ const CartoesCredito = ({ perfil }) => {
                 <h3>{cartao.nome}</h3>
                 <div className="cartao-acoes">
                   <button onClick={() => handleEditar(cartao)}>
-                    <FaEdit />
+                    Editar
                   </button>
                   <button onClick={() => handleExcluir(cartao.id_cartao)}>
-                    <FaTrash />
+                    Excluir
                   </button>
                 </div>
               </div>
@@ -453,7 +385,7 @@ const CartoesCredito = ({ perfil }) => {
                       }}
                     />
                     <button onClick={() => handleGastoInputSubmit(cartao.id_cartao)}>
-                      <FaPlus />
+                      Adicionar
                     </button>
                   </div>
                 </div>
