@@ -23,7 +23,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
 
   const carregarReceitas = useCallback(async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/receitas/${perfil.id_perfil}`);
+      const response = await fetch(`http://localhost:3001/api/receitas/${usuario.id_usuario}`);
       if (!response.ok) throw new Error('Erro ao carregar receitas');
       const data = await response.json();
       setReceitas(data);
@@ -33,7 +33,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     } finally {
       setLoading(false);
     }
-  }, [perfil]);
+  }, [usuario]);
 
   const carregarCategorias = useCallback(async () => {
     try {
@@ -80,13 +80,17 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
         // Adição
         const response = await fetch('http://localhost:3001/api/receitas', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            ...novaReceita,
-            perfil_id: perfil.id_perfil
-          }),
+            usuario_id: usuario.id_usuario,
+            perfil_id: perfil.id_perfil,
+            nome_receita: novaReceita.nome_receita,
+            valor_receita: novaReceita.valor_receita,
+            data_recebimento: novaReceita.data_recebimento,
+            descricao: novaReceita.descricao,
+            categoria_id: novaReceita.categoria_id,
+            fixa: novaReceita.fixa
+          })
         });
         if (!response.ok) {
           const data = await response.json();
@@ -161,7 +165,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     return null;
   }
 
-  if (!perfil.permissoes?.pode_ver_todas_contas) {
+  if (!perfil.permissoes?.ver_receitas) {
     return (
       <div className="sem-permissao">
         <h2>Acesso Negado</h2>

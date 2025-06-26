@@ -346,8 +346,7 @@ app.post('/api/register', async (req, res) => {
 
 // Novo Endpoint para criar o primeiro perfil após o registro
 app.post('/api/perfil/primeiro', async (req, res) => {
-  const { usuario_id, nome_perfil, categoria_familiar, senha_perfil,
-    acesso_dashboard = true, acesso_receitas = true, acesso_despesas = true, acesso_cartoes = true, acesso_imposto = true, acesso_configuracoes = true } = req.body;
+  const { usuario_id, nome_perfil, categoria_familiar, senha_perfil } = req.body;
   console.log('Recebendo requisição para criar primeiro perfil:', { usuario_id, nome_perfil, categoria_familiar });
 
   if (!usuario_id || !nome_perfil || !categoria_familiar || !senha_perfil) {
@@ -372,10 +371,9 @@ app.post('/api/perfil/primeiro', async (req, res) => {
 
     // Inserir todas as permissões como ativas para o primeiro perfil
     await client.query(
-      `INSERT INTO permissoes (perfil_id, pode_criar_conta, pode_editar_conta, pode_excluir_conta, pode_ver_todas_contas,
-        acesso_dashboard, acesso_receitas, acesso_despesas, acesso_cartoes, acesso_imposto, acesso_configuracoes) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-      [id_perfil, true, true, true, true, acesso_dashboard, acesso_receitas, acesso_despesas, acesso_cartoes, acesso_imposto, acesso_configuracoes]
+      `INSERT INTO permissoes (perfil_id, ver_receitas, ver_despesas, ver_cartoes, gerenciar_perfis) 
+       VALUES ($1, $2, $3, $4, $5)`,
+      [id_perfil, true, true, true, true]
     );
 
     await client.query('COMMIT');
@@ -384,6 +382,7 @@ app.post('/api/perfil/primeiro', async (req, res) => {
   } catch (err) {
     if (client) {
       await client.query('ROLLBACK');
+      // NÃO chame client.release() aqui
     }
     console.error('Erro ao criar o primeiro perfil:', err);
     res.status(500).json({ message: 'Erro ao criar o primeiro perfil.' });
@@ -487,17 +486,14 @@ app.get('/api/user/profiles-and-permissions/:userId', async (req, res) => {
 
 // Rotas para Gerenciamento de Contas
 app.post('/api/contas', async (req, res) => {
-  const { nome_conta, valor_conta, data_entrega, data_vencimento, status_pagamento_id, 
-          descricao, tipo_conta_id, recorrencia_id, perfil_id, categoria_id } = req.body;
+  const { usuario_id, perfil_id, nome_conta, valor_conta, data_entrega, data_vencimento, status_pagamento_id, descricao, tipo_conta_id, recorrencia_id, categoria_id, fixa } = req.body;
 
   try {
     const client = await pool.connect();
     const result = await client.query(
-      `INSERT INTO contas (nome_conta, valor_conta, data_entrega, data_vencimento, 
-        status_pagamento_id, descricao, tipo_conta_id, recorrencia_id, perfil_id, categoria_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
-      [nome_conta, valor_conta, data_entrega, data_vencimento, status_pagamento_id,
-       descricao, tipo_conta_id, recorrencia_id, perfil_id, categoria_id]
+      `INSERT INTO contas (usuario_id, perfil_id, nome_conta, valor_conta, data_entrega, data_vencimento, status_pagamento_id, descricao, tipo_conta_id, recorrencia_id, categoria_id, fixa)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+      [usuario_id, perfil_id, nome_conta, valor_conta, data_entrega, data_vencimento, status_pagamento_id, descricao, tipo_conta_id, recorrencia_id, categoria_id, fixa]
     );
     client.release();
     res.status(201).json(result.rows[0]);
@@ -507,8 +503,8 @@ app.post('/api/contas', async (req, res) => {
   }
 });
 
-app.get('/api/contas/:perfilId', async (req, res) => {
-  const { perfilId } = req.params;
+app.get('/api/contas/:usuarioId', async (req, res) => {
+  const { usuarioId } = req.params;
   try {
     const client = await pool.connect();
     const result = await client.query(
@@ -518,9 +514,9 @@ app.get('/api/contas/:perfilId', async (req, res) => {
        LEFT JOIN tipo_conta_tipo t ON c.tipo_conta_id = t.id_tipo_conta_tipo
        LEFT JOIN recorrencia_tipo r ON c.recorrencia_id = r.id_recorrencia_tipo
        LEFT JOIN categoria cat ON c.categoria_id = cat.id_categoria
-       WHERE c.perfil_id = $1
+       WHERE c.usuario_id = $1
        ORDER BY c.data_vencimento DESC`,
-      [perfilId]
+      [usuarioId]
     );
     client.release();
     res.status(200).json(result.rows);
@@ -568,16 +564,16 @@ app.delete('/api/contas/:id', async (req, res) => {
 });
 
 // Endpoints para Receitas
-app.get('/api/receitas/:perfilId', async (req, res) => {
-  const { perfilId } = req.params;
+app.get('/api/receitas/:usuarioId', async (req, res) => {
+  const { usuarioId } = req.params;
   const { mes, ano } = req.query;
   try {
     const client = await pool.connect();
     let query = `SELECT r.*, cat.nome_categoria
        FROM receita r
        LEFT JOIN categoria cat ON r.categoria_id = cat.id_categoria
-       WHERE r.perfil_id = $1 AND cat.tipo_categoria = 'receita'`;
-    const params = [perfilId];
+       WHERE r.usuario_id = $1 AND cat.tipo_categoria = 'receita'`;
+    const params = [usuarioId];
     if (mes && ano) {
       query += ` AND ((EXTRACT(MONTH FROM r.data_recebimento) = $2 AND EXTRACT(YEAR FROM r.data_recebimento) = $3) OR r.fixa = TRUE)`;
       params.push(mes, ano);
@@ -593,13 +589,12 @@ app.get('/api/receitas/:perfilId', async (req, res) => {
 });
 
 app.post('/api/receitas', async (req, res) => {
-  const { perfil_id, nome_receita, valor_receita, data_recebimento, descricao, categoria_id, fixa } = req.body;
-
+  const { usuario_id, perfil_id, nome_receita, valor_receita, data_recebimento, descricao, categoria_id, fixa } = req.body;
   try {
     const client = await pool.connect();
     const result = await client.query(
-      'INSERT INTO receita (perfil_id, nome_receita, valor_receita, data_recebimento, descricao, categoria_id, fixa) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [perfil_id, nome_receita, valor_receita, data_recebimento, descricao, categoria_id, fixa]
+      'INSERT INTO receita (usuario_id, perfil_id, nome_receita, valor_receita, data_recebimento, descricao, categoria_id, fixa) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+      [usuario_id, perfil_id, nome_receita, valor_receita, data_recebimento, descricao, categoria_id, fixa]
     );
     client.release();
     res.status(201).json(result.rows[0]);
@@ -647,16 +642,16 @@ app.put('/api/receitas/:id', async (req, res) => {
 });
 
 // Endpoints para Despesas
-app.get('/api/despesas/:perfilId', async (req, res) => {
-  const { perfilId } = req.params;
+app.get('/api/despesas/:usuarioId', async (req, res) => {
+  const { usuarioId } = req.params;
   const { mes, ano } = req.query;
   try {
     const client = await pool.connect();
     let query = `SELECT c.*, cat.nome_categoria 
        FROM contas c 
        LEFT JOIN categoria cat ON c.categoria_id = cat.id_categoria 
-       WHERE c.perfil_id = $1 AND cat.tipo_categoria = 'despesa'`;
-    const params = [perfilId];
+       WHERE c.usuario_id = $1 AND cat.tipo_categoria = 'despesa'`;
+    const params = [usuarioId];
     if (mes && ano) {
       query += ` AND ((EXTRACT(MONTH FROM c.data_vencimento) = $2 AND EXTRACT(YEAR FROM c.data_vencimento) = $3) OR c.fixa = TRUE)`;
       params.push(mes, ano);
@@ -673,6 +668,7 @@ app.get('/api/despesas/:perfilId', async (req, res) => {
 
 app.post('/api/despesas', async (req, res) => {
   const { 
+    usuario_id, 
     perfil_id, 
     nome_conta, 
     valor_conta, 
@@ -690,11 +686,11 @@ app.post('/api/despesas', async (req, res) => {
     const client = await pool.connect();
     const result = await client.query(
       `INSERT INTO contas (
-        perfil_id, nome_conta, valor_conta, data_entrega, data_vencimento, 
+        usuario_id, perfil_id, nome_conta, valor_conta, data_entrega, data_vencimento, 
         descricao, categoria_id, tipo_conta_id, recorrencia_id, status_pagamento_id, fixa
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
       [
-        perfil_id, nome_conta, valor_conta, data_entrega, data_vencimento,
+        usuario_id, perfil_id, nome_conta, valor_conta, data_entrega, data_vencimento,
         descricao, categoria_id, tipo_conta_id, recorrencia_id, status_pagamento_id, fixa
       ]
     );
@@ -845,8 +841,7 @@ app.post('/api/categorias', async (req, res) => {
 // Rotas para Gerenciamento de Perfis
 app.post('/api/perfis', async (req, res) => {
   const { usuario_id, nome, categoria_familiar, senha, renda,
-    pode_criar_conta, pode_editar_conta, pode_excluir_conta, pode_ver_todas_contas,
-    acesso_dashboard = true, acesso_receitas = true, acesso_despesas = true, acesso_cartoes = true, acesso_imposto = true, acesso_configuracoes = true } = req.body;
+    ver_receitas = true, ver_despesas = true, ver_cartoes = true, gerenciar_perfis = false } = req.body;
 
   let client;
   try {
@@ -872,21 +867,14 @@ app.post('/api/perfis', async (req, res) => {
     const id_perfil = perfilResult.rows[0].id_perfil;
 
     await client.query(
-      `INSERT INTO permissoes (perfil_id, pode_criar_conta, pode_editar_conta, pode_excluir_conta, pode_ver_todas_contas,
-        acesso_dashboard, acesso_receitas, acesso_despesas, acesso_cartoes, acesso_imposto, acesso_configuracoes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+      `INSERT INTO permissoes (perfil_id, ver_receitas, ver_despesas, ver_cartoes, gerenciar_perfis)
+       VALUES ($1, $2, $3, $4, $5)`,
       [
         id_perfil,
-        typeof pode_criar_conta === 'boolean' ? pode_criar_conta : true,
-        typeof pode_editar_conta === 'boolean' ? pode_editar_conta : true,
-        typeof pode_excluir_conta === 'boolean' ? pode_excluir_conta : true,
-        typeof pode_ver_todas_contas === 'boolean' ? pode_ver_todas_contas : true,
-        acesso_dashboard,
-        acesso_receitas,
-        acesso_despesas,
-        acesso_cartoes,
-        acesso_imposto,
-        acesso_configuracoes
+        ver_receitas,
+        ver_despesas,
+        ver_cartoes,
+        gerenciar_perfis
       ]
     );
 
@@ -896,6 +884,7 @@ app.post('/api/perfis', async (req, res) => {
   } catch (err) {
     if (client) {
       await client.query('ROLLBACK');
+      // NÃO chame client.release() aqui
     }
     console.error('Erro ao criar perfil:', err);
     res.status(500).json({ message: 'Erro ao criar perfil.' });
@@ -909,8 +898,7 @@ app.post('/api/perfis', async (req, res) => {
 app.put('/api/perfis/:id', async (req, res) => {
   const { id } = req.params;
   const { nome, categoria_familiar, renda,
-    pode_criar_conta, pode_editar_conta, pode_excluir_conta, pode_ver_todas_contas,
-    acesso_dashboard = true, acesso_receitas = true, acesso_despesas = true, acesso_cartoes = true, acesso_imposto = true, acesso_configuracoes = true } = req.body;
+    ver_receitas = true, ver_despesas = true, ver_cartoes = true, gerenciar_perfis = false } = req.body;
 
   try {
     const client = await pool.connect();
@@ -924,20 +912,13 @@ app.put('/api/perfis/:id', async (req, res) => {
     // Atualiza permissões
     await client.query(
       `UPDATE permissoes SET 
-        pode_criar_conta = $1, pode_editar_conta = $2, pode_excluir_conta = $3, pode_ver_todas_contas = $4,
-        acesso_dashboard = $5, acesso_receitas = $6, acesso_despesas = $7, acesso_cartoes = $8, acesso_imposto = $9, acesso_configuracoes = $10
-       WHERE perfil_id = $11`,
+        ver_receitas = $1, ver_despesas = $2, ver_cartoes = $3, gerenciar_perfis = $4
+       WHERE perfil_id = $5`,
       [
-        typeof pode_criar_conta === 'boolean' ? pode_criar_conta : true,
-        typeof pode_editar_conta === 'boolean' ? pode_editar_conta : true,
-        typeof pode_excluir_conta === 'boolean' ? pode_excluir_conta : true,
-        typeof pode_ver_todas_contas === 'boolean' ? pode_ver_todas_contas : true,
-        acesso_dashboard,
-        acesso_receitas,
-        acesso_despesas,
-        acesso_cartoes,
-        acesso_imposto,
-        acesso_configuracoes,
+        ver_receitas,
+        ver_despesas,
+        ver_cartoes,
+        gerenciar_perfis,
         id
       ]
     );
@@ -962,7 +943,7 @@ app.delete('/api/perfis/:id', async (req, res) => {
   } catch (err) {
     if (client) {
       await client.query('ROLLBACK');
-      client.release();
+      // NÃO chame client.release() aqui
     }
     console.error('Erro ao excluir perfil:', err);
     res.status(500).json({ message: 'Erro ao excluir perfil.' });
@@ -974,15 +955,13 @@ app.delete('/api/perfis/:id', async (req, res) => {
 });
 
 // Rotas para Cartões de Crédito
-app.get('/api/cartoes/:perfilId', async (req, res) => {
-  const { perfilId } = req.params;
-  // Para cartões, normalmente não há filtro de mês/ano, pois o cartão existe independente do mês.
-  // Se quiser filtrar gastos por mês, seria necessário uma tabela de gastos mensais por cartão.
+app.get('/api/cartoes/:usuarioId', async (req, res) => {
+  const { usuarioId } = req.params;
   try {
     const client = await pool.connect();
     const result = await client.query(
-      'SELECT * FROM cartao_credito WHERE perfil_id = $1 ORDER BY id_cartao DESC',
-      [perfilId]
+      'SELECT * FROM cartao_credito WHERE usuario_id = $1 ORDER BY id_cartao DESC',
+      [usuarioId]
     );
     client.release();
     res.status(200).json(result.rows);
@@ -993,13 +972,12 @@ app.get('/api/cartoes/:perfilId', async (req, res) => {
 });
 
 app.post('/api/cartoes', async (req, res) => {
-  console.log('Recebido no backend:', req.body); // Debug do que chega do frontend
-  const { perfil_id, nome, limite, dia_vencimento, bandeira, gastos } = req.body;
+  const { usuario_id, perfil_id, nome, limite, dia_vencimento, bandeira, gastos } = req.body;
   try {
     const client = await pool.connect();
     const result = await client.query(
-      'INSERT INTO cartao_credito (perfil_id, nome, limite, dia_vencimento, bandeira, gastos) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [perfil_id, nome, limite, dia_vencimento, bandeira, gastos || 0]
+      'INSERT INTO cartao_credito (usuario_id, perfil_id, nome, limite, dia_vencimento, bandeira, gastos) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [usuario_id, perfil_id, nome, limite, dia_vencimento, bandeira, gastos || 0]
     );
     client.release();
     res.status(201).json(result.rows[0]);

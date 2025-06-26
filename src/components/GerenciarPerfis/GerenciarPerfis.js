@@ -11,10 +11,10 @@ const GerenciarPerfis = ({ usuario }) => {
     categoria_familiar: '',
     senha: '',
     renda: '',
-    pode_criar_conta: true,
-    pode_editar_conta: true,
-    pode_excluir_conta: true,
-    pode_ver_todas_contas: true
+    ver_receitas: true,
+    ver_despesas: true,
+    ver_cartoes: true,
+    gerenciar_perfis: false
   });
   const [perfilEditando, setPerfilEditando] = useState(null);
   const [erro, setErro] = useState('');
@@ -67,10 +67,10 @@ const GerenciarPerfis = ({ usuario }) => {
             nome: novoPerfil.nome,
             categoria_familiar: novoPerfil.categoria_familiar,
             renda: novoPerfil.renda || 0,
-            pode_criar_conta: novoPerfil.pode_criar_conta,
-            pode_editar_conta: novoPerfil.pode_editar_conta,
-            pode_excluir_conta: novoPerfil.pode_excluir_conta,
-            pode_ver_todas_contas: novoPerfil.pode_ver_todas_contas
+            ver_receitas: novoPerfil.ver_receitas,
+            ver_despesas: novoPerfil.ver_despesas,
+            ver_cartoes: novoPerfil.ver_cartoes,
+            gerenciar_perfis: novoPerfil.gerenciar_perfis
           })
         });
         if (!res.ok) throw new Error('Erro ao editar perfil');
@@ -85,15 +85,15 @@ const GerenciarPerfis = ({ usuario }) => {
             categoria_familiar: novoPerfil.categoria_familiar,
             senha: novoPerfil.senha,
             renda: novoPerfil.renda || 0,
-            pode_criar_conta: novoPerfil.pode_criar_conta,
-            pode_editar_conta: novoPerfil.pode_editar_conta,
-            pode_excluir_conta: novoPerfil.pode_excluir_conta,
-            pode_ver_todas_contas: novoPerfil.pode_ver_todas_contas
+            ver_receitas: novoPerfil.ver_receitas,
+            ver_despesas: novoPerfil.ver_despesas,
+            ver_cartoes: novoPerfil.ver_cartoes,
+            gerenciar_perfis: novoPerfil.gerenciar_perfis
           })
         });
         if (!res.ok) throw new Error('Erro ao criar perfil');
       }
-      setNovoPerfil({ nome: '', categoria_familiar: '', senha: '', renda: '', pode_criar_conta: true, pode_editar_conta: true, pode_excluir_conta: true, pode_ver_todas_contas: true });
+      setNovoPerfil({ nome: '', categoria_familiar: '', senha: '', renda: '', ver_receitas: true, ver_despesas: true, ver_cartoes: true, gerenciar_perfis: false });
       setPerfilEditando(null);
       // Atualizar lista
       const res = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${usuario.id_usuario}`);
@@ -113,10 +113,10 @@ const GerenciarPerfis = ({ usuario }) => {
       categoria_familiar: perfil.categoria_familiar,
       senha: '',
       renda: perfil.renda || '',
-      pode_criar_conta: perfil.pode_criar_conta,
-      pode_editar_conta: perfil.pode_editar_conta,
-      pode_excluir_conta: perfil.pode_excluir_conta,
-      pode_ver_todas_contas: perfil.pode_ver_todas_contas
+      ver_receitas: perfil.permissoes?.ver_receitas ?? true,
+      ver_despesas: perfil.permissoes?.ver_despesas ?? true,
+      ver_cartoes: perfil.permissoes?.ver_cartoes ?? true,
+      gerenciar_perfis: perfil.permissoes?.gerenciar_perfis ?? false
     });
   };
 
@@ -134,7 +134,7 @@ const GerenciarPerfis = ({ usuario }) => {
 
   const handleCancel = () => {
     setPerfilEditando(null);
-    setNovoPerfil({ nome: '', categoria_familiar: '', senha: '', renda: '', pode_criar_conta: true, pode_editar_conta: true, pode_excluir_conta: true, pode_ver_todas_contas: true });
+    setNovoPerfil({ nome: '', categoria_familiar: '', senha: '', renda: '', ver_receitas: true, ver_despesas: true, ver_cartoes: true, gerenciar_perfis: false });
     setErro('');
   };
 
@@ -232,19 +232,19 @@ const GerenciarPerfis = ({ usuario }) => {
               </div>
 
               <div className="form-group">
-                <label>Permissões</label>
+                <label>Permissões de acesso às telas</label>
                 <div className="permissoes-checkboxes">
                   <label>
-                    <input type="checkbox" name="pode_criar_conta" checked={novoPerfil.pode_criar_conta} onChange={handleInputChange} /> Pode criar contas
+                    <input type="checkbox" name="ver_receitas" checked={novoPerfil.ver_receitas} onChange={handleInputChange} /> Ver Receitas
                   </label>
                   <label>
-                    <input type="checkbox" name="pode_editar_conta" checked={novoPerfil.pode_editar_conta} onChange={handleInputChange} /> Pode editar contas
+                    <input type="checkbox" name="ver_despesas" checked={novoPerfil.ver_despesas} onChange={handleInputChange} /> Ver Despesas
                   </label>
                   <label>
-                    <input type="checkbox" name="pode_excluir_conta" checked={novoPerfil.pode_excluir_conta} onChange={handleInputChange} /> Pode excluir contas
+                    <input type="checkbox" name="ver_cartoes" checked={novoPerfil.ver_cartoes} onChange={handleInputChange} /> Ver Cartões
                   </label>
                   <label>
-                    <input type="checkbox" name="pode_ver_todas_contas" checked={novoPerfil.pode_ver_todas_contas} onChange={handleInputChange} /> Pode ver todas as contas
+                    <input type="checkbox" name="gerenciar_perfis" checked={novoPerfil.gerenciar_perfis} onChange={handleInputChange} /> Gerenciar Perfis
                   </label>
                 </div>
               </div>
@@ -284,11 +284,21 @@ const GerenciarPerfis = ({ usuario }) => {
                   <div className="perfil-permissoes">
                     <h5>Permissões:</h5>
                     <ul>
-                      {Object.entries(perfil.permissoes).map(([permissao, valor]) => (
-                        <li key={permissao} className={valor ? 'permitido' : 'negado'}>
-                          {permissao.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                        </li>
-                      ))}
+                      {Object.entries(perfil.permissoes)
+                        .filter(([permissao]) => ['ver_receitas','ver_despesas','ver_cartoes','gerenciar_perfis'].includes(permissao))
+                        .map(([permissao, valor]) => (
+                          <li key={permissao} className={valor ? 'permitido' : 'negado'}>
+                            {(() => {
+                              switch(permissao) {
+                                case 'ver_receitas': return 'Ver Receitas';
+                                case 'ver_despesas': return 'Ver Despesas';
+                                case 'ver_cartoes': return 'Ver Cartões';
+                                case 'gerenciar_perfis': return 'Gerenciar Perfis';
+                                default: return permissao;
+                              }
+                            })()}
+                          </li>
+                        ))}
                     </ul>
                   </div>
                 </div>

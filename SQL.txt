@@ -111,6 +111,7 @@ CREATE TABLE IF NOT EXISTS contas (
     perfil_id INT,
     categoria_id INT,
     fixa BOOLEAN DEFAULT FALSE,
+    usuario_id INT,
     FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil),
     FOREIGN KEY (categoria_id) REFERENCES categoria(id_categoria),
     FOREIGN KEY (status_pagamento_id) REFERENCES status_pagamento_tipo(id_status_pagamento_tipo),
@@ -128,6 +129,7 @@ CREATE TABLE IF NOT EXISTS receita (
     descricao TEXT,
     categoria_id INT,
     fixa BOOLEAN DEFAULT FALSE,
+    usuario_id INT,
     FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil),
     FOREIGN KEY (categoria_id) REFERENCES categoria(id_categoria)
 );
@@ -150,10 +152,10 @@ CREATE TABLE IF NOT EXISTS historico_alteracoes (
 CREATE TABLE IF NOT EXISTS permissoes (
     id_permissao SERIAL PRIMARY KEY,
     perfil_id INT NOT NULL UNIQUE,
-    pode_criar_conta BOOLEAN DEFAULT FALSE,
-    pode_editar_conta BOOLEAN DEFAULT FALSE,
-    pode_excluir_conta BOOLEAN DEFAULT FALSE,
-    pode_ver_todas_contas BOOLEAN DEFAULT FALSE,
+    ver_receitas BOOLEAN DEFAULT TRUE,
+    ver_despesas BOOLEAN DEFAULT TRUE,
+    ver_cartoes BOOLEAN DEFAULT TRUE,
+    gerenciar_perfis BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil)
 );
 
@@ -166,3 +168,11 @@ CREATE TABLE IF NOT EXISTS orcamento (
     FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil),
     UNIQUE (perfil_id, mes_ano)
 );
+
+-- Adicionar coluna usuario_id nas tabelas de dados
+ALTER TABLE receita ADD COLUMN IF NOT EXISTS usuario_id INT;
+ALTER TABLE contas ADD COLUMN IF NOT EXISTS usuario_id INT;
+
+-- Preencher usuario_id com base no perfil_id já existente
+UPDATE receita r SET usuario_id = p.usuario_id FROM perfil p WHERE r.perfil_id = p.id_perfil;
+UPDATE contas c SET usuario_id = p.usuario_id FROM perfil p WHERE c.perfil_id = p.id_perfil;

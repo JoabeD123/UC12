@@ -43,8 +43,8 @@ const CartoesCredito = ({ perfil }) => {
 
   // Buscar cartões do banco ao carregar a tela
   useEffect(() => {
-    if (!perfil?.id_perfil) return;
-    fetch(`${API_URL}/${perfil.id_perfil}`)
+    if (!perfil?.id_perfil || !perfil?.usuario_id) return;
+    fetch(`${API_URL}/${perfil.usuario_id}`)
       .then(res => res.json())
       .then(data => {
         setCartoes(data);
@@ -77,6 +77,7 @@ const CartoesCredito = ({ perfil }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          usuario_id: perfil.usuario_id,
           perfil_id: perfil.id_perfil,
           nome: novoCartao.nome,
           limite: Number(novoCartao.limite) > 0 ? Number(novoCartao.limite) : 0,
@@ -250,6 +251,18 @@ const CartoesCredito = ({ perfil }) => {
   };
 
   console.log('doughnutData', doughnutData);
+
+  if (!perfil?.permissoes?.ver_cartoes) {
+    return (
+      <div className="sem-permissao">
+        <h2>Acesso Negado</h2>
+        <p>Você não tem permissão para acessar esta página.</p>
+        <button onClick={() => navigate('/dashboard')} className="btn-primary">
+          Voltar para o Dashboard
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="layout-container">

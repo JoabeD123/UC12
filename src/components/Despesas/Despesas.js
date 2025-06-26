@@ -27,7 +27,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
 
   const carregarDespesas = useCallback(async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/despesas/${perfil.id_perfil}`);
+      const response = await fetch(`http://localhost:3001/api/despesas/${usuario.id_usuario}`);
       if (!response.ok) throw new Error('Erro ao carregar despesas');
       const data = await response.json();
       setDespesas(data);
@@ -37,7 +37,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     } finally {
       setLoading(false);
     }
-  }, [perfil]);
+  }, [usuario]);
 
   const carregarCategorias = useCallback(async () => {
     try {
@@ -60,7 +60,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!perfil.permissoes?.pode_criar_conta) {
+    if (!perfil.permissoes?.ver_despesas) {
       alert('Você não tem permissão para adicionar despesas.');
       return;
     }
@@ -83,14 +83,21 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
         // Adição normal
         const response = await fetch('http://localhost:3001/api/despesas', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            usuario_id: usuario.id_usuario,
             perfil_id: perfil.id_perfil,
-            ...novaDespesa,
-            valor_conta: parseFloat(novaDespesa.valor_conta)
-          }),
+            nome_conta: novaDespesa.nome_conta,
+            valor_conta: novaDespesa.valor_conta,
+            data_entrega: novaDespesa.data_entrega,
+            data_vencimento: novaDespesa.data_vencimento,
+            descricao: novaDespesa.descricao,
+            categoria_id: novaDespesa.categoria_id,
+            tipo_conta_id: novaDespesa.tipo_conta_id,
+            recorrencia_id: novaDespesa.recorrencia_id,
+            status_pagamento_id: novaDespesa.status_pagamento_id,
+            fixa: novaDespesa.fixa
+          })
         });
         if (!response.ok) throw new Error('Erro ao criar despesa');
         const novaDespesaCriada = await response.json();
@@ -115,7 +122,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   };
 
   const handleExcluir = async (id) => {
-    if (!perfil.permissoes?.pode_excluir_conta) {
+    if (!perfil.permissoes?.ver_despesas) {
       alert('Você não tem permissão para excluir despesas.');
       return;
     }
@@ -169,7 +176,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     return null;
   }
 
-  if (!perfil.permissoes?.pode_ver_todas_contas) {
+  if (!perfil.permissoes?.ver_despesas) {
     return (
       <div className="sem-permissao">
         <h2>Acesso Negado</h2>
