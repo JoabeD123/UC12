@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaMoneyBillWave, FaWallet } from 'react-icons/fa';
+import { FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaMoneyBillWave, FaWallet, FaPiggyBank } from 'react-icons/fa';
 import './GerenciarPerfis.css';
 
 const GerenciarPerfis = ({ usuario, perfil }) => {
@@ -159,7 +159,7 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
           )}
           {perfil?.permissoes?.ver_imposto && (
             <div className="menu-item" onClick={() => navigate('/imposto-renda')}>
-              <FaChartPie />
+              <FaPiggyBank />
               <span>Imposto de Renda</span>
             </div>
           )}
@@ -172,6 +172,10 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
           <div className="menu-item" onClick={() => navigate('/configuracoes')}>
             <FaCog />
             <span>Configurações</span>
+          </div>
+          <div className="menu-item" onClick={() => navigate('/selecionar-perfil')}>
+            <FaUsers />
+            <span>Trocar de Perfil</span>
           </div>
         </div>
       </div>

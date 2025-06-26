@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaMoon, FaSun, FaSignOutAlt, FaMoneyBillWave, FaWallet } from 'react-icons/fa';
+import { FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaMoon, FaSun, FaSignOutAlt, FaMoneyBillWave, FaWallet, FaPiggyBank } from 'react-icons/fa';
 import './Configuracoes.css';
 
 const Configuracoes = ({ usuario, perfil, darkMode, onThemeChange, onLogout }) => {
@@ -70,7 +70,7 @@ const Configuracoes = ({ usuario, perfil, darkMode, onThemeChange, onLogout }) =
           )}
           {perfil?.permissoes?.ver_imposto && (
             <div className="menu-item" onClick={() => navigate('/imposto-renda')}>
-              <FaChartPie />
+              <FaPiggyBank />
               <span>Imposto de Renda</span>
             </div>
           )}
@@ -80,13 +80,13 @@ const Configuracoes = ({ usuario, perfil, darkMode, onThemeChange, onLogout }) =
               <span>Gerenciar Perfis</span>
             </div>
           )}
-          <div className="menu-item" onClick={() => navigate('/selecionar-perfil')}>
-            <FaUsers />
-            <span>Trocar de Perfil</span>
-          </div>
           <div className="menu-item active" onClick={() => navigate('/configuracoes')}>
             <FaCog />
             <span>Configurações</span>
+          </div>
+          <div className="menu-item" onClick={() => navigate('/selecionar-perfil')}>
+            <FaUsers />
+            <span>Trocar de Perfil</span>
           </div>
         </div>
       </div>

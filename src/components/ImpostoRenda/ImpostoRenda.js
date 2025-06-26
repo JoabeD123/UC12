@@ -10,7 +10,7 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
-import { FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaInfoCircle, FaMoneyBillWave, FaWallet } from 'react-icons/fa';
+import { FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaInfoCircle, FaMoneyBillWave, FaWallet, FaPiggyBank } from 'react-icons/fa';
 import './ImpostoRenda.css';
 
 // Registrar os componentes do Chart.js
@@ -279,7 +279,7 @@ const ImpostoRenda = ({ usuario, perfil }) => {
           )}
           {perfil?.permissoes?.ver_imposto && (
             <div className="menu-item active" onClick={() => navigate('/imposto-renda')}>
-              <FaChartPie />
+              <FaPiggyBank />
               <span>Imposto de Renda</span>
             </div>
           )}

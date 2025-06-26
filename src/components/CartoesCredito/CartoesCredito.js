@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaEdit, FaTrash, FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaMoneyBillWave, FaWallet } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaMoneyBillWave, FaWallet, FaPiggyBank } from 'react-icons/fa';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -295,7 +295,7 @@ const CartoesCredito = ({ perfil }) => {
           )}
           {perfil?.permissoes?.ver_imposto && (
             <div className="menu-item" onClick={() => navigate('/imposto-renda')}>
-              <FaChartPie />
+              <FaPiggyBank />
               <span>Imposto de Renda</span>
             </div>
           )}

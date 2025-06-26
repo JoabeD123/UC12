@@ -452,13 +452,13 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
               <span>Gerenciar Perfis</span>
             </div>
           )}
-          <div className="menu-item" onClick={() => handleNavigation('/selecionar-perfil')}>
-            <FaUsers />
-            <span>Trocar de Perfil</span>
-          </div>
           <div className="menu-item" onClick={() => handleNavigation('/configuracoes')}>
             <FaCog />
             <span>Configurações</span>
+          </div>
+          <div className="menu-item" onClick={() => handleNavigation('/selecionar-perfil')}>
+            <FaUsers />
+            <span>Trocar de Perfil</span>
           </div>
         </div>
       </div>
