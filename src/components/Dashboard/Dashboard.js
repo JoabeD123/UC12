@@ -426,13 +426,13 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
             <FaRegChartBar />
             <span>Dashboard</span>
           </div>
-          {perfil?.permissoes?.pode_ver_todas_contas && (
+          {perfil?.permissoes?.ver_receitas && (
             <div className="menu-item" onClick={() => handleNavigation('/receitas')}>
               <FaMoneyBillWave />
               <span>Receitas</span>
             </div>
           )}
-          {perfil?.permissoes?.pode_ver_todas_contas && (
+          {perfil?.permissoes?.ver_despesas && (
             <div className="menu-item" onClick={() => handleNavigation('/despesas')}>
               <FaWallet />
               <span>Despesas</span>
@@ -446,7 +446,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
             <FaPiggyBank />
             <span>Imposto Renda</span>
           </div>
-          {perfil?.permissoes?.pode_ver_todas_contas && (
+          {perfil?.permissoes?.gerenciar_perfis && (
             <div className="menu-item" onClick={() => handleNavigation('/gerenciar-perfis')}>
               <FaUsers />
               <span>Gerenciar Perfis</span>

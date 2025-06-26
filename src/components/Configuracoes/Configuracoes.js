@@ -50,26 +50,36 @@ const Configuracoes = ({ usuario, perfil, darkMode, onThemeChange, onLogout }) =
             <FaChartBar />
             <span>Dashboard</span>
           </div>
-          <div className="menu-item" onClick={() => navigate('/receitas')}>
-            <FaMoneyBillWave />
-            <span>Receitas</span>
-          </div>
-          <div className="menu-item" onClick={() => navigate('/despesas')}>
-            <FaWallet />
-            <span>Despesas</span>
-          </div>
-          <div className="menu-item" onClick={() => navigate('/cartoes')}>
-            <FaCreditCard />
-            <span>Cartões</span>
-          </div>
-          <div className="menu-item" onClick={() => navigate('/imposto-renda')}>
-            <FaChartPie />
-            <span>Imposto de Renda</span>
-          </div>
-          <div className="menu-item" onClick={() => navigate('/gerenciar-perfis')}>
-            <FaUsers />
-            <span>Gerenciar Perfis</span>
-          </div>
+          {perfil?.permissoes?.ver_receitas && (
+            <div className="menu-item" onClick={() => navigate('/receitas')}>
+              <FaMoneyBillWave />
+              <span>Receitas</span>
+            </div>
+          )}
+          {perfil?.permissoes?.ver_despesas && (
+            <div className="menu-item" onClick={() => navigate('/despesas')}>
+              <FaWallet />
+              <span>Despesas</span>
+            </div>
+          )}
+          {perfil?.permissoes?.ver_cartoes && (
+            <div className="menu-item" onClick={() => navigate('/cartoes')}>
+              <FaCreditCard />
+              <span>Cartões</span>
+            </div>
+          )}
+          {perfil?.permissoes?.ver_imposto && (
+            <div className="menu-item" onClick={() => navigate('/imposto-renda')}>
+              <FaChartPie />
+              <span>Imposto de Renda</span>
+            </div>
+          )}
+          {perfil?.permissoes?.gerenciar_perfis && (
+            <div className="menu-item" onClick={() => navigate('/gerenciar-perfis')}>
+              <FaUsers />
+              <span>Gerenciar Perfis</span>
+            </div>
+          )}
           <div className="menu-item" onClick={() => navigate('/selecionar-perfil')}>
             <FaUsers />
             <span>Trocar de Perfil</span>

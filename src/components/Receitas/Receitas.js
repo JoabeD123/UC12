@@ -196,25 +196,31 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
             <FaRegChartBar />
             <span>Dashboard</span>
           </div>
-          <div className="menu-item active" onClick={() => handleNavigation('/receitas')}>
-            <FaMoneyBillWave />
-            <span>Receitas</span>
-          </div>
-          {perfil?.permissoes?.pode_ver_todas_contas && (
+          {perfil?.permissoes?.ver_receitas && (
+            <div className="menu-item active" onClick={() => handleNavigation('/receitas')}>
+              <FaMoneyBillWave />
+              <span>Receitas</span>
+            </div>
+          )}
+          {perfil?.permissoes?.ver_despesas && (
             <div className="menu-item" onClick={() => handleNavigation('/despesas')}>
               <FaWallet />
               <span>Despesas</span>
             </div>
           )}
-          <div className="menu-item" onClick={() => handleNavigation('/cartoes')}>
-            <FaCreditCard />
-            <span>Cartões</span>
-          </div>
-          <div className="menu-item" onClick={() => handleNavigation('/imposto-renda')}>
-            <FaPiggyBank />
-            <span>Imposto Renda</span>
-          </div>
-          {perfil?.permissoes?.pode_ver_todas_contas && (
+          {perfil?.permissoes?.ver_cartoes && (
+            <div className="menu-item" onClick={() => handleNavigation('/cartoes')}>
+              <FaCreditCard />
+              <span>Cartões</span>
+            </div>
+          )}
+          {perfil?.permissoes?.ver_imposto && (
+            <div className="menu-item" onClick={() => handleNavigation('/imposto-renda')}>
+              <FaPiggyBank />
+              <span>Imposto Renda</span>
+            </div>
+          )}
+          {perfil?.permissoes?.gerenciar_perfis && (
             <div className="menu-item" onClick={() => handleNavigation('/gerenciar-perfis')}>
               <FaUsers />
               <span>Gerenciar Perfis</span>
