@@ -331,7 +331,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                 {despesas.map((despesa) => (
                   <div key={despesa.id_conta} className="despesa-card">
                     <div className="despesa-header">
-                      <h4 className="despesa-titulo">{despesa.nome_conta} {despesa.fixa && <span title="Despesa fixa" style={{color: '#e74a3b', fontSize: '1.1em', marginLeft: 4}}>📌</span>}</h4>
+                      <h4 className="despesa-titulo">{despesa.nome_conta} {despesa.fixa && <span title="Despesa fixa" style={{color: '#e74a3b', fontSize: '1.1em', marginLeft: 4}}>📌</span>}<span style={{fontWeight: 400, fontSize: '0.95em', color: '#888'}}> ({despesa.nome_perfil})</span></h4>
                       <span className="despesa-valor">R$ {Number(despesa.valor_conta).toFixed(2).replace('.', ',')}</span>
                     </div>
                     <div className="despesa-info">

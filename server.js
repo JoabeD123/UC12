@@ -569,9 +569,10 @@ app.get('/api/receitas/:usuarioId', async (req, res) => {
   const { mes, ano } = req.query;
   try {
     const client = await pool.connect();
-    let query = `SELECT r.*, cat.nome_categoria
+    let query = `SELECT r.*, cat.nome_categoria, p.nome AS nome_perfil
        FROM receita r
        LEFT JOIN categoria cat ON r.categoria_id = cat.id_categoria
+       LEFT JOIN perfil p ON r.perfil_id = p.id_perfil
        WHERE r.usuario_id = $1 AND cat.tipo_categoria = 'receita'`;
     const params = [usuarioId];
     if (mes && ano) {
@@ -647,9 +648,10 @@ app.get('/api/despesas/:usuarioId', async (req, res) => {
   const { mes, ano } = req.query;
   try {
     const client = await pool.connect();
-    let query = `SELECT c.*, cat.nome_categoria 
+    let query = `SELECT c.*, cat.nome_categoria, p.nome AS nome_perfil 
        FROM contas c 
        LEFT JOIN categoria cat ON c.categoria_id = cat.id_categoria 
+       LEFT JOIN perfil p ON c.perfil_id = p.id_perfil
        WHERE c.usuario_id = $1 AND cat.tipo_categoria = 'despesa'`;
     const params = [usuarioId];
     if (mes && ano) {
@@ -960,7 +962,7 @@ app.get('/api/cartoes/:usuarioId', async (req, res) => {
   try {
     const client = await pool.connect();
     const result = await client.query(
-      'SELECT * FROM cartao_credito WHERE usuario_id = $1 ORDER BY id_cartao DESC',
+      'SELECT c.*, p.nome AS nome_perfil FROM cartao_credito c LEFT JOIN perfil p ON c.perfil_id = p.id_perfil WHERE c.usuario_id = $1 ORDER BY c.id_cartao DESC',
       [usuarioId]
     );
     client.release();

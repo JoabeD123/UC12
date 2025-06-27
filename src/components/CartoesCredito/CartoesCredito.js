@@ -350,7 +350,7 @@ const CartoesCredito = ({ perfil }) => {
           {cartoes.map(cartao => (
             <div key={cartao.id_cartao} className="cartao-card">
               <div className="cartao-header">
-                <h3>{cartao.nome}</h3>
+                <h3>{cartao.nome}<span style={{fontWeight: 400, fontSize: '0.95em', color: '#888'}}> ({cartao.nome_perfil})</span></h3>
                 <div className="cartao-acoes">
                   <button onClick={() => handleEditar(cartao)}>
                     Editar

@@ -320,7 +320,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                 {receitas.map((receita) => (
                   <div key={receita.id_receita} className="receita-card">
                     <div className="receita-header">
-                      <h4 className="receita-titulo">{receita.nome_receita} {receita.fixa && <span title="Receita fixa" style={{color: '#1cc88a', fontSize: '1.1em', marginLeft: 4}}>📌</span>}</h4>
+                      <h4 className="receita-titulo">{receita.nome_receita} {receita.fixa && <span title="Receita fixa" style={{color: '#1cc88a', fontSize: '1.1em', marginLeft: 4}}>📌</span>}<span style={{fontWeight: 400, fontSize: '0.95em', color: '#888'}}> ({receita.nome_perfil})</span></h4>
                       <span className="receita-valor">R$ {Number(receita.valor_receita).toFixed(2).replace('.', ',')}</span>
                     </div>
                     <div className="receita-info">
