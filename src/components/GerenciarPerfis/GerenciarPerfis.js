@@ -12,7 +12,8 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
     ver_receitas: true,
     ver_despesas: true,
     ver_cartoes: true,
-    gerenciar_perfis: false
+    gerenciar_perfis: false,
+    ver_imposto: false
   });
   const [perfilEditando, setPerfilEditando] = useState(null);
   const [erro, setErro] = useState('');
@@ -62,7 +63,8 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
             ver_receitas: novoPerfil.ver_receitas,
             ver_despesas: novoPerfil.ver_despesas,
             ver_cartoes: novoPerfil.ver_cartoes,
-            gerenciar_perfis: novoPerfil.gerenciar_perfis
+            gerenciar_perfis: novoPerfil.gerenciar_perfis,
+            ver_imposto: novoPerfil.ver_imposto
           })
         });
         if (!res.ok) throw new Error('Erro ao editar perfil');
@@ -79,12 +81,13 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
             ver_receitas: novoPerfil.ver_receitas,
             ver_despesas: novoPerfil.ver_despesas,
             ver_cartoes: novoPerfil.ver_cartoes,
-            gerenciar_perfis: novoPerfil.gerenciar_perfis
+            gerenciar_perfis: novoPerfil.gerenciar_perfis,
+            ver_imposto: novoPerfil.ver_imposto
           })
         });
         if (!res.ok) throw new Error('Erro ao criar perfil');
       }
-      setNovoPerfil({ nome: '', categoria_familiar: '', senha: '', ver_receitas: true, ver_despesas: true, ver_cartoes: true, gerenciar_perfis: false });
+      setNovoPerfil({ nome: '', categoria_familiar: '', senha: '', ver_receitas: true, ver_despesas: true, ver_cartoes: true, gerenciar_perfis: false, ver_imposto: false });
       setPerfilEditando(null);
       // Atualizar lista
       const res = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${usuario.id_usuario}`);
@@ -104,7 +107,8 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
       ver_receitas: perfil.permissoes?.ver_receitas ?? true,
       ver_despesas: perfil.permissoes?.ver_despesas ?? true,
       ver_cartoes: perfil.permissoes?.ver_cartoes ?? true,
-      gerenciar_perfis: perfil.permissoes?.gerenciar_perfis ?? false
+      gerenciar_perfis: perfil.permissoes?.gerenciar_perfis ?? false,
+      ver_imposto: perfil.permissoes?.ver_imposto ?? false
     });
   };
 
@@ -119,7 +123,7 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
 
   const handleCancel = () => {
     setPerfilEditando(null);
-    setNovoPerfil({ nome: '', categoria_familiar: '', senha: '', ver_receitas: true, ver_despesas: true, ver_cartoes: true, gerenciar_perfis: false });
+    setNovoPerfil({ nome: '', categoria_familiar: '', senha: '', ver_receitas: true, ver_despesas: true, ver_cartoes: true, gerenciar_perfis: false, ver_imposto: false });
     setErro('');
   };
 
@@ -186,6 +190,9 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
                   <label>
                     <input type="checkbox" name="gerenciar_perfis" checked={novoPerfil.gerenciar_perfis} onChange={handleInputChange} /> Gerenciar Perfis
                   </label>
+                  <label>
+                    <input type="checkbox" name="ver_imposto" checked={novoPerfil.ver_imposto} onChange={handleInputChange} /> Ver Imposto de Renda
+                  </label>
                 </div>
               </div>
 
@@ -219,7 +226,7 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
                         <h5>Permissões:</h5>
                         <ul>
                           {Object.entries(perfil.permissoes)
-                            .filter(([permissao]) => ['ver_receitas','ver_despesas','ver_cartoes','gerenciar_perfis'].includes(permissao))
+                            .filter(([permissao]) => ['ver_receitas','ver_despesas','ver_cartoes','gerenciar_perfis','ver_imposto'].includes(permissao))
                             .map(([permissao, valor]) => (
                               <li key={permissao} className={valor ? 'permitido' : 'negado'}>
                                 {(() => {
@@ -228,6 +235,7 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
                                     case 'ver_despesas': return 'Ver Despesas';
                                     case 'ver_cartoes': return 'Ver Cartões';
                                     case 'gerenciar_perfis': return 'Gerenciar Perfis';
+                                    case 'ver_imposto': return 'Ver Imposto de Renda';
                                     default: return permissao;
                                   }
                                 })()}

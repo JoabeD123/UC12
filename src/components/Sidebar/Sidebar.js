@@ -37,7 +37,7 @@ function Sidebar({ perfil }) {
         )}
         {perfil?.permissoes?.ver_imposto && (
           <div className={`menu-item${location.pathname === '/imposto-renda' ? ' active' : ''}`} onClick={() => navigate('/imposto-renda')}>
-            <FaPiggyBank />
+            <span role="img" aria-label="Imposto">💰</span>
             <span>Imposto de Renda</span>
           </div>
         )}

@@ -371,9 +371,9 @@ app.post('/api/perfil/primeiro', async (req, res) => {
 
     // Inserir todas as permissões como ativas para o primeiro perfil
     await client.query(
-      `INSERT INTO permissoes (perfil_id, ver_receitas, ver_despesas, ver_cartoes, gerenciar_perfis) 
-       VALUES ($1, $2, $3, $4, $5)`,
-      [id_perfil, true, true, true, true]
+      `INSERT INTO permissoes (perfil_id, ver_receitas, ver_despesas, ver_cartoes, gerenciar_perfis, ver_imposto) 
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [id_perfil, true, true, true, true, true]
     );
 
     await client.query('COMMIT');
@@ -470,7 +470,8 @@ app.get('/api/user/profiles-and-permissions/:userId', async (req, res) => {
         acesso_despesas: true,
         acesso_cartoes: true,
         acesso_imposto: true,
-        acesso_configuracoes: true
+        acesso_configuracoes: true,
+        ver_imposto: true
       };
       return { ...profile, permissoes: { ...defaultPerms, ...permissions } };
     }));
@@ -843,7 +844,7 @@ app.post('/api/categorias', async (req, res) => {
 // Rotas para Gerenciamento de Perfis
 app.post('/api/perfis', async (req, res) => {
   const { usuario_id, nome, categoria_familiar, senha, renda,
-    ver_receitas = true, ver_despesas = true, ver_cartoes = true, gerenciar_perfis = false } = req.body;
+    ver_receitas = true, ver_despesas = true, ver_cartoes = true, gerenciar_perfis = false, ver_imposto = false } = req.body;
 
   let client;
   try {
@@ -861,22 +862,23 @@ app.post('/api/perfis', async (req, res) => {
     const nome_familia = userResult.rows[0].nome_familia;
 
     const perfilResult = await client.query(
-      `INSERT INTO perfil (usuario_id, nome, categoria_familiar, cod_perfil, renda, senha)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_perfil`,
-      [usuario_id, nome, categoria_familiar, codPerfil, renda, hashedPassword]
+      `INSERT INTO perfil (usuario_id, nome, categoria_familiar, cod_perfil, renda, is_admin, senha)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id_perfil`,
+      [usuario_id, nome, categoria_familiar, codPerfil, renda, true, hashedPassword]
     );
 
     const id_perfil = perfilResult.rows[0].id_perfil;
 
     await client.query(
-      `INSERT INTO permissoes (perfil_id, ver_receitas, ver_despesas, ver_cartoes, gerenciar_perfis)
-       VALUES ($1, $2, $3, $4, $5)`,
+      `INSERT INTO permissoes (perfil_id, ver_receitas, ver_despesas, ver_cartoes, gerenciar_perfis, ver_imposto)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
       [
         id_perfil,
         ver_receitas,
         ver_despesas,
         ver_cartoes,
-        gerenciar_perfis
+        gerenciar_perfis,
+        ver_imposto
       ]
     );
 
@@ -900,7 +902,7 @@ app.post('/api/perfis', async (req, res) => {
 app.put('/api/perfis/:id', async (req, res) => {
   const { id } = req.params;
   const { nome, categoria_familiar, renda,
-    ver_receitas = true, ver_despesas = true, ver_cartoes = true, gerenciar_perfis = false } = req.body;
+    ver_receitas = true, ver_despesas = true, ver_cartoes = true, gerenciar_perfis = false, ver_imposto = false } = req.body;
 
   try {
     const client = await pool.connect();
@@ -914,13 +916,14 @@ app.put('/api/perfis/:id', async (req, res) => {
     // Atualiza permissões
     await client.query(
       `UPDATE permissoes SET 
-        ver_receitas = $1, ver_despesas = $2, ver_cartoes = $3, gerenciar_perfis = $4
-       WHERE perfil_id = $5`,
+        ver_receitas = $1, ver_despesas = $2, ver_cartoes = $3, gerenciar_perfis = $4, ver_imposto = $5
+       WHERE perfil_id = $6`,
       [
         ver_receitas,
         ver_despesas,
         ver_cartoes,
         gerenciar_perfis,
+        ver_imposto,
         id
       ]
     );
