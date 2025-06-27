@@ -17,6 +17,8 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
   });
   const [perfilEditando, setPerfilEditando] = useState(null);
   const [erro, setErro] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [perfilParaExcluir, setPerfilParaExcluir] = useState(null);
 
   useEffect(() => {
     if (!usuario?.id_usuario) return;
@@ -112,13 +114,33 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
     });
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
+    setPerfilParaExcluir(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async (cascade) => {
+    if (!perfilParaExcluir) return;
     try {
-      await fetch(`http://localhost:3001/api/perfis/${id}`, { method: 'DELETE' });
-      setPerfis(prev => prev.filter(perfil => perfil.id_perfil !== id));
+      const res = await fetch(`http://localhost:3001/api/perfis/${perfilParaExcluir}?cascade=${cascade}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        setErro(data.message || 'Erro ao excluir perfil.');
+      } else {
+        setPerfis(prev => prev.filter(perfil => perfil.id_perfil !== perfilParaExcluir));
+        setErro('');
+      }
     } catch {
       setErro('Erro ao excluir perfil.');
+    } finally {
+      setShowDeleteModal(false);
+      setPerfilParaExcluir(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setPerfilParaExcluir(null);
   };
 
   const handleCancel = () => {
@@ -259,6 +281,20 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
           </div>
         </div>
       </div>
+
+      {showDeleteModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Excluir Perfil</h3>
+            <p>Deseja excluir também todas as informações relacionadas a este perfil (receitas, despesas, cartões, etc)?</p>
+            <div className="modal-actions">
+              <button className="btn-primary" onClick={() => confirmDelete(true)}>Sim, excluir tudo</button>
+              <button className="btn-secondary" onClick={() => confirmDelete(false)}>Não, excluir apenas o perfil</button>
+              <button className="btn-secondary" onClick={cancelDelete}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

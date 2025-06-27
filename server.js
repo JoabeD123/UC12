@@ -937,25 +937,35 @@ app.put('/api/perfis/:id', async (req, res) => {
 
 app.delete('/api/perfis/:id', async (req, res) => {
   const { id } = req.params;
+  const cascade = req.query.cascade === 'true';
   let client;
   try {
     client = await pool.connect();
     await client.query('BEGIN');
+    if (cascade) {
+      await client.query('DELETE FROM receita WHERE perfil_id = $1', [id]);
+      await client.query('DELETE FROM contas WHERE perfil_id = $1', [id]);
+      await client.query('DELETE FROM orcamento WHERE perfil_id = $1', [id]);
+      await client.query('DELETE FROM historico_alteracoes WHERE perfil_id = $1', [id]);
+      // Adicione aqui outras tabelas relacionadas, se necessário
+    }
     await client.query('DELETE FROM permissoes WHERE perfil_id = $1', [id]);
-    await client.query('DELETE FROM perfil WHERE id_perfil = $1', [id]);
+    const result = await client.query('DELETE FROM perfil WHERE id_perfil = $1', [id]);
     await client.query('COMMIT');
-    res.status(200).json({ message: 'Perfil excluído com sucesso.' });
+    if (result.rowCount === 0) {
+      res.status(404).json({ message: 'Perfil não encontrado.' });
+    } else {
+      res.status(200).json({ message: 'Perfil excluído com sucesso.' });
+    }
   } catch (err) {
-    if (client) {
-      await client.query('ROLLBACK');
-      // NÃO chame client.release() aqui
+    if (client) await client.query('ROLLBACK');
+    if (err.code === '23503') {
+      res.status(400).json({ message: 'Este perfil possui informações relacionadas. Exclua-as ou use a opção de exclusão total.' });
+    } else {
+      res.status(500).json({ message: 'Erro ao excluir perfil.' });
     }
-    console.error('Erro ao excluir perfil:', err);
-    res.status(500).json({ message: 'Erro ao excluir perfil.' });
   } finally {
-    if (client) {
-      client.release();
-    }
+    if (client) client.release();
   }
 });
 
