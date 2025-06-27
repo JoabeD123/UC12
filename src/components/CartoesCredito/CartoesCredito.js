@@ -20,6 +20,8 @@ const CartoesCredito = ({ perfil }) => {
   const [gastos, setGastos] = useState({});
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [gastoInput, setGastoInput] = useState({});
+  const [perfis, setPerfis] = useState([]);
+  const [perfilFiltro, setPerfilFiltro] = useState('todos');
 
   // Buscar cartões do banco ao carregar a tela
   useEffect(() => {
@@ -36,6 +38,10 @@ const CartoesCredito = ({ perfil }) => {
         setGastos(gastosObj);
       })
       .catch(() => setCartoes([]));
+    // Buscar perfis do usuário para o filtro
+    fetch(`http://localhost:3001/api/user/profiles-and-permissions/${perfil.usuario_id}`)
+      .then(res => res.json())
+      .then(data => setPerfis(data.profiles || []));
   }, [perfil]);
 
   const handleInputChange = (e) => {
@@ -249,8 +255,17 @@ const CartoesCredito = ({ perfil }) => {
       <Sidebar perfil={perfil} />
 
       <div className="cartoes-credito">
-        <div className="cartoes-header">
+        <div className="cartoes-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
           <h2>Cartões de Crédito</h2>
+          <div className="filtro-perfil">
+            <label style={{ marginRight: 8 }}>Filtrar por perfil:</label>
+            <select value={perfilFiltro} onChange={e => setPerfilFiltro(e.target.value)}>
+              <option value="todos">Todos</option>
+              {perfis.map(p => (
+                <option key={p.id_perfil} value={p.nome}>{p.nome}</option>
+              ))}
+            </select>
+          </div>
           <button 
             className="btn-novo-cartao" 
             onClick={() => {
@@ -347,60 +362,62 @@ const CartoesCredito = ({ perfil }) => {
         )}
 
         <div className="cartoes-grid">
-          {cartoes.map(cartao => (
-            <div key={cartao.id_cartao} className="cartao-card">
-              <div className="cartao-header">
-                <h3>{cartao.nome}<span style={{fontWeight: 400, fontSize: '0.95em', color: '#888'}}> ({cartao.nome_perfil})</span></h3>
-                <div className="cartao-acoes">
-                  <button onClick={() => handleEditar(cartao)}>
-                    Editar
-                  </button>
-                  <button onClick={() => handleExcluir(cartao.id_cartao)}>
-                    Excluir
-                  </button>
-                </div>
-              </div>
-              <div className="cartao-info">
-                <p><strong>Limite:</strong> R$ {Number(cartao.limite ?? 0).toFixed(2)}</p>
-                <p><strong>Vencimento:</strong> Dia {cartao.dia_vencimento}</p>
-                <p><strong>Bandeira:</strong> {cartao.bandeira}</p>
-                <div className="gastos-input">
-                  <label>Gastos Atuais:</label>
-                  <input
-                    type="number"
-                    value={gastos[cartao.id_cartao] ?? cartao.gastos ?? 0}
-                    readOnly
-                    min="0"
-                    max={Number(cartao.limite ?? 0)}
-                  />
-                  <div className="gasto-unificado">
-                    <input
-                      type="number"
-                      placeholder="Adicionar (+) ou Diminuir (-)"
-                      value={gastoInput[cartao.id_cartao] || ''}
-                      step="0.01"
-                      onChange={e => handleGastoInputChange(cartao.id_cartao, e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') handleGastoInputSubmit(cartao.id_cartao);
-                      }}
-                    />
-                    <button onClick={() => handleGastoInputSubmit(cartao.id_cartao)}>
-                      Adicionar
+          {cartoes
+            .filter(c => perfilFiltro === 'todos' || c.nome_perfil === perfilFiltro)
+            .map(cartao => (
+              <div key={cartao.id_cartao} className="cartao-card">
+                <div className="cartao-header">
+                  <h3>{cartao.nome}<span style={{fontWeight: 400, fontSize: '0.95em', color: '#888'}}> ({cartao.nome_perfil})</span></h3>
+                  <div className="cartao-acoes">
+                    <button onClick={() => handleEditar(cartao)}>
+                      Editar
+                    </button>
+                    <button onClick={() => handleExcluir(cartao.id_cartao)}>
+                      Excluir
                     </button>
                   </div>
                 </div>
-                <div className="progress-bar">
-                  <div 
-                    className="progress-fill"
-                    style={{ 
-                      width: `${((gastos[cartao.id_cartao] ?? cartao.gastos ?? 0) / Number(cartao.limite ?? 1)) * 100}%`,
-                      backgroundColor: ((gastos[cartao.id_cartao] ?? cartao.gastos ?? 0) / Number(cartao.limite ?? 1)) > 0.8 ? 'var(--danger-color)' : 'var(--success-color)'
-                    }}
-                  />
+                <div className="cartao-info">
+                  <p><strong>Limite:</strong> R$ {Number(cartao.limite ?? 0).toFixed(2)}</p>
+                  <p><strong>Vencimento:</strong> Dia {cartao.dia_vencimento}</p>
+                  <p><strong>Bandeira:</strong> {cartao.bandeira}</p>
+                  <div className="gastos-input">
+                    <label>Gastos Atuais:</label>
+                    <input
+                      type="number"
+                      value={gastos[cartao.id_cartao] ?? cartao.gastos ?? 0}
+                      readOnly
+                      min="0"
+                      max={Number(cartao.limite ?? 0)}
+                    />
+                    <div className="gasto-unificado">
+                      <input
+                        type="number"
+                        placeholder="Adicionar (+) ou Diminuir (-)"
+                        value={gastoInput[cartao.id_cartao] || ''}
+                        step="0.01"
+                        onChange={e => handleGastoInputChange(cartao.id_cartao, e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') handleGastoInputSubmit(cartao.id_cartao);
+                        }}
+                      />
+                      <button onClick={() => handleGastoInputSubmit(cartao.id_cartao)}>
+                        Adicionar
+                      </button>
+                    </div>
+                  </div>
+                  <div className="progress-bar">
+                    <div 
+                      className="progress-fill"
+                      style={{ 
+                        width: `${((gastos[cartao.id_cartao] ?? cartao.gastos ?? 0) / Number(cartao.limite ?? 1)) * 100}%`,
+                        backgroundColor: ((gastos[cartao.id_cartao] ?? cartao.gastos ?? 0) / Number(cartao.limite ?? 1)) > 0.8 ? 'var(--danger-color)' : 'var(--success-color)'
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
 
         {cartoes.length > 0 && (

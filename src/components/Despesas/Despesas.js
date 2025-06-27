@@ -23,6 +23,8 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const [error, setError] = useState(null);
   const [showCategoriaForm, setShowCategoriaForm] = useState(false);
   const [editandoDespesa, setEditandoDespesa] = useState(null);
+  const [perfis, setPerfis] = useState([]);
+  const [perfilFiltro, setPerfilFiltro] = useState('todos');
   const navigate = useNavigate();
 
   const carregarDespesas = useCallback(async () => {
@@ -55,6 +57,10 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     if (usuario && perfil) {
       carregarDespesas();
       carregarCategorias();
+      // Buscar perfis do usuário para o filtro
+      fetch(`http://localhost:3001/api/user/profiles-and-permissions/${usuario.id_usuario}`)
+        .then(res => res.json())
+        .then(data => setPerfis(data.profiles || []));
     }
   }, [usuario, perfil, carregarDespesas, carregarCategorias]);
 
@@ -201,8 +207,17 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
       <Sidebar perfil={perfil} />
 
       <div className="despesas">
-        <div className="despesas-header">
+        <div className="despesas-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
           <h2>Despesas</h2>
+          <div className="filtro-perfil">
+            <label style={{ marginRight: 8 }}>Filtrar por perfil:</label>
+            <select value={perfilFiltro} onChange={e => setPerfilFiltro(e.target.value)}>
+              <option value="todos">Todos</option>
+              {perfis.map(p => (
+                <option key={p.id_perfil} value={p.nome}>{p.nome}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="despesas-content">
@@ -328,57 +343,59 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
               </div>
             ) : (
               <div className="despesas-grid">
-                {despesas.map((despesa) => (
-                  <div key={despesa.id_conta} className="despesa-card">
-                    <div className="despesa-header">
-                      <h4 className="despesa-titulo">{despesa.nome_conta} {despesa.fixa && <span title="Despesa fixa" style={{color: '#e74a3b', fontSize: '1.1em', marginLeft: 4}}>📌</span>}<span style={{fontWeight: 400, fontSize: '0.95em', color: '#888'}}> ({despesa.nome_perfil})</span></h4>
-                      <span className="despesa-valor">R$ {Number(despesa.valor_conta).toFixed(2).replace('.', ',')}</span>
+                {despesas
+                  .filter(d => perfilFiltro === 'todos' || d.nome_perfil === perfilFiltro)
+                  .map((despesa) => (
+                    <div key={despesa.id_conta} className="despesa-card">
+                      <div className="despesa-header">
+                        <h4 className="despesa-titulo">{despesa.nome_conta} {despesa.fixa && <span title="Despesa fixa" style={{color: '#e74a3b', fontSize: '1.1em', marginLeft: 4}}>📌</span>}<span style={{fontWeight: 400, fontSize: '0.95em', color: '#888'}}> ({despesa.nome_perfil})</span></h4>
+                        <span className="despesa-valor">R$ {Number(despesa.valor_conta).toFixed(2).replace('.', ',')}</span>
+                      </div>
+                      <div className="despesa-info">
+                        <p><strong>Data de Vencimento:</strong> {new Date(despesa.data_vencimento).toLocaleDateString()}</p>
+                        <p><strong>Data de Entrega:</strong> {new Date(despesa.data_entrega).toLocaleDateString()}</p>
+                        {despesa.nome_categoria && <p><strong>Categoria:</strong> {despesa.nome_categoria}</p>}
+                        {despesa.descricao && <p><strong>Descrição:</strong> {despesa.descricao}</p>}
+                        <p><strong>Tipo:</strong> {despesa.nome_tipo_conta}</p>
+                        <p><strong>Recorrência:</strong> {despesa.nome_recorrencia}</p>
+                        <p><strong>Status:</strong> {despesa.nome_status_pagamento}</p>
+                      </div>
+                      <div className="despesa-actions">
+                        <button onClick={() => handleExcluir(despesa.id_conta)} className="btn-delete">
+                          Excluir
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditandoDespesa(despesa);
+                            // Corrigir formato das datas para yyyy-MM-dd
+                            const formatarData = (data) => {
+                              if (!data) return '';
+                              const d = new Date(data);
+                              const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                              const day = d.getDate().toString().padStart(2, '0');
+                              return `${d.getFullYear()}-${month}-${day}`;
+                            };
+                            setNovaDespesa({
+                              nome_conta: despesa.nome_conta,
+                              valor_conta: despesa.valor_conta,
+                              data_entrega: formatarData(despesa.data_entrega),
+                              data_vencimento: formatarData(despesa.data_vencimento),
+                              descricao: despesa.descricao || '',
+                              categoria_id: despesa.categoria_id || '',
+                              tipo_conta_id: despesa.tipo_conta_id || 1,
+                              recorrencia_id: despesa.recorrencia_id || 1,
+                              status_pagamento_id: despesa.status_pagamento_id || 1,
+                              fixa: despesa.fixa || false
+                            });
+                          }}
+                          className="btn-edit"
+                          style={{ marginLeft: 8 }}
+                        >
+                          Editar
+                        </button>
+                      </div>
                     </div>
-                    <div className="despesa-info">
-                      <p><strong>Data de Vencimento:</strong> {new Date(despesa.data_vencimento).toLocaleDateString()}</p>
-                      <p><strong>Data de Entrega:</strong> {new Date(despesa.data_entrega).toLocaleDateString()}</p>
-                      {despesa.nome_categoria && <p><strong>Categoria:</strong> {despesa.nome_categoria}</p>}
-                      {despesa.descricao && <p><strong>Descrição:</strong> {despesa.descricao}</p>}
-                      <p><strong>Tipo:</strong> {despesa.nome_tipo_conta}</p>
-                      <p><strong>Recorrência:</strong> {despesa.nome_recorrencia}</p>
-                      <p><strong>Status:</strong> {despesa.nome_status_pagamento}</p>
-                    </div>
-                    <div className="despesa-actions">
-                      <button onClick={() => handleExcluir(despesa.id_conta)} className="btn-delete">
-                        Excluir
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditandoDespesa(despesa);
-                          // Corrigir formato das datas para yyyy-MM-dd
-                          const formatarData = (data) => {
-                            if (!data) return '';
-                            const d = new Date(data);
-                            const month = (d.getMonth() + 1).toString().padStart(2, '0');
-                            const day = d.getDate().toString().padStart(2, '0');
-                            return `${d.getFullYear()}-${month}-${day}`;
-                          };
-                          setNovaDespesa({
-                            nome_conta: despesa.nome_conta,
-                            valor_conta: despesa.valor_conta,
-                            data_entrega: formatarData(despesa.data_entrega),
-                            data_vencimento: formatarData(despesa.data_vencimento),
-                            descricao: despesa.descricao || '',
-                            categoria_id: despesa.categoria_id || '',
-                            tipo_conta_id: despesa.tipo_conta_id || 1,
-                            recorrencia_id: despesa.recorrencia_id || 1,
-                            status_pagamento_id: despesa.status_pagamento_id || 1,
-                            fixa: despesa.fixa || false
-                          });
-                        }}
-                        className="btn-edit"
-                        style={{ marginLeft: 8 }}
-                      >
-                        Editar
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             )}
           </div>

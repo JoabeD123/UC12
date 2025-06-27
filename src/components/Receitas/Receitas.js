@@ -20,6 +20,8 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const [error, setError] = useState(null);
   const [showCategoriaForm, setShowCategoriaForm] = useState(false);
   const [editandoReceita, setEditandoReceita] = useState(null);
+  const [perfis, setPerfis] = useState([]);
+  const [perfilFiltro, setPerfilFiltro] = useState('todos');
   const navigate = useNavigate();
 
   const carregarReceitas = useCallback(async () => {
@@ -56,6 +58,10 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
 
     carregarReceitas();
     carregarCategorias();
+    // Buscar perfis do usuário para o filtro
+    fetch(`http://localhost:3001/api/user/profiles-and-permissions/${usuario.id_usuario}`)
+      .then(res => res.json())
+      .then(data => setPerfis(data.profiles || []));
   }, [usuario, perfil, onLogout, carregarReceitas, carregarCategorias]);
 
   const handleSubmit = async (e) => {
@@ -187,8 +193,17 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
       <Sidebar perfil={perfil} />
 
       <div className="receitas">
-        <div className="receitas-header">
+        <div className="receitas-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
           <h2>Receitas</h2>
+          <div className="filtro-perfil">
+            <label style={{ marginRight: 8 }}>Filtrar por perfil:</label>
+            <select value={perfilFiltro} onChange={e => setPerfilFiltro(e.target.value)}>
+              <option value="todos">Todos</option>
+              {perfis.map(p => (
+                <option key={p.id_perfil} value={p.nome}>{p.nome}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="receitas-content">
@@ -317,44 +332,46 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
               </div>
             ) : (
               <div className="receitas-grid">
-                {receitas.map((receita) => (
-                  <div key={receita.id_receita} className="receita-card">
-                    <div className="receita-header">
-                      <h4 className="receita-titulo">{receita.nome_receita} {receita.fixa && <span title="Receita fixa" style={{color: '#1cc88a', fontSize: '1.1em', marginLeft: 4}}>📌</span>}<span style={{fontWeight: 400, fontSize: '0.95em', color: '#888'}}> ({receita.nome_perfil})</span></h4>
-                      <span className="receita-valor">R$ {Number(receita.valor_receita).toFixed(2).replace('.', ',')}</span>
+                {receitas
+                  .filter(r => perfilFiltro === 'todos' || r.nome_perfil === perfilFiltro)
+                  .map((receita) => (
+                    <div key={receita.id_receita} className="receita-card">
+                      <div className="receita-header">
+                        <h4 className="receita-titulo">{receita.nome_receita} {receita.fixa && <span title="Receita fixa" style={{color: '#1cc88a', fontSize: '1.1em', marginLeft: 4}}>📌</span>}<span style={{fontWeight: 400, fontSize: '0.95em', color: '#888'}}> ({receita.nome_perfil})</span></h4>
+                        <span className="receita-valor">R$ {Number(receita.valor_receita).toFixed(2).replace('.', ',')}</span>
+                      </div>
+                      <div className="receita-info">
+                        <p><strong>Data:</strong> {new Date(receita.data_recebimento).toLocaleDateString()}</p>
+                        {receita.nome_categoria && <p><strong>Categoria:</strong> {receita.nome_categoria}</p>}
+                        {receita.descricao && <p><strong>Descrição:</strong> {receita.descricao}</p>}
+                      </div>
+                      <div className="receita-actions">
+                        <button onClick={() => handleExcluir(receita.id_receita)} className="btn-delete">
+                          Excluir
+                        </button>
+                        <button onClick={() => {
+                          setEditandoReceita(receita);
+                          const formatarData = (data) => {
+                            if (!data) return '';
+                            const d = new Date(data);
+                            const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                            const day = d.getDate().toString().padStart(2, '0');
+                            return `${d.getFullYear()}-${month}-${day}`;
+                          };
+                          setNovaReceita({
+                            nome_receita: receita.nome_receita,
+                            valor_receita: receita.valor_receita,
+                            data_recebimento: formatarData(receita.data_recebimento),
+                            descricao: receita.descricao || '',
+                            categoria_id: receita.categoria_id || '',
+                            fixa: receita.fixa || false
+                          });
+                        }} className="btn-edit" style={{marginLeft: 8}}>
+                          <FaEdit style={{marginRight: 4}} /> Editar
+                        </button>
+                      </div>
                     </div>
-                    <div className="receita-info">
-                      <p><strong>Data:</strong> {new Date(receita.data_recebimento).toLocaleDateString()}</p>
-                      {receita.nome_categoria && <p><strong>Categoria:</strong> {receita.nome_categoria}</p>}
-                      {receita.descricao && <p><strong>Descrição:</strong> {receita.descricao}</p>}
-                    </div>
-                    <div className="receita-actions">
-                      <button onClick={() => handleExcluir(receita.id_receita)} className="btn-delete">
-                        Excluir
-                      </button>
-                      <button onClick={() => {
-                        setEditandoReceita(receita);
-                        const formatarData = (data) => {
-                          if (!data) return '';
-                          const d = new Date(data);
-                          const month = (d.getMonth() + 1).toString().padStart(2, '0');
-                          const day = d.getDate().toString().padStart(2, '0');
-                          return `${d.getFullYear()}-${month}-${day}`;
-                        };
-                        setNovaReceita({
-                          nome_receita: receita.nome_receita,
-                          valor_receita: receita.valor_receita,
-                          data_recebimento: formatarData(receita.data_recebimento),
-                          descricao: receita.descricao || '',
-                          categoria_id: receita.categoria_id || '',
-                          fixa: receita.fixa || false
-                        });
-                      }} className="btn-edit" style={{marginLeft: 8}}>
-                        <FaEdit style={{marginRight: 4}} /> Editar
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             )}
           </div>
