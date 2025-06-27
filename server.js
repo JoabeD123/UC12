@@ -52,6 +52,9 @@ app.get('/init-db', async (req, res) => {
   `;
 
   const createSchema = `
+    -- Garantir que a tabela permissoes será criada do zero
+    DROP TABLE IF EXISTS permissoes CASCADE;
+
     -- Tabela de Usuários (Conta da Família)
     CREATE TABLE IF NOT EXISTS usuario (
         id_usuario SERIAL PRIMARY KEY,
@@ -227,6 +230,7 @@ app.get('/init-db', async (req, res) => {
     CREATE TABLE IF NOT EXISTS cartao_credito (
         id_cartao SERIAL PRIMARY KEY,
         perfil_id INT NOT NULL,
+        usuario_id INT, -- Adicionado para queries por usuario
         nome VARCHAR(255) NOT NULL,
         limite DECIMAL(10,2) NOT NULL,
         dia_vencimento INT NOT NULL,
@@ -258,6 +262,24 @@ app.get('/init-db', async (req, res) => {
     ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS acesso_configuracoes BOOLEAN DEFAULT TRUE;
   `;
 
+  // Remover colunas antigas da tabela permissoes se existirem (garantia extra)
+  const dropOldPermColumns = `
+    DO $$ BEGIN
+      IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='permissoes' AND column_name='pode_criar_conta') THEN
+        ALTER TABLE permissoes DROP COLUMN pode_criar_conta;
+      END IF;
+      IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='permissoes' AND column_name='pode_editar_conta') THEN
+        ALTER TABLE permissoes DROP COLUMN pode_editar_conta;
+      END IF;
+      IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='permissoes' AND column_name='pode_excluir_conta') THEN
+        ALTER TABLE permissoes DROP COLUMN pode_excluir_conta;
+      END IF;
+      IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='permissoes' AND column_name='pode_ver_todas_contas') THEN
+        ALTER TABLE permissoes DROP COLUMN pode_ver_todas_contas;
+      END IF;
+    END $$;
+  `;
+
   // Comandos extras para garantir usuario_id nas tabelas de dados e preenchimento correto
   const patchUsuarioId = `
     ALTER TABLE receita ADD COLUMN IF NOT EXISTS usuario_id INT;
@@ -281,6 +303,9 @@ app.get('/init-db', async (req, res) => {
     
     await client.query(alterPermissoesTable); // <-- Adiciona as colunas se não existirem
     console.log('Colunas de permissões adicionadas com sucesso.');
+
+    await client.query(dropOldPermColumns); // <-- Remove colunas antigas se existirem
+    console.log('Colunas antigas de permissoes removidas se existiam.');
 
     await client.query(patchUsuarioId); // <-- Garante usuario_id correto
     console.log('usuario_id garantido e atualizado em contas e receita.');
@@ -468,7 +493,7 @@ app.get('/api/user/profiles-and-permissions/:userId', async (req, res) => {
 
     if (profiles.length === 0) {
       client.release();
-      return res.status(404).json({ message: 'Nenhum perfil encontrado para este usuário.' });
+      return res.status(200).json({ profiles: [] });
     }
 
     // Para cada perfil, buscar suas permissões
