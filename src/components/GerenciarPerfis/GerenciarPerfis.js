@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import './GerenciarPerfis.css';
 import Sidebar from '../Sidebar/Sidebar';
 import { FaSave, FaPlus, FaTimes, FaEdit, FaTrash } from 'react-icons/fa';
 
 const GerenciarPerfis = ({ usuario, perfil }) => {
-  const navigate = useNavigate();
   const [perfis, setPerfis] = useState([]);
   const [novoPerfil, setNovoPerfil] = useState({
     nome: '',
     categoria_familiar: '',
     senha: '',
-    renda: '',
     ver_receitas: true,
     ver_despesas: true,
     ver_cartoes: true,
@@ -62,7 +59,6 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
           body: JSON.stringify({
             nome: novoPerfil.nome,
             categoria_familiar: novoPerfil.categoria_familiar,
-            renda: novoPerfil.renda || 0,
             ver_receitas: novoPerfil.ver_receitas,
             ver_despesas: novoPerfil.ver_despesas,
             ver_cartoes: novoPerfil.ver_cartoes,
@@ -80,7 +76,6 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
             nome: novoPerfil.nome,
             categoria_familiar: novoPerfil.categoria_familiar,
             senha: novoPerfil.senha,
-            renda: novoPerfil.renda || 0,
             ver_receitas: novoPerfil.ver_receitas,
             ver_despesas: novoPerfil.ver_despesas,
             ver_cartoes: novoPerfil.ver_cartoes,
@@ -89,7 +84,7 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
         });
         if (!res.ok) throw new Error('Erro ao criar perfil');
       }
-      setNovoPerfil({ nome: '', categoria_familiar: '', senha: '', renda: '', ver_receitas: true, ver_despesas: true, ver_cartoes: true, gerenciar_perfis: false });
+      setNovoPerfil({ nome: '', categoria_familiar: '', senha: '', ver_receitas: true, ver_despesas: true, ver_cartoes: true, gerenciar_perfis: false });
       setPerfilEditando(null);
       // Atualizar lista
       const res = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${usuario.id_usuario}`);
@@ -106,7 +101,6 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
       nome: perfil.nome,
       categoria_familiar: perfil.categoria_familiar,
       senha: '',
-      renda: perfil.renda || '',
       ver_receitas: perfil.permissoes?.ver_receitas ?? true,
       ver_despesas: perfil.permissoes?.ver_despesas ?? true,
       ver_cartoes: perfil.permissoes?.ver_cartoes ?? true,
@@ -125,7 +119,7 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
 
   const handleCancel = () => {
     setPerfilEditando(null);
-    setNovoPerfil({ nome: '', categoria_familiar: '', senha: '', renda: '', ver_receitas: true, ver_despesas: true, ver_cartoes: true, gerenciar_perfis: false });
+    setNovoPerfil({ nome: '', categoria_familiar: '', senha: '', ver_receitas: true, ver_despesas: true, ver_cartoes: true, gerenciar_perfis: false });
     setErro('');
   };
 
@@ -174,17 +168,6 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
                   value={novoPerfil.senha}
                   onChange={handleInputChange}
                   placeholder="Digite a senha do perfil"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Renda</label>
-                <input
-                  type="text"
-                  name="renda"
-                  value={novoPerfil.renda}
-                  onChange={handleInputChange}
-                  placeholder="Digite a renda do perfil"
                 />
               </div>
 
