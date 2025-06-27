@@ -419,8 +419,8 @@
   padding: 2.76rem;
   box-shadow: var(--card-shadow);
   border: 1px solid var(--border-color);
-  min-width: 594px;
-  min-height: 468px;
+  min-width: 700px;
+  min-height: 520px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -432,8 +432,8 @@
   padding: 2.76rem;
   box-shadow: var(--card-shadow);
   border: 1px solid var(--border-color);
-  min-width: 594px;
-  min-height: 468px;
+  min-width: 700px;
+  min-height: 520px;
   display: flex;
   align-items: center;
   justify-content: center;
