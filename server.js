@@ -48,6 +48,7 @@ app.get('/init-db', async (req, res) => {
     DROP TABLE IF EXISTS tabela_afetada_tipo CASCADE;
     DROP TABLE IF EXISTS tipo_acao_tipo CASCADE;
     DROP TABLE IF EXISTS cartao_credito CASCADE;
+    DROP TABLE IF EXISTS fatura_cartao CASCADE;
   `;
 
   const createSchema = `
@@ -68,7 +69,6 @@ app.get('/init-db', async (req, res) => {
         nome VARCHAR(255) NOT NULL,
         categoria_familiar VARCHAR(50) NOT NULL,
         cod_perfil VARCHAR(10) UNIQUE NOT NULL,
-        renda DECIMAL(10,2) DEFAULT 0.00 NOT NULL,
         is_admin BOOLEAN DEFAULT FALSE,
         senha VARCHAR(255) NOT NULL,
         FOREIGN KEY (usuario_id) REFERENCES usuario(id_usuario)
@@ -149,7 +149,7 @@ app.get('/init-db', async (req, res) => {
     ('Outros (Despesa)', 'despesa')
     ON CONFLICT (nome_categoria) DO NOTHING;
 
-    -- Tabela de Contas (Despesas) - Atualizada com FOREIGN KEYs
+    -- Tabela de Contas (Despesas) - Atualizada com campos fixa e usuario_id
     CREATE TABLE IF NOT EXISTS contas (
         id_conta SERIAL PRIMARY KEY,
         nome_conta VARCHAR(255) NOT NULL,
@@ -163,6 +163,8 @@ app.get('/init-db', async (req, res) => {
         recorrencia_id INT,
         perfil_id INT,
         categoria_id INT,
+        fixa BOOLEAN DEFAULT FALSE,
+        usuario_id INT,
         FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil),
         FOREIGN KEY (categoria_id) REFERENCES categoria(id_categoria),
         FOREIGN KEY (status_pagamento_id) REFERENCES status_pagamento_tipo(id_status_pagamento_tipo),
@@ -170,7 +172,7 @@ app.get('/init-db', async (req, res) => {
         FOREIGN KEY (recorrencia_id) REFERENCES recorrencia_tipo(id_recorrencia_tipo)
     );
 
-    -- Tabela de Receitas (Entradas de dinheiro)
+    -- Tabela de Receitas (Entradas de dinheiro) - Atualizada com campos fixa e usuario_id
     CREATE TABLE IF NOT EXISTS receita (
         id_receita SERIAL PRIMARY KEY,
         perfil_id INT NOT NULL,
@@ -179,11 +181,13 @@ app.get('/init-db', async (req, res) => {
         data_recebimento DATE NOT NULL,
         descricao TEXT,
         categoria_id INT,
+        fixa BOOLEAN DEFAULT FALSE,
+        usuario_id INT,
         FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil),
         FOREIGN KEY (categoria_id) REFERENCES categoria(id_categoria)
     );
 
-    -- Tabela de Histórico de Alterações (Auditoria) - Atualizada com FOREIGN KEYs
+    -- Tabela de Histórico de Alterações (Auditoria)
     CREATE TABLE IF NOT EXISTS historico_alteracoes (
         id_log SERIAL PRIMARY KEY,
         perfil_id INT NOT NULL,
@@ -197,14 +201,15 @@ app.get('/init-db', async (req, res) => {
         FOREIGN KEY (tipo_acao_id) REFERENCES tipo_acao_tipo(id_tipo_acao_tipo)
     );
 
-    -- Tabela de Permissões por Perfil
+    -- Tabela de Permissões por Perfil (modelo atualizado)
     CREATE TABLE IF NOT EXISTS permissoes (
         id_permissao SERIAL PRIMARY KEY,
         perfil_id INT NOT NULL UNIQUE,
-        pode_criar_conta BOOLEAN DEFAULT FALSE,
-        pode_editar_conta BOOLEAN DEFAULT FALSE,
-        pode_excluir_conta BOOLEAN DEFAULT FALSE,
-        pode_ver_todas_contas BOOLEAN DEFAULT FALSE,
+        ver_receitas BOOLEAN DEFAULT TRUE,
+        ver_despesas BOOLEAN DEFAULT TRUE,
+        ver_cartoes BOOLEAN DEFAULT TRUE,
+        gerenciar_perfis BOOLEAN DEFAULT FALSE,
+        ver_imposto BOOLEAN DEFAULT TRUE,
         FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil)
     );
 
@@ -230,7 +235,7 @@ app.get('/init-db', async (req, res) => {
         FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil)
     );
 
-    -- Tabela de Faturas de Cartão de Crédito
+    -- Tabela de Faturas de Cartão de Crédito (mantida se desejar)
     CREATE TABLE IF NOT EXISTS fatura_cartao (
         id_fatura SERIAL PRIMARY KEY,
         id_cartao INT NOT NULL,
@@ -243,7 +248,7 @@ app.get('/init-db', async (req, res) => {
     );
   `;
 
-  // Adicionar colunas de permissões de acesso às telas, se não existirem
+  // Adicionar colunas de permissões de acesso às telas, se não existirem (mantido)
   const alterPermissoesTable = `
     ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS acesso_dashboard BOOLEAN DEFAULT TRUE;
     ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS acesso_receitas BOOLEAN DEFAULT TRUE;
@@ -251,6 +256,14 @@ app.get('/init-db', async (req, res) => {
     ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS acesso_cartoes BOOLEAN DEFAULT TRUE;
     ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS acesso_imposto BOOLEAN DEFAULT TRUE;
     ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS acesso_configuracoes BOOLEAN DEFAULT TRUE;
+  `;
+
+  // Comandos extras para garantir usuario_id nas tabelas de dados e preenchimento correto
+  const patchUsuarioId = `
+    ALTER TABLE receita ADD COLUMN IF NOT EXISTS usuario_id INT;
+    ALTER TABLE contas ADD COLUMN IF NOT EXISTS usuario_id INT;
+    UPDATE receita r SET usuario_id = p.usuario_id FROM perfil p WHERE r.perfil_id = p.id_perfil;
+    UPDATE contas c SET usuario_id = p.usuario_id FROM perfil p WHERE c.perfil_id = p.id_perfil;
   `;
 
   try {
@@ -268,6 +281,9 @@ app.get('/init-db', async (req, res) => {
     
     await client.query(alterPermissoesTable); // <-- Adiciona as colunas se não existirem
     console.log('Colunas de permissões adicionadas com sucesso.');
+
+    await client.query(patchUsuarioId); // <-- Garante usuario_id correto
+    console.log('usuario_id garantido e atualizado em contas e receita.');
     
     client.release();
     res.status(200).send('Banco de dados inicializado/reiniciado com sucesso.');
@@ -363,9 +379,9 @@ app.post('/api/perfil/primeiro', async (req, res) => {
     const codPerfil = `PERF${timestamp.slice(-6)}`;
 
     const perfilResult = await client.query(
-      `INSERT INTO perfil (usuario_id, nome, categoria_familiar, cod_perfil, renda, is_admin, senha) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id_perfil`,
-      [usuario_id, nome_perfil, categoria_familiar, codPerfil, 0.00, true, hashedPasswordPerfil]
+      `INSERT INTO perfil (usuario_id, nome, categoria_familiar, cod_perfil, is_admin, senha) 
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_perfil`,
+      [usuario_id, nome_perfil, categoria_familiar, codPerfil, true, hashedPasswordPerfil]
     );
     const id_perfil = perfilResult.rows[0].id_perfil;
 
@@ -862,9 +878,9 @@ app.post('/api/perfis', async (req, res) => {
     const nome_familia = userResult.rows[0].nome_familia;
 
     const perfilResult = await client.query(
-      `INSERT INTO perfil (usuario_id, nome, categoria_familiar, cod_perfil, renda, is_admin, senha)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id_perfil, is_admin`,
-      [usuario_id, nome, categoria_familiar, codPerfil, renda, false, hashedPassword]
+      `INSERT INTO perfil (usuario_id, nome, categoria_familiar, cod_perfil, is_admin, senha)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_perfil, is_admin`,
+      [usuario_id, nome, categoria_familiar, codPerfil, false, hashedPassword]
     );
 
     const id_perfil = perfilResult.rows[0].id_perfil;
