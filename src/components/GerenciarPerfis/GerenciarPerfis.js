@@ -172,6 +172,7 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
                   value={novoPerfil.nome}
                   onChange={handleInputChange}
                   placeholder="Digite o nome do perfil"
+                  disabled={perfilEditando?.is_admin}
                 />
               </div>
 
@@ -183,6 +184,7 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
                   value={novoPerfil.categoria_familiar}
                   onChange={handleInputChange}
                   placeholder="Digite a categoria familiar do perfil"
+                  disabled={perfilEditando?.is_admin}
                 />
               </div>
 
@@ -194,6 +196,7 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
                   value={novoPerfil.senha}
                   onChange={handleInputChange}
                   placeholder="Digite a senha do perfil"
+                  disabled={perfilEditando?.is_admin}
                 />
               </div>
 
@@ -201,25 +204,25 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
                 <label>Permissões de acesso às telas</label>
                 <div className="permissoes-checkboxes">
                   <label>
-                    <input type="checkbox" name="ver_receitas" checked={novoPerfil.ver_receitas} onChange={handleInputChange} /> Ver Receitas
+                    <input type="checkbox" name="ver_receitas" checked={novoPerfil.ver_receitas} onChange={handleInputChange} disabled={perfilEditando?.is_admin} /> Ver Receitas
                   </label>
                   <label>
-                    <input type="checkbox" name="ver_despesas" checked={novoPerfil.ver_despesas} onChange={handleInputChange} /> Ver Despesas
+                    <input type="checkbox" name="ver_despesas" checked={novoPerfil.ver_despesas} onChange={handleInputChange} disabled={perfilEditando?.is_admin} /> Ver Despesas
                   </label>
                   <label>
-                    <input type="checkbox" name="ver_cartoes" checked={novoPerfil.ver_cartoes} onChange={handleInputChange} /> Ver Cartões
+                    <input type="checkbox" name="ver_cartoes" checked={novoPerfil.ver_cartoes} onChange={handleInputChange} disabled={perfilEditando?.is_admin} /> Ver Cartões
                   </label>
                   <label>
-                    <input type="checkbox" name="gerenciar_perfis" checked={novoPerfil.gerenciar_perfis} onChange={handleInputChange} /> Gerenciar Perfis
+                    <input type="checkbox" name="gerenciar_perfis" checked={novoPerfil.gerenciar_perfis} onChange={handleInputChange} disabled={perfilEditando?.is_admin} /> Gerenciar Perfis
                   </label>
                   <label>
-                    <input type="checkbox" name="ver_imposto" checked={novoPerfil.ver_imposto} onChange={handleInputChange} /> Ver Imposto de Renda
+                    <input type="checkbox" name="ver_imposto" checked={novoPerfil.ver_imposto} onChange={handleInputChange} disabled={perfilEditando?.is_admin} /> Ver Imposto de Renda
                   </label>
                 </div>
               </div>
 
               <div className="form-actions">
-                <button type="submit" className="btn-primary">
+                <button type="submit" className="btn-primary" disabled={perfilEditando?.is_admin}>
                   {perfilEditando ? <FaSave /> : <FaPlus />}
                   {perfilEditando ? 'Salvar' : 'Adicionar'}
                 </button>
@@ -267,14 +270,16 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
                       </div>
                     </div>
                   </div>
-                  <div className="perfil-actions">
-                    <button onClick={() => handleEdit(perfil)} className="btn-icon">
-                      <FaEdit /> Editar
-                    </button>
-                    <button onClick={() => handleDelete(perfil.id_perfil)} className="btn-icon excluir">
-                      <FaTrash /> Excluir
-                    </button>
-                  </div>
+                  {!perfil.is_admin && (
+                    <div className="perfil-actions">
+                      <button onClick={() => handleEdit(perfil)} className="btn-icon">
+                        <FaEdit /> Editar
+                      </button>
+                      <button onClick={() => handleDelete(perfil.id_perfil)} className="btn-icon excluir">
+                        <FaTrash /> Excluir
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

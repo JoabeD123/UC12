@@ -863,8 +863,8 @@ app.post('/api/perfis', async (req, res) => {
 
     const perfilResult = await client.query(
       `INSERT INTO perfil (usuario_id, nome, categoria_familiar, cod_perfil, renda, is_admin, senha)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id_perfil`,
-      [usuario_id, nome, categoria_familiar, codPerfil, renda, true, hashedPassword]
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id_perfil, is_admin`,
+      [usuario_id, nome, categoria_familiar, codPerfil, renda, false, hashedPassword]
     );
 
     const id_perfil = perfilResult.rows[0].id_perfil;
