@@ -176,3 +176,16 @@ ALTER TABLE contas ADD COLUMN IF NOT EXISTS usuario_id INT;
 -- Preencher usuario_id com base no perfil_id já existente
 UPDATE receita r SET usuario_id = p.usuario_id FROM perfil p WHERE r.perfil_id = p.id_perfil;
 UPDATE contas c SET usuario_id = p.usuario_id FROM perfil p WHERE c.perfil_id = p.id_perfil;
+
+-- Tabela de Configurações de Usuário
+CREATE TABLE IF NOT EXISTS configuracoes_usuario (
+    id_configuracao SERIAL PRIMARY KEY,
+    usuario_id INT NOT NULL UNIQUE,
+    dark_mode BOOLEAN DEFAULT FALSE,
+    zoom INT DEFAULT 100,
+    notificacoes BOOLEAN DEFAULT TRUE,
+    privacidade BOOLEAN DEFAULT FALSE,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id_usuario) ON DELETE CASCADE
+);

@@ -40,6 +40,7 @@ app.get('/init-db', async (req, res) => {
     DROP TABLE IF EXISTS contas CASCADE;
     DROP TABLE IF EXISTS permissoes CASCADE;
     DROP TABLE IF EXISTS perfil CASCADE;
+    DROP TABLE IF EXISTS configuracoes_usuario CASCADE;
     DROP TABLE IF EXISTS usuario CASCADE;
     DROP TABLE IF EXISTS categoria CASCADE;
     DROP TABLE IF EXISTS status_pagamento_tipo CASCADE;
@@ -212,8 +213,21 @@ app.get('/init-db', async (req, res) => {
         ver_despesas BOOLEAN DEFAULT TRUE,
         ver_cartoes BOOLEAN DEFAULT TRUE,
         gerenciar_perfis BOOLEAN DEFAULT FALSE,
-        ver_imposto BOOLEAN DEFAULT TRUE,
+        ver_imposto BOOLEAN DEFAULT FALSE,
         FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil)
+    );
+
+    -- Tabela de Configurações de Usuário
+    CREATE TABLE IF NOT EXISTS configuracoes_usuario (
+        id_configuracao SERIAL PRIMARY KEY,
+        usuario_id INT NOT NULL UNIQUE,
+        dark_mode BOOLEAN DEFAULT FALSE,
+        zoom INT DEFAULT 100,
+        notificacoes BOOLEAN DEFAULT TRUE,
+        privacidade BOOLEAN DEFAULT FALSE,
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (usuario_id) REFERENCES usuario(id_usuario) ON DELETE CASCADE
     );
 
     -- Tabela de Orçamento Mensal
@@ -1245,6 +1259,117 @@ app.post('/api/perfil/validar-senha', async (req, res) => {
   } catch (err) {
     console.error('Erro ao validar senha do perfil:', err);
     res.status(500).json({ message: 'Erro ao validar senha do perfil.' });
+  }
+});
+
+// Endpoint para salvar configurações do usuário
+app.post('/api/configuracoes/:userId', async (req, res) => {
+  const { userId } = req.params;
+  const { darkMode, zoom, notificacoes, privacidade } = req.body;
+  
+  console.log('Salvando configurações para usuário:', userId, { darkMode, zoom, notificacoes, privacidade });
+
+  try {
+    const client = await pool.connect();
+    
+    // Verificar se já existe configuração para este usuário
+    const existingConfig = await client.query(
+      'SELECT * FROM configuracoes_usuario WHERE usuario_id = $1',
+      [userId]
+    );
+
+    if (existingConfig.rows.length > 0) {
+      // Atualizar configuração existente
+      await client.query(
+        `UPDATE configuracoes_usuario 
+         SET dark_mode = $1, zoom = $2, notificacoes = $3, privacidade = $4, atualizado_em = CURRENT_TIMESTAMP
+         WHERE usuario_id = $5`,
+        [darkMode, zoom, notificacoes, privacidade, userId]
+      );
+    } else {
+      // Criar nova configuração
+      await client.query(
+        `INSERT INTO configuracoes_usuario (usuario_id, dark_mode, zoom, notificacoes, privacidade)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [userId, darkMode, zoom, notificacoes, privacidade]
+      );
+    }
+
+    client.release();
+    res.status(200).json({ message: 'Configurações salvas com sucesso' });
+
+  } catch (err) {
+    console.error('Erro ao salvar configurações:', err);
+    res.status(500).json({ message: 'Erro ao salvar configurações' });
+  }
+});
+
+// Endpoint para buscar configurações do usuário
+app.get('/api/configuracoes/:userId', async (req, res) => {
+  const { userId } = req.params;
+  
+  console.log('Buscando configurações para usuário:', userId);
+
+  try {
+    const client = await pool.connect();
+    
+    const result = await client.query(
+      'SELECT * FROM configuracoes_usuario WHERE usuario_id = $1',
+      [userId]
+    );
+
+    client.release();
+
+    if (result.rows.length > 0) {
+      const config = result.rows[0];
+      res.status(200).json({
+        darkMode: config.dark_mode,
+        zoom: config.zoom,
+        notificacoes: config.notificacoes,
+        privacidade: config.privacidade
+      });
+    } else {
+      // Retornar configurações padrão se não existir
+      res.status(200).json({
+        darkMode: false,
+        zoom: 100,
+        notificacoes: true,
+        privacidade: false
+      });
+    }
+
+  } catch (err) {
+    console.error('Erro ao buscar configurações:', err);
+    res.status(500).json({ message: 'Erro ao buscar configurações' });
+  }
+});
+
+// Endpoint para criar a tabela de configurações se não existir
+app.get('/create-config-table', async (req, res) => {
+  try {
+    const client = await pool.connect();
+    
+    const createTableSQL = `
+      CREATE TABLE IF NOT EXISTS configuracoes_usuario (
+        id_configuracao SERIAL PRIMARY KEY,
+        usuario_id INT NOT NULL UNIQUE,
+        dark_mode BOOLEAN DEFAULT FALSE,
+        zoom INT DEFAULT 100,
+        notificacoes BOOLEAN DEFAULT TRUE,
+        privacidade BOOLEAN DEFAULT FALSE,
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (usuario_id) REFERENCES usuario(id_usuario) ON DELETE CASCADE
+      );
+    `;
+    
+    await client.query(createTableSQL);
+    client.release();
+    
+    res.status(200).json({ message: 'Tabela de configurações criada com sucesso!' });
+  } catch (err) {
+    console.error('Erro ao criar tabela de configurações:', err);
+    res.status(500).json({ message: 'Erro ao criar tabela de configurações' });
   }
 });
 

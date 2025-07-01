@@ -69,21 +69,34 @@ function App() {
       if (!profilesResponse.ok) {
         throw new Error(profilesData.message || 'Erro ao buscar perfis do usuário');
       }
-      if (profilesData.profiles && profilesData.profiles.length > 1) {
-        // Mais de um perfil: forçar seleção
+      if (profilesData.profiles && profilesData.profiles.length > 0) {
+        const primeiroPerfil = profilesData.profiles[0];
+        console.log('Usando primeiro perfil:', primeiroPerfil);
+        
         setCurrentUser(user);
-        setPrecisaSelecionarPerfil(true);
-        return;
-      } else if (profilesData.profiles && profilesData.profiles.length === 1) {
-        setCurrentUser(user);
-        setProfile(profilesData.profiles[0]);
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        localStorage.setItem(`profile_${user.id_usuario}`, JSON.stringify(profilesData.profiles[0]));
+        setProfile(primeiroPerfil);
+        
+        // Carregar configurações do usuário do backend
+        try {
+          const configResponse = await fetch(`http://localhost:3001/api/configuracoes/${user.id_usuario}`);
+          if (configResponse.ok) {
+            const configData = await configResponse.json();
+            setDarkMode(configData.darkMode || false);
+            document.documentElement.setAttribute('data-theme', configData.darkMode ? 'dark' : 'light');
+          } else {
+            setDarkMode(false);
+            document.documentElement.setAttribute('data-theme', 'light');
+          }
+        } catch (error) {
+          console.error('Erro ao carregar configurações:', error);
+          setDarkMode(false);
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } else {
+        // Se não há perfis, redirecionar para criar o primeiro perfil
+        console.log('Usuário não tem perfis, redirecionando para criar primeiro perfil');
+        window.location.href = `/criar-primeiro-perfil?userId=${user.id_usuario}`;
       }
-      // Carregar configurações do usuário ao fazer login
-      const userConfig = JSON.parse(localStorage.getItem(`config_${user.id_usuario}`)) || {};
-      setDarkMode(userConfig.darkMode || false);
-      document.documentElement.setAttribute('data-theme', userConfig.darkMode ? 'dark' : 'light');
     } catch (error) {
       console.error('Erro detalhado no handleLogin:', error);
     }
@@ -91,26 +104,10 @@ function App() {
 
   const handleLogout = () => {
     try {
-      // Limpar dados do usuário atual
-      if (currentUser?.id_usuario) {
-        localStorage.removeItem(`profile_${currentUser.id_usuario}`);
-        localStorage.removeItem(`permissions_${currentUser.id_usuario}`);
-        localStorage.removeItem(`config_${currentUser.id_usuario}`);
-        localStorage.removeItem(`receitas_${currentUser.id_usuario}`);
-        localStorage.removeItem(`despesas_${currentUser.id_usuario}`);
-        localStorage.removeItem(`categorias_receitas_${currentUser.id_usuario}`);
-        localStorage.removeItem(`categorias_despesas_${currentUser.id_usuario}`);
-      }
-      
-      // Limpar dados gerais
-      localStorage.removeItem('currentUser');
-      
-      // Resetar estados
       setCurrentUser(null);
       setProfile(null);
       setDarkMode(false);
       document.documentElement.setAttribute('data-theme', 'light');
-      
       console.log('Logout realizado com sucesso');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
@@ -121,13 +118,6 @@ function App() {
     try {
       setDarkMode(isDark);
       document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-      
-      // Salvar configuração de tema específica do usuário
-      if (currentUser?.id_usuario) {
-        const userConfig = JSON.parse(localStorage.getItem(`config_${currentUser.id_usuario}`)) || {};
-        userConfig.darkMode = isDark;
-        localStorage.setItem(`config_${currentUser.id_usuario}`, JSON.stringify(userConfig));
-      }
     } catch (error) {
       console.error('Erro ao alterar tema:', error);
     }
