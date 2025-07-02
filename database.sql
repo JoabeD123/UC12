@@ -1,9 +1,0 @@
-CREATE TABLE perfis (
-  id_perfil SERIAL PRIMARY KEY,
-  nome VARCHAR(100) NOT NULL,
-  descricao TEXT,
-  senha VARCHAR(255) NOT NULL,
-  usuario_id INTEGER REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-); 
