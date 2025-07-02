@@ -1,0 +1,143 @@
+erDiagram
+  USUARIO ||--o{ PERFIL : possui
+  PERFIL ||--o{ CONTAS : registra
+  PERFIL ||--o{ RECEITA : registra
+  PERFIL ||--o{ PERMISSOES : tem
+  PERFIL ||--o{ ORCAMENTO : define
+  PERFIL ||--o{ CARTAO_CREDITO : possui
+  PERFIL ||--o{ HISTORICO_ALTERACOES : altera
+  CONTAS }o--|| CATEGORIA : pertence
+  CONTAS }o--|| STATUS_PAGAMENTO_TIPO : tem_status
+  CONTAS }o--|| TIPO_CONTA_TIPO : tem_tipo
+  CONTAS }o--|| RECORRENCIA_TIPO : tem_recorrencia
+  RECEITA }o--|| CATEGORIA : pertence
+  HISTORICO_ALTERACOES }o--|| TABELA_AFETADA_TIPO : afeta
+  HISTORICO_ALTERACOES }o--|| TIPO_ACAO_TIPO : acao
+  CARTAO_CREDITO ||--o{ FATURA_CARTAO : gera
+
+  USUARIO {
+    INT id_usuario PK
+    VARCHAR nome_familia
+    VARCHAR email
+    VARCHAR senha
+    TIMESTAMP criado_em
+    TIMESTAMP atualizado_em
+  }
+
+  PERFIL {
+    INT id_perfil PK
+    INT usuario_id FK
+    VARCHAR nome
+    VARCHAR categoria_familiar
+    VARCHAR cod_perfil
+    BOOLEAN is_admin
+    VARCHAR senha
+  }
+
+  CATEGORIA {
+    INT id_categoria PK
+    VARCHAR nome_categoria
+    VARCHAR tipo_categoria
+  }
+
+  STATUS_PAGAMENTO_TIPO {
+    INT id_status_pagamento_tipo PK
+    VARCHAR nome_status
+  }
+
+  TIPO_CONTA_TIPO {
+    INT id_tipo_conta_tipo PK
+    VARCHAR nome_tipo
+  }
+
+  RECORRENCIA_TIPO {
+    INT id_recorrencia_tipo PK
+    VARCHAR nome_recorrencia
+  }
+
+  TABELA_AFETADA_TIPO {
+    INT id_tabela_afetada_tipo PK
+    VARCHAR nome_tabela
+  }
+
+  TIPO_ACAO_TIPO {
+    INT id_tipo_acao_tipo PK
+    VARCHAR nome_acao
+  }
+
+  CONTAS {
+    INT id_conta PK
+    VARCHAR nome_conta
+    DECIMAL valor_conta
+    DATE data_entrega
+    DATE data_vencimento
+    INT status_pagamento_id FK
+    TEXT descricao
+    INT tipo_conta_id FK
+    BOOLEAN avisado
+    INT recorrencia_id FK
+    INT perfil_id FK
+    INT categoria_id FK
+    BOOLEAN fixa
+    INT usuario_id
+  }
+
+  RECEITA {
+    INT id_receita PK
+    INT perfil_id FK
+    VARCHAR nome_receita
+    DECIMAL valor_receita
+    DATE data_recebimento
+    TEXT descricao
+    INT categoria_id FK
+    BOOLEAN fixa
+    INT usuario_id
+  }
+
+  HISTORICO_ALTERACOES {
+    INT id_log PK
+    INT perfil_id FK
+    INT tabela_afetada_id FK
+    INT registro_id
+    INT tipo_acao_id FK
+    TIMESTAMP data_acao
+    TEXT detalhes
+  }
+
+  PERMISSOES {
+    INT id_permissao PK
+    INT perfil_id FK
+    BOOLEAN ver_receitas
+    BOOLEAN ver_despesas
+    BOOLEAN ver_cartoes
+    BOOLEAN gerenciar_perfis
+    BOOLEAN ver_imposto
+  }
+
+  ORCAMENTO {
+    INT id_orcamento PK
+    INT perfil_id FK
+    VARCHAR mes_ano
+    DECIMAL valor_limite
+  }
+
+  CARTAO_CREDITO {
+    INT id_cartao PK
+    INT perfil_id FK
+    INT usuario_id
+    VARCHAR nome
+    DECIMAL limite
+    INT dia_vencimento
+    VARCHAR bandeira
+    DECIMAL gastos
+  }
+
+  FATURA_CARTAO {
+    INT id_fatura PK
+    INT id_cartao FK
+    VARCHAR mes_ano
+    DECIMAL valor_fechado
+    DECIMAL valor_pago
+    DATE data_fechamento
+    BOOLEAN paga
+  } 
