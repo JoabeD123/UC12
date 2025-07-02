@@ -12,19 +12,64 @@ const Configuracoes = ({ usuario, perfil, darkMode, onThemeChange, onLogout }) =
     notificacoes: true,
     privacidade: false
   });
+  const [loading, setLoading] = useState(true);
 
+  // Carregar configurações do usuário do backend
   useEffect(() => {
-    const configSalva = localStorage.getItem('config');
-    if (configSalva) {
-      setConfig(JSON.parse(configSalva));
-    }
-  }, []);
+    const carregarConfiguracoes = async () => {
+      if (!usuario?.id_usuario) {
+        setLoading(false);
+        return;
+      }
 
-  const handleConfigChange = (campo, valor) => {
+      try {
+        const response = await fetch(`http://localhost:3001/api/configuracoes/${usuario.id_usuario}`);
+        if (response.ok) {
+          const configData = await response.json();
+          setConfig(configData);
+          
+          // Aplicar configurações carregadas
+          document.documentElement.setAttribute('data-theme', configData.darkMode ? 'dark' : 'light');
+          document.body.style.zoom = `${configData.zoom}%`;
+        }
+      } catch (error) {
+        console.error('Erro ao carregar configurações:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    carregarConfiguracoes();
+  }, [usuario]);
+
+  const salvarConfiguracao = async (novaConfig) => {
+    if (!usuario?.id_usuario) return;
+
+    try {
+      const response = await fetch(`http://localhost:3001/api/configuracoes/${usuario.id_usuario}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(novaConfig),
+      });
+
+      if (!response.ok) {
+        console.error('Erro ao salvar configuração');
+      }
+    } catch (error) {
+      console.error('Erro ao salvar configuração:', error);
+    }
+  };
+
+  const handleConfigChange = async (campo, valor) => {
     const novaConfig = { ...config, [campo]: valor };
     setConfig(novaConfig);
-    localStorage.setItem('config', JSON.stringify(novaConfig));
 
+    // Salvar no backend
+    await salvarConfiguracao(novaConfig);
+
+    // Aplicar mudanças imediatas
     if (campo === 'darkMode') {
       document.documentElement.setAttribute('data-theme', valor ? 'dark' : 'light');
       onThemeChange(valor);
@@ -39,6 +84,10 @@ const Configuracoes = ({ usuario, perfil, darkMode, onThemeChange, onLogout }) =
     onLogout();
     navigate('/login');
   };
+
+  if (loading) {
+    return <div className="loading">Carregando configurações...</div>;
+  }
 
   return (
     <div className="layout-container">

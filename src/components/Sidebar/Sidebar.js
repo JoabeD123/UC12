@@ -10,7 +10,13 @@ function Sidebar({ perfil }) {
   return (
     <div className="sidebar">
       <div className="logo">
-        <div className="logo-icon">GF</div>
+        <div className="logo-icon">
+          <img 
+            src="/logo.png" 
+            alt="Gestor Familiar" 
+            className="logo-image"
+          />
+        </div>
       </div>
       <div className="menu">
         <div className={`menu-item${location.pathname === '/dashboard' ? ' active' : ''}`} onClick={() => navigate('/dashboard')}>
