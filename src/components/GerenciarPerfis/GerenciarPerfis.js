@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './GerenciarPerfis.css';
 import Sidebar from '../Sidebar/Sidebar';
-import { FaSave, FaPlus, FaTimes, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaSave, FaPlus, FaTimes, FaEdit, FaTrash, FaCrown, FaUser } from 'react-icons/fa';
 
 const GerenciarPerfis = ({ usuario, perfil }) => {
   const [perfis, setPerfis] = useState([]);
@@ -143,6 +143,29 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
     setPerfilParaExcluir(null);
   };
 
+  const handleHierarchyChange = async (perfilId, isPrincipal) => {
+    try {
+      const res = await fetch(`http://localhost:3001/api/perfis/${perfilId}/hierarquia`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_principal: isPrincipal })
+      });
+      
+      if (!res.ok) {
+        const data = await res.json();
+        setErro(data.message || 'Erro ao alterar hierarquia do perfil.');
+      } else {
+        // Atualizar lista de perfis
+        const profilesRes = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${usuario.id_usuario}`);
+        const profilesData = await profilesRes.json();
+        setPerfis(profilesData.profiles);
+        setErro('');
+      }
+    } catch {
+      setErro('Erro ao alterar hierarquia do perfil.');
+    }
+  };
+
   const handleCancel = () => {
     setPerfilEditando(null);
     setNovoPerfil({ nome: '', categoria_familiar: '', senha: '', ver_receitas: true, ver_despesas: true, ver_cartoes: true, gerenciar_perfis: false, ver_imposto: false });
@@ -244,6 +267,19 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
                   <div className="perfil-header" style={{display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1.5rem'}}>
                     <div style={{flex: '1 1 40%', minWidth: 0}}>
                       <h4>{perfil.nome}</h4>
+                      <div className="perfil-tipo" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem'}}>
+                        {perfil.is_principal ? (
+                          <>
+                            <FaCrown style={{color: '#FFD700'}} />
+                            <span style={{color: '#FFD700', fontWeight: 'bold'}}>Perfil Principal</span>
+                          </>
+                        ) : (
+                          <>
+                            <FaUser style={{color: '#6c757d'}} />
+                            <span style={{color: '#6c757d'}}>Perfil Secundário</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div style={{flex: '2 1 60%', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
                       <p className="perfil-descricao">{perfil.categoria_familiar}</p>
@@ -275,6 +311,23 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
                       <button onClick={() => handleEdit(perfil)} className="btn-icon">
                         <FaEdit /> Editar
                       </button>
+                      {!perfil.is_principal ? (
+                        <button 
+                          onClick={() => handleHierarchyChange(perfil.id_perfil, true)} 
+                          className="btn-icon promover"
+                          title="Promover para Perfil Principal"
+                        >
+                          <FaCrown /> Promover
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => handleHierarchyChange(perfil.id_perfil, false)} 
+                          className="btn-icon rebaixar"
+                          title="Rebaixar para Perfil Secundário"
+                        >
+                          <FaUser /> Rebaixar
+                        </button>
+                      )}
                       <button onClick={() => handleDelete(perfil.id_perfil)} className="btn-icon excluir">
                         <FaTrash /> Excluir
                       </button>

@@ -15,6 +15,23 @@ const pool = new Pool({
   port: 5432, // Porta padrão do PostgreSQL
 });
 
+// Função helper para determinar visibilidade de dados baseada na hierarquia
+const getDataVisibilityQuery = (perfilId, tableAlias = '') => {
+  const alias = tableAlias ? `${tableAlias}.` : '';
+  return `
+    (${alias}perfil_id = ${perfilId} OR 
+     EXISTS (
+       SELECT 1 FROM perfil p 
+       WHERE p.id_perfil = ${perfilId} AND p.is_principal = true
+     ) OR
+     EXISTS (
+       SELECT 1 FROM perfil p1 
+       JOIN perfil p2 ON p1.usuario_id = p2.usuario_id 
+       WHERE p1.id_perfil = ${perfilId} AND p2.id_perfil = ${alias}perfil_id AND p1.is_principal = true
+     ))
+  `;
+};
+
 app.use(cors()); // Habilita o CORS para permitir requisições de diferentes origens (seu frontend)
 app.use(express.json()); // Permite que o Express parseie requisições JSON
 
@@ -66,7 +83,7 @@ app.get('/init-db', async (req, res) => {
         atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
-    -- Tabela de Perfis (Membros da Família)
+    -- Tabela de Perfis (Membros da Família) - Atualizada com hierarquia
     CREATE TABLE IF NOT EXISTS perfil (
         id_perfil SERIAL PRIMARY KEY,
         usuario_id INT NOT NULL,
@@ -74,7 +91,9 @@ app.get('/init-db', async (req, res) => {
         categoria_familiar VARCHAR(50) NOT NULL,
         cod_perfil VARCHAR(10) UNIQUE NOT NULL,
         is_admin BOOLEAN DEFAULT FALSE,
+        is_principal BOOLEAN DEFAULT FALSE, -- Novo campo para identificar perfis principais
         senha VARCHAR(255) NOT NULL,
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (usuario_id) REFERENCES usuario(id_usuario)
     );
 
@@ -302,6 +321,20 @@ app.get('/init-db', async (req, res) => {
     UPDATE contas c SET usuario_id = p.usuario_id FROM perfil p WHERE c.perfil_id = p.id_perfil;
   `;
 
+  // Comandos para atualizar estrutura de hierarquia
+  const patchHierarchy = `
+    ALTER TABLE perfil ADD COLUMN IF NOT EXISTS is_principal BOOLEAN DEFAULT FALSE;
+    ALTER TABLE perfil ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+    
+    -- Definir o primeiro perfil de cada usuário como principal
+    UPDATE perfil SET is_principal = true 
+    WHERE id_perfil IN (
+      SELECT DISTINCT ON (usuario_id) id_perfil 
+      FROM perfil 
+      ORDER BY usuario_id, criado_em ASC
+    );
+  `;
+
   try {
     const client = await pool.connect();
     console.log('Conexão com o banco estabelecida para init-db.');
@@ -323,6 +356,9 @@ app.get('/init-db', async (req, res) => {
 
     await client.query(patchUsuarioId); // <-- Garante usuario_id correto
     console.log('usuario_id garantido e atualizado em contas e receita.');
+    
+    await client.query(patchHierarchy); // <-- Atualiza estrutura de hierarquia
+    console.log('Estrutura de hierarquia atualizada com sucesso.');
     
     client.release();
     res.status(200).send('Banco de dados inicializado/reiniciado com sucesso.');
@@ -418,9 +454,9 @@ app.post('/api/perfil/primeiro', async (req, res) => {
     const codPerfil = `PERF${timestamp.slice(-6)}`;
 
     const perfilResult = await client.query(
-      `INSERT INTO perfil (usuario_id, nome, categoria_familiar, cod_perfil, is_admin, senha) 
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_perfil`,
-      [usuario_id, nome_perfil, categoria_familiar, codPerfil, true, hashedPasswordPerfil]
+      `INSERT INTO perfil (usuario_id, nome, categoria_familiar, cod_perfil, is_admin, is_principal, senha) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id_perfil`,
+      [usuario_id, nome_perfil, categoria_familiar, codPerfil, true, true, hashedPasswordPerfil]
     );
     const id_perfil = perfilResult.rows[0].id_perfil;
 
@@ -493,7 +529,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Novo Endpoint para buscar perfis e permissões de um usuário
+// Novo Endpoint para buscar perfis e permissões de um usuário - Atualizado com hierarquia
 app.get('/api/user/profiles-and-permissions/:userId', async (req, res) => {
   const { userId } = req.params;
   console.log(`Recebendo requisição para buscar perfis e permissões para userId: ${userId}`);
@@ -501,8 +537,11 @@ app.get('/api/user/profiles-and-permissions/:userId', async (req, res) => {
   try {
     const client = await pool.connect();
 
-    // Buscar perfis do usuário
-    const profilesResult = await client.query('SELECT * FROM perfil WHERE usuario_id = $1', [userId]);
+    // Buscar perfis do usuário com informações de hierarquia
+    const profilesResult = await client.query(
+      'SELECT *, CASE WHEN is_principal THEN \'Principal\' ELSE \'Secundário\' END as tipo_perfil FROM perfil WHERE usuario_id = $1 ORDER BY is_principal DESC, criado_em ASC', 
+      [userId]
+    );
     const profiles = profilesResult.rows;
 
     if (profiles.length === 0) {
@@ -540,6 +579,74 @@ app.get('/api/user/profiles-and-permissions/:userId', async (req, res) => {
   }
 });
 
+// Endpoint para gerenciar hierarquia de perfis
+app.put('/api/perfis/:id/hierarquia', async (req, res) => {
+  const { id } = req.params;
+  const { is_principal } = req.body;
+
+  let client;
+  try {
+    client = await pool.connect();
+    await client.query('BEGIN');
+
+    // Verificar se o perfil existe
+    const perfilCheck = await client.query('SELECT usuario_id, is_principal FROM perfil WHERE id_perfil = $1', [id]);
+    if (perfilCheck.rows.length === 0) {
+      await client.query('ROLLBACK');
+      client.release();
+      return res.status(404).json({ message: 'Perfil não encontrado.' });
+    }
+
+    const usuarioId = perfilCheck.rows[0].usuario_id;
+    const isCurrentlyPrincipal = perfilCheck.rows[0].is_principal;
+
+    // Verificar se é o primeiro perfil (mais antigo) do usuário
+    const firstProfileCheck = await client.query(
+      'SELECT id_perfil FROM perfil WHERE usuario_id = $1 ORDER BY criado_em ASC LIMIT 1',
+      [usuarioId]
+    );
+
+    const isFirstProfile = firstProfileCheck.rows[0].id_perfil === parseInt(id);
+
+    // Não permitir rebaixar o primeiro perfil
+    if (isFirstProfile && !is_principal) {
+      await client.query('ROLLBACK');
+      client.release();
+      return res.status(400).json({ message: 'O primeiro perfil criado deve sempre permanecer como principal.' });
+    }
+
+    // Se está promovendo para principal, rebaixar outros perfis do mesmo usuário (exceto o primeiro)
+    if (is_principal && !isCurrentlyPrincipal) {
+      await client.query(
+        'UPDATE perfil SET is_principal = false WHERE usuario_id = $1 AND id_perfil != $2',
+        [usuarioId, id]
+      );
+    }
+
+    // Atualizar o perfil
+    await client.query(
+      'UPDATE perfil SET is_principal = $1 WHERE id_perfil = $2',
+      [is_principal, id]
+    );
+
+    await client.query('COMMIT');
+    res.status(200).json({ 
+      message: is_principal ? 'Perfil promovido para principal com sucesso!' : 'Perfil rebaixado para secundário com sucesso!' 
+    });
+
+  } catch (err) {
+    if (client) {
+      await client.query('ROLLBACK');
+    }
+    console.error('Erro ao atualizar hierarquia do perfil:', err);
+    res.status(500).json({ message: 'Erro ao atualizar hierarquia do perfil.' });
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+});
+
 // Rotas para Gerenciamento de Contas
 app.post('/api/contas', async (req, res) => {
   const { usuario_id, perfil_id, nome_conta, valor_conta, data_entrega, data_vencimento, status_pagamento_id, descricao, tipo_conta_id, recorrencia_id, categoria_id, fixa } = req.body;
@@ -559,18 +666,31 @@ app.post('/api/contas', async (req, res) => {
   }
 });
 
-app.get('/api/contas/:usuarioId', async (req, res) => {
-  const { usuarioId } = req.params;
+app.get('/api/contas/:usuarioId/:perfilId', async (req, res) => {
+  const { usuarioId, perfilId } = req.params;
   try {
     const client = await pool.connect();
+    
+    // Verificar se o perfil existe e tem permissão
+    const perfilCheck = await client.query(
+      'SELECT is_principal FROM perfil WHERE id_perfil = $1 AND usuario_id = $2',
+      [perfilId, usuarioId]
+    );
+    
+    if (perfilCheck.rows.length === 0) {
+      client.release();
+      return res.status(403).json({ message: 'Perfil não encontrado ou sem permissão.' });
+    }
+
     const result = await client.query(
-      `SELECT c.*, s.nome_status, t.nome_tipo, r.nome_recorrencia, cat.nome_categoria
+      `SELECT c.*, s.nome_status, t.nome_tipo, r.nome_recorrencia, cat.nome_categoria, p.nome AS nome_perfil, p.is_principal
        FROM contas c
        LEFT JOIN status_pagamento_tipo s ON c.status_pagamento_id = s.id_status_pagamento_tipo
        LEFT JOIN tipo_conta_tipo t ON c.tipo_conta_id = t.id_tipo_conta_tipo
        LEFT JOIN recorrencia_tipo r ON c.recorrencia_id = r.id_recorrencia_tipo
        LEFT JOIN categoria cat ON c.categoria_id = cat.id_categoria
-       WHERE c.usuario_id = $1
+       LEFT JOIN perfil p ON c.perfil_id = p.id_perfil
+       WHERE c.usuario_id = $1 AND ${getDataVisibilityQuery(perfilId, 'c')}
        ORDER BY c.data_vencimento DESC`,
       [usuarioId]
     );
@@ -619,23 +739,37 @@ app.delete('/api/contas/:id', async (req, res) => {
   }
 });
 
-// Endpoints para Receitas
-app.get('/api/receitas/:usuarioId', async (req, res) => {
-  const { usuarioId } = req.params;
+// Endpoints para Receitas - Atualizado com hierarquia de perfis
+app.get('/api/receitas/:usuarioId/:perfilId', async (req, res) => {
+  const { usuarioId, perfilId } = req.params;
   const { mes, ano } = req.query;
   try {
     const client = await pool.connect();
-    let query = `SELECT r.*, cat.nome_categoria, p.nome AS nome_perfil
+    
+    // Verificar se o perfil existe e tem permissão
+    const perfilCheck = await client.query(
+      'SELECT is_principal FROM perfil WHERE id_perfil = $1 AND usuario_id = $2',
+      [perfilId, usuarioId]
+    );
+    
+    if (perfilCheck.rows.length === 0) {
+      client.release();
+      return res.status(403).json({ message: 'Perfil não encontrado ou sem permissão.' });
+    }
+
+    let query = `SELECT r.*, cat.nome_categoria, p.nome AS nome_perfil, p.is_principal
        FROM receita r
        LEFT JOIN categoria cat ON r.categoria_id = cat.id_categoria
        LEFT JOIN perfil p ON r.perfil_id = p.id_perfil
-       WHERE r.usuario_id = $1 AND cat.tipo_categoria = 'receita'`;
+       WHERE r.usuario_id = $1 AND cat.tipo_categoria = 'receita' AND ${getDataVisibilityQuery(perfilId, 'r')}`;
     const params = [usuarioId];
+    
     if (mes && ano) {
       query += ` AND ((EXTRACT(MONTH FROM r.data_recebimento) = $2 AND EXTRACT(YEAR FROM r.data_recebimento) = $3) OR r.fixa = TRUE)`;
       params.push(mes, ano);
     }
     query += ' ORDER BY r.data_recebimento DESC';
+    
     const result = await client.query(query, params);
     client.release();
     res.status(200).json(result.rows);
@@ -698,23 +832,37 @@ app.put('/api/receitas/:id', async (req, res) => {
   }
 });
 
-// Endpoints para Despesas
-app.get('/api/despesas/:usuarioId', async (req, res) => {
-  const { usuarioId } = req.params;
+// Endpoints para Despesas - Atualizado com hierarquia de perfis
+app.get('/api/despesas/:usuarioId/:perfilId', async (req, res) => {
+  const { usuarioId, perfilId } = req.params;
   const { mes, ano } = req.query;
   try {
     const client = await pool.connect();
-    let query = `SELECT c.*, cat.nome_categoria, p.nome AS nome_perfil 
+    
+    // Verificar se o perfil existe e tem permissão
+    const perfilCheck = await client.query(
+      'SELECT is_principal FROM perfil WHERE id_perfil = $1 AND usuario_id = $2',
+      [perfilId, usuarioId]
+    );
+    
+    if (perfilCheck.rows.length === 0) {
+      client.release();
+      return res.status(403).json({ message: 'Perfil não encontrado ou sem permissão.' });
+    }
+
+    let query = `SELECT c.*, cat.nome_categoria, p.nome AS nome_perfil, p.is_principal
        FROM contas c 
        LEFT JOIN categoria cat ON c.categoria_id = cat.id_categoria 
        LEFT JOIN perfil p ON c.perfil_id = p.id_perfil
-       WHERE c.usuario_id = $1 AND cat.tipo_categoria = 'despesa'`;
+       WHERE c.usuario_id = $1 AND cat.tipo_categoria = 'despesa' AND ${getDataVisibilityQuery(perfilId, 'c')}`;
     const params = [usuarioId];
+    
     if (mes && ano) {
       query += ` AND ((EXTRACT(MONTH FROM c.data_vencimento) = $2 AND EXTRACT(YEAR FROM c.data_vencimento) = $3) OR c.fixa = TRUE)`;
       params.push(mes, ano);
     }
     query += ' ORDER BY c.data_vencimento DESC';
+    
     const result = await client.query(query, params);
     client.release();
     res.status(200).json(result.rows);
@@ -819,13 +967,27 @@ app.post('/api/orcamentos', async (req, res) => {
   }
 });
 
-app.get('/api/orcamentos/:perfilId', async (req, res) => {
-  const { perfilId } = req.params;
+app.get('/api/orcamentos/:usuarioId/:perfilId', async (req, res) => {
+  const { usuarioId, perfilId } = req.params;
   try {
     const client = await pool.connect();
+    
+    // Verificar se o perfil existe e tem permissão
+    const perfilCheck = await client.query(
+      'SELECT is_principal FROM perfil WHERE id_perfil = $1 AND usuario_id = $2',
+      [perfilId, usuarioId]
+    );
+    
+    if (perfilCheck.rows.length === 0) {
+      client.release();
+      return res.status(403).json({ message: 'Perfil não encontrado ou sem permissão.' });
+    }
+
     const result = await client.query(
-      'SELECT * FROM orcamento WHERE perfil_id = $1 ORDER BY mes_ano DESC',
-      [perfilId]
+      `SELECT o.*, p.nome AS nome_perfil, p.is_principal FROM orcamento o
+       LEFT JOIN perfil p ON o.perfil_id = p.id_perfil
+       WHERE p.usuario_id = $1 AND ${getDataVisibilityQuery(perfilId, 'o')} ORDER BY o.mes_ano DESC`,
+      [usuarioId]
     );
     client.release();
     res.status(200).json(result.rows);
@@ -898,7 +1060,7 @@ app.post('/api/categorias', async (req, res) => {
 
 // Rotas para Gerenciamento de Perfis
 app.post('/api/perfis', async (req, res) => {
-  const { usuario_id, nome, categoria_familiar, senha, renda,
+  const { usuario_id, nome, categoria_familiar, senha,
     ver_receitas = true, ver_despesas = true, ver_cartoes = true, gerenciar_perfis = false, ver_imposto = false } = req.body;
 
   let client;
@@ -917,9 +1079,9 @@ app.post('/api/perfis', async (req, res) => {
     const nome_familia = userResult.rows[0].nome_familia;
 
     const perfilResult = await client.query(
-      `INSERT INTO perfil (usuario_id, nome, categoria_familiar, cod_perfil, is_admin, senha)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_perfil, is_admin`,
-      [usuario_id, nome, categoria_familiar, codPerfil, false, hashedPassword]
+      `INSERT INTO perfil (usuario_id, nome, categoria_familiar, cod_perfil, is_admin, is_principal, senha)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id_perfil, is_admin`,
+      [usuario_id, nome, categoria_familiar, codPerfil, false, false, hashedPassword]
     );
 
     const id_perfil = perfilResult.rows[0].id_perfil;
@@ -956,7 +1118,7 @@ app.post('/api/perfis', async (req, res) => {
 
 app.put('/api/perfis/:id', async (req, res) => {
   const { id } = req.params;
-  const { nome, categoria_familiar, renda,
+  const { nome, categoria_familiar,
     ver_receitas = true, ver_despesas = true, ver_cartoes = true, gerenciar_perfis = false, ver_imposto = false } = req.body;
 
   try {
@@ -964,9 +1126,9 @@ app.put('/api/perfis/:id', async (req, res) => {
     // Atualiza perfil
     await client.query(
       `UPDATE perfil 
-       SET nome = $1, categoria_familiar = $2, renda = $3
-       WHERE id_perfil = $4`,
-      [nome, categoria_familiar, renda, id]
+       SET nome = $1, categoria_familiar = $2
+       WHERE id_perfil = $3`,
+      [nome, categoria_familiar, id]
     );
     // Atualiza permissões
     await client.query(
@@ -1025,12 +1187,26 @@ app.delete('/api/perfis/:id', async (req, res) => {
 });
 
 // Rotas para Cartões de Crédito
-app.get('/api/cartoes/:usuarioId', async (req, res) => {
-  const { usuarioId } = req.params;
+app.get('/api/cartoes/:usuarioId/:perfilId', async (req, res) => {
+  const { usuarioId, perfilId } = req.params;
   try {
     const client = await pool.connect();
+    
+    // Verificar se o perfil existe e tem permissão
+    const perfilCheck = await client.query(
+      'SELECT is_principal FROM perfil WHERE id_perfil = $1 AND usuario_id = $2',
+      [perfilId, usuarioId]
+    );
+    
+    if (perfilCheck.rows.length === 0) {
+      client.release();
+      return res.status(403).json({ message: 'Perfil não encontrado ou sem permissão.' });
+    }
+
     const result = await client.query(
-      'SELECT c.*, p.nome AS nome_perfil FROM cartao_credito c LEFT JOIN perfil p ON c.perfil_id = p.id_perfil WHERE c.usuario_id = $1 ORDER BY c.id_cartao DESC',
+      `SELECT c.*, p.nome AS nome_perfil, p.is_principal FROM cartao_credito c 
+       LEFT JOIN perfil p ON c.perfil_id = p.id_perfil 
+       WHERE c.usuario_id = $1 AND ${getDataVisibilityQuery(perfilId, 'c')} ORDER BY c.id_cartao DESC`,
       [usuarioId]
     );
     client.release();
@@ -1119,16 +1295,28 @@ app.post('/api/faturas-cartao', async (req, res) => {
 });
 
 // Listar faturas por perfil (todas faturas dos cartões do perfil)
-app.get('/api/faturas-cartao/perfil/:perfilId', async (req, res) => {
-  const { perfilId } = req.params;
+app.get('/api/faturas-cartao/perfil/:usuarioId/:perfilId', async (req, res) => {
+  const { usuarioId, perfilId } = req.params;
   try {
     const client = await pool.connect();
+    
+    // Verificar se o perfil existe e tem permissão
+    const perfilCheck = await client.query(
+      'SELECT is_principal FROM perfil WHERE id_perfil = $1 AND usuario_id = $2',
+      [perfilId, usuarioId]
+    );
+    
+    if (perfilCheck.rows.length === 0) {
+      client.release();
+      return res.status(403).json({ message: 'Perfil não encontrado ou sem permissão.' });
+    }
+
     const result = await client.query(
       `SELECT f.*, c.nome as nome_cartao, c.bandeira FROM fatura_cartao f
        JOIN cartao_credito c ON f.id_cartao = c.id_cartao
-       WHERE c.perfil_id = $1
+       WHERE c.usuario_id = $1 AND ${getDataVisibilityQuery(perfilId, 'c')}
        ORDER BY f.data_fechamento DESC`,
-      [perfilId]
+      [usuarioId]
     );
     client.release();
     res.status(200).json(result.rows);

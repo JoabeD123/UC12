@@ -49,12 +49,12 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
   const carregarDadosFinanceiros = useCallback(async () => {
     try {
       // Carregar receitas
-      const receitasResponse = await fetch(`http://localhost:3001/api/receitas/${usuario.id_usuario}?mes=${mesSelecionado+1}&ano=${anoSelecionado}`);
+      const receitasResponse = await fetch(`http://localhost:3001/api/receitas/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mesSelecionado+1}&ano=${anoSelecionado}`);
       if (!receitasResponse.ok) throw new Error('Erro ao carregar receitas');
       const receitas = await receitasResponse.json();
 
       // Carregar despesas
-      const despesasResponse = await fetch(`http://localhost:3001/api/despesas/${usuario.id_usuario}?mes=${mesSelecionado+1}&ano=${anoSelecionado}`);
+      const despesasResponse = await fetch(`http://localhost:3001/api/despesas/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mesSelecionado+1}&ano=${anoSelecionado}`);
       if (!despesasResponse.ok) throw new Error('Erro ao carregar despesas');
       const despesas = await despesasResponse.json();
 
@@ -87,7 +87,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
     } finally {
       // Não setar loading aqui, só após cartões
     }
-  }, [usuario, mesSelecionado, anoSelecionado]);
+  }, [usuario, perfil, mesSelecionado, anoSelecionado]);
 
   useEffect(() => {
     if (!usuario || !perfil) {
@@ -101,12 +101,12 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
 
   useEffect(() => {
     const fetchCartoes = async () => {
-      if (!usuario?.id_usuario) {
+      if (!usuario?.id_usuario || !perfil?.id_perfil) {
         setCartoesLoading(false);
         return;
       }
       try {
-        const res = await fetch(`http://localhost:3001/api/cartoes/${usuario.id_usuario}?mes=${mesSelecionado+1}`);
+        const res = await fetch(`http://localhost:3001/api/cartoes/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mesSelecionado+1}`);
         if (!res.ok) throw new Error('Erro ao buscar cartões de crédito');
         const data = await res.json();
         setCartoes(data);
@@ -121,7 +121,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
       }
     };
     fetchCartoes();
-  }, [usuario, mesSelecionado]);
+  }, [usuario, perfil, mesSelecionado]);
 
   // Quando ambos carregarem, libera o loading principal
   useEffect(() => {
@@ -198,7 +198,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
       // Se houve fechamento, atualize as faturas fechadas
       if (houveFechamento) {
         try {
-          const res = await fetch(`http://localhost:3001/api/faturas-cartao/usuario/${usuario.id_usuario}`);
+          const res = await fetch(`http://localhost:3001/api/faturas-cartao/perfil/${usuario.id_usuario}/${perfil.id_perfil}`);
           if (res.ok) {
             const data = await res.json();
             setFaturasFechadas(data);
@@ -211,10 +211,10 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
   }, [cartoes, usuario]);
 
   useEffect(() => {
-    if (!usuario?.id_usuario) return;
+    if (!usuario?.id_usuario || !perfil?.id_perfil) return;
     const fetchFaturasFechadas = async () => {
       try {
-        const res = await fetch(`http://localhost:3001/api/faturas-cartao/usuario/${usuario.id_usuario}`);
+        const res = await fetch(`http://localhost:3001/api/faturas-cartao/perfil/${usuario.id_usuario}/${perfil.id_perfil}`);
         if (res.ok) {
           const data = await res.json();
           setFaturasFechadas(data);
@@ -222,7 +222,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
       } catch {}
     };
     fetchFaturasFechadas();
-  }, [usuario]);
+  }, [usuario, perfil]);
 
   const handleNavigation = (path) => {
     navigate(path);

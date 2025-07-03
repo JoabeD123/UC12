@@ -29,7 +29,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
 
   const carregarDespesas = useCallback(async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/despesas/${usuario.id_usuario}`);
+      const response = await fetch(`http://localhost:3001/api/despesas/${usuario.id_usuario}/${perfil.id_perfil}`);
       if (!response.ok) throw new Error('Erro ao carregar despesas');
       const data = await response.json();
       setDespesas(data);
@@ -39,7 +39,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     } finally {
       setLoading(false);
     }
-  }, [usuario]);
+  }, [usuario, perfil]);
 
   const carregarCategorias = useCallback(async () => {
     try {

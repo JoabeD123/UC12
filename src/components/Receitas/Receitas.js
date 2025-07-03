@@ -26,7 +26,8 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
 
   const carregarReceitas = useCallback(async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/receitas/${usuario.id_usuario}`);
+      setLoading(true);
+      const response = await fetch(`http://localhost:3001/api/receitas/${usuario.id_usuario}/${perfil.id_perfil}`);
       if (!response.ok) throw new Error('Erro ao carregar receitas');
       const data = await response.json();
       setReceitas(data);
@@ -36,7 +37,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     } finally {
       setLoading(false);
     }
-  }, [usuario]);
+  }, [usuario, perfil]);
 
   const carregarCategorias = useCallback(async () => {
     try {

@@ -26,7 +26,7 @@ const CartoesCredito = ({ perfil }) => {
   // Buscar cartões do banco ao carregar a tela
   useEffect(() => {
     if (!perfil?.id_perfil || !perfil?.usuario_id) return;
-    fetch(`${API_URL}/${perfil.usuario_id}`)
+    fetch(`${API_URL}/${perfil.usuario_id}/${perfil.id_perfil}`)
       .then(res => res.json())
       .then(data => {
         setCartoes(data);
