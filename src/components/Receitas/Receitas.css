@@ -342,18 +342,11 @@
 }
 
 .form-group input:focus,
-<<<<<<< HEAD
 .form-group textarea:focus,
 .form-group select:focus {
-  border-color: var(--success-green); /* Cor verde para receitas */
-  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.25); /* Sombra maior e verde */
-=======
-.form-group select:focus,
-.form-group textarea:focus {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(28, 200, 138, 0.1);
   outline: none;
->>>>>>> Testes-de-Responsividade-do-Projeto
 }
 
 .form-group small {
@@ -363,15 +356,8 @@
   font-size: 13px;
 }
 
-<<<<<<< HEAD
-.btn-submit {
-  grid-column: 1 / -1;
-  padding: 1rem; /* Aumentado o padding */
-  background-color: var(--success-green); /* Cor verde para receitas */
-=======
 .btn-primary {
   background-color: var(--primary-color);
->>>>>>> Testes-de-Responsividade-do-Projeto
   color: white;
   border: none;
   padding: 14px 28px;
@@ -384,10 +370,6 @@
   margin-top: 10px;
 }
 
-<<<<<<< HEAD
-.btn-submit:hover {
-  background-color: #218838; /* Um verde ligeiramente mais escuro */
-=======
 .btn-primary:hover {
   background-color: var(--primary-hover);
   transform: translateY(-2px);
@@ -634,7 +616,6 @@
 
 .btn-adicionar-categoria:hover {
   background-color: var(--primary-hover);
->>>>>>> Testes-de-Responsividade-do-Projeto
   transform: translateY(-2px);
 }
 
