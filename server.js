@@ -1,0 +1,1580 @@
+const express = require('express');
+const { Pool } = require('pg');
+const cors = require('cors'); // Para permitir requisições do frontend
+const bcrypt = require('bcryptjs'); // Importa a biblioteca bcryptjs
+
+const app = express();
+const port = 3001; // Porta para o backend
+
+// Configuração do banco de dados PostgreSQL
+const pool = new Pool({
+  user: 'postgres', // Substitua pelo seu usuário do PostgreSQL
+  host: 'localhost',
+  database: 'gestao_familiar', // Substitua pelo nome do seu banco de dados
+  password: '1234', // Substitua pela sua senha do PostgreSQL
+  port: 5432, // Porta padrão do PostgreSQL
+});
+
+// Função helper para determinar visibilidade de dados baseada na hierarquia
+const getDataVisibilityQuery = (perfilId, tableAlias = '') => {
+  const alias = tableAlias ? `${tableAlias}.` : '';
+  return `
+    (${alias}perfil_id = ${perfilId} OR 
+     EXISTS (
+       SELECT 1 FROM perfil p 
+       WHERE p.id_perfil = ${perfilId} AND p.is_principal = true
+     ) OR
+     EXISTS (
+       SELECT 1 FROM perfil p1 
+       JOIN perfil p2 ON p1.usuario_id = p2.usuario_id 
+       WHERE p1.id_perfil = ${perfilId} AND p2.id_perfil = ${alias}perfil_id AND p1.is_principal = true
+     ))
+  `;
+};
+
+app.use(cors()); // Habilita o CORS para permitir requisições de diferentes origens (seu frontend)
+app.use(express.json()); // Permite que o Express parseie requisições JSON
+
+// Rota de teste para verificar a conexão com o banco de dados
+app.get('/', async (req, res) => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query('SELECT NOW()');
+    client.release();
+    res.status(200).send(`Conexão com o PostgreSQL estabelecida! Hora atual no DB: ${result.rows[0].now}`);
+  } catch (err) {
+    console.error('Erro de conexão com o banco de dados:', err);
+    res.status(500).send('Erro ao conectar com o banco de dados.');
+  }
+});
+
+// Endpoint para inicializar/reiniciar o banco de dados
+app.get('/init-db', async (req, res) => {
+  const dropSchema = `
+    DROP TABLE IF EXISTS orcamento CASCADE;
+    DROP TABLE IF EXISTS historico_alteracoes CASCADE;
+    DROP TABLE IF EXISTS receita CASCADE;
+    DROP TABLE IF EXISTS contas CASCADE;
+    DROP TABLE IF EXISTS permissoes CASCADE;
+    DROP TABLE IF EXISTS perfil CASCADE;
+    DROP TABLE IF EXISTS configuracoes_usuario CASCADE;
+    DROP TABLE IF EXISTS usuario CASCADE;
+    DROP TABLE IF EXISTS categoria CASCADE;
+    DROP TABLE IF EXISTS status_pagamento_tipo CASCADE;
+    DROP TABLE IF EXISTS tipo_conta_tipo CASCADE;
+    DROP TABLE IF EXISTS recorrencia_tipo CASCADE;
+    DROP TABLE IF EXISTS tabela_afetada_tipo CASCADE;
+    DROP TABLE IF EXISTS tipo_acao_tipo CASCADE;
+    DROP TABLE IF EXISTS cartao_credito CASCADE;
+    DROP TABLE IF EXISTS fatura_cartao CASCADE;
+  `;
+
+  const createSchema = `
+    -- Garantir que a tabela permissoes será criada do zero
+    DROP TABLE IF EXISTS permissoes CASCADE;
+
+    -- Tabela de Usuários (Conta da Família)
+    CREATE TABLE IF NOT EXISTS usuario (
+        id_usuario SERIAL PRIMARY KEY,
+        nome_familia VARCHAR(255) NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        senha VARCHAR(255) NOT NULL,
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Tabela de Perfis (Membros da Família) - Atualizada com hierarquia
+    CREATE TABLE IF NOT EXISTS perfil (
+        id_perfil SERIAL PRIMARY KEY,
+        usuario_id INT NOT NULL,
+        nome VARCHAR(255) NOT NULL,
+        categoria_familiar VARCHAR(50) NOT NULL,
+        cod_perfil VARCHAR(10) UNIQUE NOT NULL,
+        is_admin BOOLEAN DEFAULT FALSE,
+        is_principal BOOLEAN DEFAULT FALSE, -- Novo campo para identificar perfis principais
+        senha VARCHAR(255) NOT NULL,
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (usuario_id) REFERENCES usuario(id_usuario)
+    );
+
+    -- Tabela de Categorias (Ex: Moradia, Alimentação, etc.)
+    CREATE TABLE IF NOT EXISTS categoria (
+        id_categoria SERIAL PRIMARY KEY,
+        nome_categoria VARCHAR(100) NOT NULL UNIQUE,
+        tipo_categoria VARCHAR(20) NOT NULL -- 'receita' ou 'despesa'
+    );
+
+    -- Tabelas de Lookup para Status, Tipos e Recorrências
+    CREATE TABLE IF NOT EXISTS status_pagamento_tipo (
+        id_status_pagamento_tipo SERIAL PRIMARY KEY,
+        nome_status VARCHAR(50) UNIQUE NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS tipo_conta_tipo (
+        id_tipo_conta_tipo SERIAL PRIMARY KEY,
+        nome_tipo VARCHAR(50) UNIQUE NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS recorrencia_tipo (
+        id_recorrencia_tipo SERIAL PRIMARY KEY,
+        nome_recorrencia VARCHAR(50) UNIQUE NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS tabela_afetada_tipo (
+        id_tabela_afetada_tipo SERIAL PRIMARY KEY,
+        nome_tabela VARCHAR(50) UNIQUE NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS tipo_acao_tipo (
+        id_tipo_acao_tipo SERIAL PRIMARY KEY,
+        nome_acao VARCHAR(50) UNIQUE NOT NULL
+    );
+
+    -- Inserção inicial de dados nas tabelas de lookup (se não existirem)
+    INSERT INTO status_pagamento_tipo (nome_status) VALUES
+    ('pendente'), ('pago'), ('atrasado')
+    ON CONFLICT (nome_status) DO NOTHING;
+
+    INSERT INTO tipo_conta_tipo (nome_tipo) VALUES
+    ('fixa'), ('variável')
+    ON CONFLICT (nome_tipo) DO NOTHING;
+
+    INSERT INTO recorrencia_tipo (nome_recorrencia) VALUES
+    ('nenhuma'), ('mensal'), ('anual'), ('outro')
+    ON CONFLICT (nome_recorrencia) DO NOTHING;
+
+    INSERT INTO tabela_afetada_tipo (nome_tabela) VALUES
+    ('contas'), ('receita')
+    ON CONFLICT (nome_tabela) DO NOTHING;
+
+    INSERT INTO tipo_acao_tipo (nome_acao) VALUES
+    ('insercao'), ('atualizacao'), ('remocao')
+    ON CONFLICT (nome_acao) DO NOTHING;
+
+    -- Inserir categorias pré-definidas
+    INSERT INTO categoria (nome_categoria, tipo_categoria) VALUES
+    -- Categorias de Receitas
+    ('Salário', 'receita'),
+    ('Freelancer', 'receita'),
+    ('Investimentos', 'receita'),
+    ('Aluguel', 'receita'),
+    ('Outros (Receita)', 'receita'),
+    -- Categorias de Despesas
+    ('Moradia', 'despesa'),
+    ('Alimentação', 'despesa'),
+    ('Transporte', 'despesa'),
+    ('Saúde', 'despesa'),
+    ('Educação', 'despesa'),
+    ('Lazer', 'despesa'),
+    ('Vestuário', 'despesa'),
+    ('Contas', 'despesa'),
+    ('Impostos', 'despesa'),
+    ('Outros (Despesa)', 'despesa')
+    ON CONFLICT (nome_categoria) DO NOTHING;
+
+    -- Tabela de Contas (Despesas) - Atualizada com campos fixa e usuario_id
+    CREATE TABLE IF NOT EXISTS contas (
+        id_conta SERIAL PRIMARY KEY,
+        nome_conta VARCHAR(255) NOT NULL,
+        valor_conta DECIMAL(10,2) NOT NULL,
+        data_entrega DATE NOT NULL,
+        data_vencimento DATE NOT NULL,
+        status_pagamento_id INT,
+        descricao TEXT,
+        tipo_conta_id INT,
+        avisado BOOLEAN DEFAULT FALSE,
+        recorrencia_id INT,
+        perfil_id INT,
+        categoria_id INT,
+        fixa BOOLEAN DEFAULT FALSE,
+        usuario_id INT,
+        FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil),
+        FOREIGN KEY (categoria_id) REFERENCES categoria(id_categoria),
+        FOREIGN KEY (status_pagamento_id) REFERENCES status_pagamento_tipo(id_status_pagamento_tipo),
+        FOREIGN KEY (tipo_conta_id) REFERENCES tipo_conta_tipo(id_tipo_conta_tipo),
+        FOREIGN KEY (recorrencia_id) REFERENCES recorrencia_tipo(id_recorrencia_tipo)
+    );
+
+    -- Tabela de Receitas (Entradas de dinheiro) - Atualizada com campos fixa e usuario_id
+    CREATE TABLE IF NOT EXISTS receita (
+        id_receita SERIAL PRIMARY KEY,
+        perfil_id INT NOT NULL,
+        nome_receita VARCHAR(255) NOT NULL,
+        valor_receita DECIMAL(10,2) NOT NULL,
+        data_recebimento DATE NOT NULL,
+        descricao TEXT,
+        categoria_id INT,
+        fixa BOOLEAN DEFAULT FALSE,
+        usuario_id INT,
+        FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil),
+        FOREIGN KEY (categoria_id) REFERENCES categoria(id_categoria)
+    );
+
+    -- Tabela de Histórico de Alterações (Auditoria)
+    CREATE TABLE IF NOT EXISTS historico_alteracoes (
+        id_log SERIAL PRIMARY KEY,
+        perfil_id INT NOT NULL,
+        tabela_afetada_id INT NOT NULL,
+        registro_id INT NOT NULL,
+        tipo_acao_id INT NOT NULL,
+        data_acao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        detalhes TEXT,
+        FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil),
+        FOREIGN KEY (tabela_afetada_id) REFERENCES tabela_afetada_tipo(id_tabela_afetada_tipo),
+        FOREIGN KEY (tipo_acao_id) REFERENCES tipo_acao_tipo(id_tipo_acao_tipo)
+    );
+
+    -- Tabela de Permissões por Perfil (modelo atualizado)
+    CREATE TABLE IF NOT EXISTS permissoes (
+        id_permissao SERIAL PRIMARY KEY,
+        perfil_id INT NOT NULL UNIQUE,
+        ver_receitas BOOLEAN DEFAULT TRUE,
+        ver_despesas BOOLEAN DEFAULT TRUE,
+        ver_cartoes BOOLEAN DEFAULT TRUE,
+        gerenciar_perfis BOOLEAN DEFAULT FALSE,
+        ver_imposto BOOLEAN DEFAULT FALSE,
+        FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil)
+    );
+
+    -- Tabela de Configurações de Usuário
+    CREATE TABLE IF NOT EXISTS configuracoes_usuario (
+        id_configuracao SERIAL PRIMARY KEY,
+        usuario_id INT NOT NULL UNIQUE,
+        dark_mode BOOLEAN DEFAULT FALSE,
+        zoom INT DEFAULT 100,
+        notificacoes BOOLEAN DEFAULT TRUE,
+        privacidade BOOLEAN DEFAULT FALSE,
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (usuario_id) REFERENCES usuario(id_usuario) ON DELETE CASCADE
+    );
+
+    -- Tabela de Orçamento Mensal
+    CREATE TABLE IF NOT EXISTS orcamento (
+        id_orcamento SERIAL PRIMARY KEY,
+        perfil_id INT NOT NULL,
+        mes_ano VARCHAR(7) NOT NULL, -- formato: 'AAAA-MM'
+        valor_limite DECIMAL(10,2) NOT NULL,
+        FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil),
+        UNIQUE (perfil_id, mes_ano)
+    );
+
+    -- Tabela de Cartões de Crédito
+    CREATE TABLE IF NOT EXISTS cartao_credito (
+        id_cartao SERIAL PRIMARY KEY,
+        perfil_id INT NOT NULL,
+        usuario_id INT, -- Adicionado para queries por usuario
+        nome VARCHAR(255) NOT NULL,
+        limite DECIMAL(10,2) NOT NULL,
+        dia_vencimento INT NOT NULL,
+        bandeira VARCHAR(50) NOT NULL,
+        gastos DECIMAL(10,2) DEFAULT 0,
+        FOREIGN KEY (perfil_id) REFERENCES perfil(id_perfil)
+    );
+
+    -- Tabela de Faturas de Cartão de Crédito (mantida se desejar)
+    CREATE TABLE IF NOT EXISTS fatura_cartao (
+        id_fatura SERIAL PRIMARY KEY,
+        id_cartao INT NOT NULL,
+        mes_ano VARCHAR(7) NOT NULL, -- 'AAAA-MM' do mês de vencimento
+        valor_fechado DECIMAL(10,2) NOT NULL,
+        valor_pago DECIMAL(10,2) DEFAULT 0,
+        data_fechamento DATE NOT NULL,
+        paga BOOLEAN DEFAULT FALSE,
+        FOREIGN KEY (id_cartao) REFERENCES cartao_credito(id_cartao)
+    );
+  `;
+
+  // Adicionar colunas de permissões de acesso às telas, se não existirem (mantido)
+  const alterPermissoesTable = `
+    ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS acesso_dashboard BOOLEAN DEFAULT TRUE;
+    ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS acesso_receitas BOOLEAN DEFAULT TRUE;
+    ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS acesso_despesas BOOLEAN DEFAULT TRUE;
+    ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS acesso_cartoes BOOLEAN DEFAULT TRUE;
+    ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS acesso_imposto BOOLEAN DEFAULT TRUE;
+    ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS acesso_configuracoes BOOLEAN DEFAULT TRUE;
+  `;
+
+  // Remover colunas antigas da tabela permissoes se existirem (garantia extra)
+  const dropOldPermColumns = `
+    DO $$ BEGIN
+      IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='permissoes' AND column_name='pode_criar_conta') THEN
+        ALTER TABLE permissoes DROP COLUMN pode_criar_conta;
+      END IF;
+      IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='permissoes' AND column_name='pode_editar_conta') THEN
+        ALTER TABLE permissoes DROP COLUMN pode_editar_conta;
+      END IF;
+      IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='permissoes' AND column_name='pode_excluir_conta') THEN
+        ALTER TABLE permissoes DROP COLUMN pode_excluir_conta;
+      END IF;
+      IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='permissoes' AND column_name='pode_ver_todas_contas') THEN
+        ALTER TABLE permissoes DROP COLUMN pode_ver_todas_contas;
+      END IF;
+    END $$;
+  `;
+
+  // Comandos extras para garantir usuario_id nas tabelas de dados e preenchimento correto
+  const patchUsuarioId = `
+    ALTER TABLE receita ADD COLUMN IF NOT EXISTS usuario_id INT;
+    ALTER TABLE contas ADD COLUMN IF NOT EXISTS usuario_id INT;
+    UPDATE receita r SET usuario_id = p.usuario_id FROM perfil p WHERE r.perfil_id = p.id_perfil;
+    UPDATE contas c SET usuario_id = p.usuario_id FROM perfil p WHERE c.perfil_id = p.id_perfil;
+  `;
+
+  // Comandos para atualizar estrutura de hierarquia
+  const patchHierarchy = `
+    ALTER TABLE perfil ADD COLUMN IF NOT EXISTS is_principal BOOLEAN DEFAULT FALSE;
+    ALTER TABLE perfil ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+    
+    -- Definir o primeiro perfil de cada usuário como principal
+    UPDATE perfil SET is_principal = true 
+    WHERE id_perfil IN (
+      SELECT DISTINCT ON (usuario_id) id_perfil 
+      FROM perfil 
+      ORDER BY usuario_id, criado_em ASC
+    );
+  `;
+
+  try {
+    const client = await pool.connect();
+    console.log('Conexão com o banco estabelecida para init-db.');
+    // Excluir tabelas existentes (para garantir um estado limpo)
+    console.log('Excluindo tabelas existentes...');
+    await client.query(dropSchema);
+    console.log('Tabelas excluídas com sucesso (se existiam).');
+    
+    // Criar tabelas
+    console.log('Criando tabelas...');
+    await client.query(createSchema);
+    console.log('Tabelas criadas com sucesso.');
+    
+    await client.query(alterPermissoesTable); // <-- Adiciona as colunas se não existirem
+    console.log('Colunas de permissões adicionadas com sucesso.');
+
+    await client.query(dropOldPermColumns); // <-- Remove colunas antigas se existirem
+    console.log('Colunas antigas de permissoes removidas se existiam.');
+
+    await client.query(patchUsuarioId); // <-- Garante usuario_id correto
+    console.log('usuario_id garantido e atualizado em contas e receita.');
+    
+    await client.query(patchHierarchy); // <-- Atualiza estrutura de hierarquia
+    console.log('Estrutura de hierarquia atualizada com sucesso.');
+    
+    client.release();
+    res.status(200).send('Banco de dados inicializado/reiniciado com sucesso.');
+  } catch (err) {
+    console.error('Erro ao inicializar o banco de dados:', err); // Loga o erro completo
+    res.status(500).send('Erro ao inicializar o banco de dados.');
+  }
+});
+
+// Endpoint de Registro de Usuário
+app.post('/api/register', async (req, res) => {
+  const { nome_familia, email, senha } = req.body;
+  console.log('Recebendo requisição de registro:', { nome_familia, email });
+
+  if (!nome_familia || !email || !senha) {
+    console.log('Campos obrigatórios faltando');
+    return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
+  }
+
+  try {
+    console.log('Iniciando processo de registro');
+    const hashedPassword = await bcrypt.hash(senha, 10);
+    console.log('Senha hasheada com sucesso');
+    
+    const client = await pool.connect();
+    console.log('Conexão com o banco estabelecida');
+    
+    try {
+      // Inicia uma transação
+      await client.query('BEGIN');
+      console.log('Transação iniciada');
+      
+      // Verifica se o email já existe
+      const checkEmail = await client.query('SELECT id_usuario FROM usuario WHERE email = $1', [email]);
+      console.log('Verificação de email:', checkEmail.rows);
+      
+      if (checkEmail.rows.length > 0) {
+        console.log('Email já cadastrado');
+        await client.query('ROLLBACK');
+        client.release();
+        return res.status(409).json({ message: 'Email já cadastrado.' });
+      }
+
+      // Insere o usuário
+      console.log('Inserindo novo usuário');
+      const userResult = await client.query(
+        'INSERT INTO usuario (nome_familia, email, senha) VALUES ($1, $2, $3) RETURNING id_usuario, nome_familia, email, criado_em, atualizado_em',
+        [nome_familia, email, hashedPassword]
+      );
+      console.log('Usuário inserido:', userResult.rows[0]);
+      
+      const newUser = userResult.rows[0];
+
+      await client.query('COMMIT'); // Confirma a transação
+      console.log('Transação de registro de usuário confirmada.');
+      client.release(); // Libera o cliente de volta para o pool
+      res.status(201).json({ message: 'Usuário registrado com sucesso!', userId: newUser.id_usuario });
+    } catch (error) {
+      await client.query('ROLLBACK'); // Em caso de erro, desfaz a transação
+      console.error('Erro na transação de registro:', error);
+      client.release();
+      throw error; // Propaga o erro para o catch externo
+    }
+
+  } catch (err) {
+    console.error('Erro no registro de usuário:', err);
+    let errorMessage = 'Erro interno do servidor ao registrar usuário.';
+    if (err.message.includes('duplicate key value violates unique constraint "usuario_email_key"')) {
+      errorMessage = 'Este email já está cadastrado.';
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    res.status(500).json({ message: errorMessage });
+  }
+});
+
+// Novo Endpoint para criar o primeiro perfil após o registro
+app.post('/api/perfil/primeiro', async (req, res) => {
+  const { usuario_id, nome_perfil, categoria_familiar, senha_perfil } = req.body;
+  console.log('Recebendo requisição para criar primeiro perfil:', { usuario_id, nome_perfil, categoria_familiar });
+
+  if (!usuario_id || !nome_perfil || !categoria_familiar || !senha_perfil) {
+    return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
+  }
+
+  let client;
+  try {
+    const hashedPasswordPerfil = await bcrypt.hash(senha_perfil, 10);
+    client = await pool.connect();
+    await client.query('BEGIN');
+
+    const timestamp = Date.now().toString();
+    const codPerfil = `PERF${timestamp.slice(-6)}`;
+
+    const perfilResult = await client.query(
+      `INSERT INTO perfil (usuario_id, nome, categoria_familiar, cod_perfil, is_admin, is_principal, senha) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id_perfil`,
+      [usuario_id, nome_perfil, categoria_familiar, codPerfil, true, true, hashedPasswordPerfil]
+    );
+    const id_perfil = perfilResult.rows[0].id_perfil;
+
+    // Inserir todas as permissões como ativas para o primeiro perfil
+    await client.query(
+      `INSERT INTO permissoes (perfil_id, ver_receitas, ver_despesas, ver_cartoes, gerenciar_perfis, ver_imposto) 
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [id_perfil, true, true, true, true, true]
+    );
+
+    await client.query('COMMIT');
+    res.status(201).json({ message: 'Primeiro perfil criado com sucesso!', perfilId: id_perfil });
+
+  } catch (err) {
+    if (client) {
+      await client.query('ROLLBACK');
+      // NÃO chame client.release() aqui
+    }
+    console.error('Erro ao criar o primeiro perfil:', err);
+    res.status(500).json({ message: 'Erro ao criar o primeiro perfil.' });
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+});
+
+// Endpoint de Login de Usuário
+app.post('/api/login', async (req, res) => {
+  const { email, senha } = req.body;
+  console.log('Recebendo requisição de login:', { email });
+
+  if (!email || !senha) {
+    console.log('Campos obrigatórios faltando para login');
+    return res.status(400).json({ message: 'Email e senha são obrigatórios.' });
+  }
+
+  try {
+    const client = await pool.connect();
+    const userResult = await client.query('SELECT * FROM usuario WHERE email = $1', [email]);
+    
+    if (userResult.rows.length === 0) {
+      client.release();
+      console.log('Usuário não encontrado');
+      return res.status(401).json({ message: 'Credenciais inválidas.' });
+    }
+
+    const user = userResult.rows[0];
+    const isMatch = await bcrypt.compare(senha, user.senha);
+
+    if (!isMatch) {
+      client.release();
+      console.log('Senha incorreta');
+      return res.status(401).json({ message: 'Credenciais inválidas.' });
+    }
+
+    // Se login bem-sucedido, você pode retornar os dados do usuário (exceto a senha hasheada)
+    // Ou gerar um token de sessão, etc.
+    // Para esta etapa, vamos retornar o ID do usuário e o nome da família
+    res.status(200).json({ 
+      message: 'Login bem-sucedido!', 
+      userId: user.id_usuario,
+      nomeFamilia: user.nome_familia
+    });
+    client.release();
+
+  } catch (err) {
+    console.error('Erro no login:', err);
+    res.status(500).json({ message: 'Erro interno do servidor.' });
+  }
+});
+
+// Novo Endpoint para buscar perfis e permissões de um usuário - Atualizado com hierarquia
+app.get('/api/user/profiles-and-permissions/:userId', async (req, res) => {
+  const { userId } = req.params;
+  console.log(`Recebendo requisição para buscar perfis e permissões para userId: ${userId}`);
+
+  try {
+    const client = await pool.connect();
+
+    // Buscar perfis do usuário com informações de hierarquia
+    const profilesResult = await client.query(
+      'SELECT *, CASE WHEN is_principal THEN \'Principal\' ELSE \'Secundário\' END as tipo_perfil FROM perfil WHERE usuario_id = $1 ORDER BY is_principal DESC, criado_em ASC', 
+      [userId]
+    );
+    const profiles = profilesResult.rows;
+
+    if (profiles.length === 0) {
+      client.release();
+      return res.status(200).json({ profiles: [] });
+    }
+
+    // Para cada perfil, buscar suas permissões
+    const profilesWithPermissions = await Promise.all(profiles.map(async (profile) => {
+      const permissionsResult = await client.query('SELECT * FROM permissoes WHERE perfil_id = $1', [profile.id_perfil]);
+      const permissions = permissionsResult.rows[0];
+      // Garante que todas as permissões estejam presentes (mesmo se nulas)
+      const defaultPerms = {
+        pode_criar_conta: true,
+        pode_editar_conta: true,
+        pode_excluir_conta: true,
+        pode_ver_todas_contas: true,
+        acesso_dashboard: true,
+        acesso_receitas: true,
+        acesso_despesas: true,
+        acesso_cartoes: true,
+        acesso_imposto: true,
+        acesso_configuracoes: true,
+        ver_imposto: true
+      };
+      return { ...profile, permissoes: { ...defaultPerms, ...permissions } };
+    }));
+
+    client.release();
+    res.status(200).json({ profiles: profilesWithPermissions });
+
+  } catch (err) {
+    console.error('Erro ao buscar perfis e permissões do usuário:', err);
+    res.status(500).json({ message: 'Erro interno do servidor ao buscar perfis e permissões.' });
+  }
+});
+
+// Endpoint para gerenciar hierarquia de perfis
+app.put('/api/perfis/:id/hierarquia', async (req, res) => {
+  const { id } = req.params;
+  const { is_principal } = req.body;
+
+  let client;
+  try {
+    client = await pool.connect();
+    await client.query('BEGIN');
+
+    // Verificar se o perfil existe
+    const perfilCheck = await client.query('SELECT usuario_id, is_principal FROM perfil WHERE id_perfil = $1', [id]);
+    if (perfilCheck.rows.length === 0) {
+      await client.query('ROLLBACK');
+      client.release();
+      return res.status(404).json({ message: 'Perfil não encontrado.' });
+    }
+
+    const usuarioId = perfilCheck.rows[0].usuario_id;
+    const isCurrentlyPrincipal = perfilCheck.rows[0].is_principal;
+
+    // Verificar se é o primeiro perfil (mais antigo) do usuário
+    const firstProfileCheck = await client.query(
+      'SELECT id_perfil FROM perfil WHERE usuario_id = $1 ORDER BY criado_em ASC LIMIT 1',
+      [usuarioId]
+    );
+
+    const isFirstProfile = firstProfileCheck.rows[0].id_perfil === parseInt(id);
+
+    // Não permitir rebaixar o primeiro perfil
+    if (isFirstProfile && !is_principal) {
+      await client.query('ROLLBACK');
+      client.release();
+      return res.status(400).json({ message: 'O primeiro perfil criado deve sempre permanecer como principal.' });
+    }
+
+    // Se está promovendo para principal, rebaixar outros perfis do mesmo usuário (exceto o primeiro)
+    if (is_principal && !isCurrentlyPrincipal) {
+      await client.query(
+        'UPDATE perfil SET is_principal = false WHERE usuario_id = $1 AND id_perfil != $2',
+        [usuarioId, id]
+      );
+    }
+
+    // Atualizar o perfil
+    await client.query(
+      'UPDATE perfil SET is_principal = $1 WHERE id_perfil = $2',
+      [is_principal, id]
+    );
+
+    await client.query('COMMIT');
+    res.status(200).json({ 
+      message: is_principal ? 'Perfil promovido para principal com sucesso!' : 'Perfil rebaixado para secundário com sucesso!' 
+    });
+
+  } catch (err) {
+    if (client) {
+      await client.query('ROLLBACK');
+    }
+    console.error('Erro ao atualizar hierarquia do perfil:', err);
+    res.status(500).json({ message: 'Erro ao atualizar hierarquia do perfil.' });
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+});
+
+// Rotas para Gerenciamento de Contas
+app.post('/api/contas', async (req, res) => {
+  const { usuario_id, perfil_id, nome_conta, valor_conta, data_entrega, data_vencimento, status_pagamento_id, descricao, tipo_conta_id, recorrencia_id, categoria_id, fixa } = req.body;
+
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      `INSERT INTO contas (usuario_id, perfil_id, nome_conta, valor_conta, data_entrega, data_vencimento, status_pagamento_id, descricao, tipo_conta_id, recorrencia_id, categoria_id, fixa)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+      [usuario_id, perfil_id, nome_conta, valor_conta, data_entrega, data_vencimento, status_pagamento_id, descricao, tipo_conta_id, recorrencia_id, categoria_id, fixa]
+    );
+    client.release();
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao criar conta:', err);
+    res.status(500).json({ message: 'Erro ao criar conta.' });
+  }
+});
+
+app.get('/api/contas/:usuarioId/:perfilId', async (req, res) => {
+  const { usuarioId, perfilId } = req.params;
+  try {
+    const client = await pool.connect();
+    
+    // Verificar se o perfil existe e tem permissão
+    const perfilCheck = await client.query(
+      'SELECT is_principal FROM perfil WHERE id_perfil = $1 AND usuario_id = $2',
+      [perfilId, usuarioId]
+    );
+    
+    if (perfilCheck.rows.length === 0) {
+      client.release();
+      return res.status(403).json({ message: 'Perfil não encontrado ou sem permissão.' });
+    }
+
+    const result = await client.query(
+      `SELECT c.*, s.nome_status, t.nome_tipo, r.nome_recorrencia, cat.nome_categoria, p.nome AS nome_perfil, p.is_principal
+       FROM contas c
+       LEFT JOIN status_pagamento_tipo s ON c.status_pagamento_id = s.id_status_pagamento_tipo
+       LEFT JOIN tipo_conta_tipo t ON c.tipo_conta_id = t.id_tipo_conta_tipo
+       LEFT JOIN recorrencia_tipo r ON c.recorrencia_id = r.id_recorrencia_tipo
+       LEFT JOIN categoria cat ON c.categoria_id = cat.id_categoria
+       LEFT JOIN perfil p ON c.perfil_id = p.id_perfil
+       WHERE c.usuario_id = $1 AND ${getDataVisibilityQuery(perfilId, 'c')}
+       ORDER BY c.data_vencimento DESC`,
+      [usuarioId]
+    );
+    client.release();
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar contas:', err);
+    res.status(500).json({ message: 'Erro ao buscar contas.' });
+  }
+});
+
+app.put('/api/contas/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nome_conta, valor_conta, data_entrega, data_vencimento, status_pagamento_id,
+          descricao, tipo_conta_id, recorrencia_id, categoria_id } = req.body;
+
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      `UPDATE contas 
+       SET nome_conta = $1, valor_conta = $2, data_entrega = $3, data_vencimento = $4,
+           status_pagamento_id = $5, descricao = $6, tipo_conta_id = $7, 
+           recorrencia_id = $8, categoria_id = $9
+       WHERE id_conta = $10 RETURNING *`,
+      [nome_conta, valor_conta, data_entrega, data_vencimento, status_pagamento_id,
+       descricao, tipo_conta_id, recorrencia_id, categoria_id, id]
+    );
+    client.release();
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao atualizar conta:', err);
+    res.status(500).json({ message: 'Erro ao atualizar conta.' });
+  }
+});
+
+app.delete('/api/contas/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const client = await pool.connect();
+    await client.query('DELETE FROM contas WHERE id_conta = $1', [id]);
+    client.release();
+    res.status(200).json({ message: 'Conta excluída com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao excluir conta:', err);
+    res.status(500).json({ message: 'Erro ao excluir conta.' });
+  }
+});
+
+// Endpoints para Receitas - Atualizado com hierarquia de perfis
+app.get('/api/receitas/:usuarioId/:perfilId', async (req, res) => {
+  const { usuarioId, perfilId } = req.params;
+  const { mes, ano } = req.query;
+  try {
+    const client = await pool.connect();
+    
+    // Verificar se o perfil existe e tem permissão
+    const perfilCheck = await client.query(
+      'SELECT is_principal FROM perfil WHERE id_perfil = $1 AND usuario_id = $2',
+      [perfilId, usuarioId]
+    );
+    
+    if (perfilCheck.rows.length === 0) {
+      client.release();
+      return res.status(403).json({ message: 'Perfil não encontrado ou sem permissão.' });
+    }
+
+    let query = `SELECT r.*, cat.nome_categoria, p.nome AS nome_perfil, p.is_principal
+       FROM receita r
+       LEFT JOIN categoria cat ON r.categoria_id = cat.id_categoria
+       LEFT JOIN perfil p ON r.perfil_id = p.id_perfil
+       WHERE r.usuario_id = $1 AND cat.tipo_categoria = 'receita' AND ${getDataVisibilityQuery(perfilId, 'r')}`;
+    const params = [usuarioId];
+    
+    if (mes && ano) {
+      query += ` AND ((EXTRACT(MONTH FROM r.data_recebimento) = $2 AND EXTRACT(YEAR FROM r.data_recebimento) = $3) OR r.fixa = TRUE)`;
+      params.push(mes, ano);
+    }
+    query += ' ORDER BY r.data_recebimento DESC';
+    
+    const result = await client.query(query, params);
+    client.release();
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar receitas:', err);
+    res.status(500).json({ message: 'Erro ao buscar receitas.' });
+  }
+});
+
+app.post('/api/receitas', async (req, res) => {
+  const { usuario_id, perfil_id, nome_receita, valor_receita, data_recebimento, descricao, categoria_id, fixa } = req.body;
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'INSERT INTO receita (usuario_id, perfil_id, nome_receita, valor_receita, data_recebimento, descricao, categoria_id, fixa) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+      [usuario_id, perfil_id, nome_receita, valor_receita, data_recebimento, descricao, categoria_id, fixa]
+    );
+    client.release();
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao criar receita:', err);
+    res.status(500).json({ message: 'Erro ao criar receita.' });
+  }
+});
+
+app.delete('/api/receitas/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const client = await pool.connect();
+    await client.query('DELETE FROM receita WHERE id_receita = $1', [id]);
+    client.release();
+    res.status(200).json({ message: 'Receita excluída com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao excluir receita:', err);
+    res.status(500).json({ message: 'Erro ao excluir receita.' });
+  }
+});
+
+app.put('/api/receitas/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nome_receita, valor_receita, data_recebimento, descricao, categoria_id, fixa } = req.body;
+
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      `UPDATE receita
+       SET nome_receita = $1, valor_receita = $2, data_recebimento = $3, descricao = $4, categoria_id = $5, fixa = $6
+       WHERE id_receita = $7
+       RETURNING *`,
+      [nome_receita, valor_receita, data_recebimento, descricao, categoria_id, fixa, id]
+    );
+    client.release();
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Receita não encontrada.' });
+    }
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao atualizar receita:', err);
+    res.status(500).json({ message: 'Erro ao atualizar receita.' });
+  }
+});
+
+// Endpoints para Despesas - Atualizado com hierarquia de perfis
+app.get('/api/despesas/:usuarioId/:perfilId', async (req, res) => {
+  const { usuarioId, perfilId } = req.params;
+  const { mes, ano } = req.query;
+  try {
+    const client = await pool.connect();
+    
+    // Verificar se o perfil existe e tem permissão
+    const perfilCheck = await client.query(
+      'SELECT is_principal FROM perfil WHERE id_perfil = $1 AND usuario_id = $2',
+      [perfilId, usuarioId]
+    );
+    
+    if (perfilCheck.rows.length === 0) {
+      client.release();
+      return res.status(403).json({ message: 'Perfil não encontrado ou sem permissão.' });
+    }
+
+    let query = `SELECT c.*, cat.nome_categoria, p.nome AS nome_perfil, p.is_principal
+       FROM contas c 
+       LEFT JOIN categoria cat ON c.categoria_id = cat.id_categoria 
+       LEFT JOIN perfil p ON c.perfil_id = p.id_perfil
+       WHERE c.usuario_id = $1 AND cat.tipo_categoria = 'despesa' AND ${getDataVisibilityQuery(perfilId, 'c')}`;
+    const params = [usuarioId];
+    
+    if (mes && ano) {
+      query += ` AND ((EXTRACT(MONTH FROM c.data_vencimento) = $2 AND EXTRACT(YEAR FROM c.data_vencimento) = $3) OR c.fixa = TRUE)`;
+      params.push(mes, ano);
+    }
+    query += ' ORDER BY c.data_vencimento DESC';
+    
+    const result = await client.query(query, params);
+    client.release();
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar despesas:', err);
+    res.status(500).json({ message: 'Erro ao buscar despesas.' });
+  }
+});
+
+app.post('/api/despesas', async (req, res) => {
+  const { 
+    usuario_id, 
+    perfil_id, 
+    nome_conta, 
+    valor_conta, 
+    data_entrega, 
+    data_vencimento, 
+    descricao, 
+    categoria_id,
+    tipo_conta_id,
+    recorrencia_id,
+    status_pagamento_id,
+    fixa
+  } = req.body;
+
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      `INSERT INTO contas (
+        usuario_id, perfil_id, nome_conta, valor_conta, data_entrega, data_vencimento, 
+        descricao, categoria_id, tipo_conta_id, recorrencia_id, status_pagamento_id, fixa
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+      [
+        usuario_id, perfil_id, nome_conta, valor_conta, data_entrega, data_vencimento,
+        descricao, categoria_id, tipo_conta_id, recorrencia_id, status_pagamento_id, fixa
+      ]
+    );
+    client.release();
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao criar despesa:', err);
+    res.status(500).json({ message: 'Erro ao criar despesa.' });
+  }
+});
+
+app.delete('/api/despesas/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const client = await pool.connect();
+    await client.query('DELETE FROM contas WHERE id_conta = $1', [id]);
+    client.release();
+    res.status(200).json({ message: 'Despesa excluída com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao excluir despesa:', err);
+    res.status(500).json({ message: 'Erro ao excluir despesa.' });
+  }
+});
+
+app.put('/api/despesas/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nome_conta, valor_conta, data_entrega, data_vencimento, status_pagamento_id,
+          descricao, tipo_conta_id, recorrencia_id, categoria_id, fixa } = req.body;
+
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      `UPDATE contas 
+       SET nome_conta = $1, valor_conta = $2, data_entrega = $3, data_vencimento = $4,
+           status_pagamento_id = $5, descricao = $6, tipo_conta_id = $7, 
+           recorrencia_id = $8, categoria_id = $9, fixa = $10
+       WHERE id_conta = $11 RETURNING *`,
+      [nome_conta, valor_conta, data_entrega, data_vencimento, status_pagamento_id,
+       descricao, tipo_conta_id, recorrencia_id, categoria_id, fixa, id]
+    );
+    client.release();
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Despesa não encontrada.' });
+    }
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao atualizar despesa:', err);
+    res.status(500).json({ message: 'Erro ao atualizar despesa.' });
+  }
+});
+
+// Rotas para Gerenciamento de Orçamentos
+app.post('/api/orcamentos', async (req, res) => {
+  const { perfil_id, mes_ano, valor_limite } = req.body;
+
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      `INSERT INTO orcamento (perfil_id, mes_ano, valor_limite)
+       VALUES ($1, $2, $3) RETURNING *`,
+      [perfil_id, mes_ano, valor_limite]
+    );
+    client.release();
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao criar orçamento:', err);
+    res.status(500).json({ message: 'Erro ao criar orçamento.' });
+  }
+});
+
+app.get('/api/orcamentos/:usuarioId/:perfilId', async (req, res) => {
+  const { usuarioId, perfilId } = req.params;
+  try {
+    const client = await pool.connect();
+    
+    // Verificar se o perfil existe e tem permissão
+    const perfilCheck = await client.query(
+      'SELECT is_principal FROM perfil WHERE id_perfil = $1 AND usuario_id = $2',
+      [perfilId, usuarioId]
+    );
+    
+    if (perfilCheck.rows.length === 0) {
+      client.release();
+      return res.status(403).json({ message: 'Perfil não encontrado ou sem permissão.' });
+    }
+
+    const result = await client.query(
+      `SELECT o.*, p.nome AS nome_perfil, p.is_principal FROM orcamento o
+       LEFT JOIN perfil p ON o.perfil_id = p.id_perfil
+       WHERE p.usuario_id = $1 AND ${getDataVisibilityQuery(perfilId, 'o')} ORDER BY o.mes_ano DESC`,
+      [usuarioId]
+    );
+    client.release();
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar orçamentos:', err);
+    res.status(500).json({ message: 'Erro ao buscar orçamentos.' });
+  }
+});
+
+app.put('/api/orcamentos/:id', async (req, res) => {
+  const { id } = req.params;
+  const { valor_limite } = req.body;
+
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'UPDATE orcamento SET valor_limite = $1 WHERE id_orcamento = $2 RETURNING *',
+      [valor_limite, id]
+    );
+    client.release();
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao atualizar orçamento:', err);
+    res.status(500).json({ message: 'Erro ao atualizar orçamento.' });
+  }
+});
+
+// Rotas para Gerenciamento de Categorias
+app.get('/api/categorias', async (req, res) => {
+  const { tipo } = req.query; // Pega o parâmetro 'tipo' da query string
+  try {
+    const client = await pool.connect();
+    let query = 'SELECT * FROM categoria';
+    const params = [];
+
+    if (tipo) {
+      query += ' WHERE tipo_categoria = $1';
+      params.push(tipo);
+    }
+
+    const result = await client.query(query, params);
+    client.release();
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar categorias:', err);
+    res.status(500).json({ message: 'Erro ao buscar categorias.' });
+  }
+});
+
+app.post('/api/categorias', async (req, res) => {
+  const { nome_categoria, tipo_categoria } = req.body; // Agora espera o tipo_categoria
+
+  if (!nome_categoria || !tipo_categoria) {
+    return res.status(400).json({ message: 'Nome da categoria e tipo são obrigatórios.' });
+  }
+
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'INSERT INTO categoria (nome_categoria, tipo_categoria) VALUES ($1, $2) RETURNING *; ', // Insere o tipo
+      [nome_categoria, tipo_categoria]
+    );
+    client.release();
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao criar categoria:', err);
+    res.status(500).json({ message: 'Erro ao criar categoria.' });
+  }
+});
+
+// Rotas para Gerenciamento de Perfis
+app.post('/api/perfis', async (req, res) => {
+  const { usuario_id, nome, categoria_familiar, senha,
+    ver_receitas = true, ver_despesas = true, ver_cartoes = true, gerenciar_perfis = false, ver_imposto = false } = req.body;
+
+  let client;
+  try {
+    client = await pool.connect();
+    await client.query('BEGIN');
+
+    const hashedPassword = await bcrypt.hash(senha, 10);
+    const timestamp = Date.now().toString();
+    const codPerfil = `PERF${timestamp.slice(-6)}`;
+
+    const userResult = await client.query('SELECT nome_familia FROM usuario WHERE id_usuario = $1', [usuario_id]);
+    if (userResult.rows.length === 0) {
+      throw new Error('Usuário não encontrado.');
+    }
+    const nome_familia = userResult.rows[0].nome_familia;
+
+    const perfilResult = await client.query(
+      `INSERT INTO perfil (usuario_id, nome, categoria_familiar, cod_perfil, is_admin, is_principal, senha)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id_perfil, is_admin`,
+      [usuario_id, nome, categoria_familiar, codPerfil, false, false, hashedPassword]
+    );
+
+    const id_perfil = perfilResult.rows[0].id_perfil;
+
+    await client.query(
+      `INSERT INTO permissoes (perfil_id, ver_receitas, ver_despesas, ver_cartoes, gerenciar_perfis, ver_imposto)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        id_perfil,
+        ver_receitas,
+        ver_despesas,
+        ver_cartoes,
+        gerenciar_perfis,
+        ver_imposto
+      ]
+    );
+
+    await client.query('COMMIT');
+    res.status(201).json({ message: 'Perfil criado com sucesso!', perfilId: id_perfil, nome_familia: nome_familia });
+
+  } catch (err) {
+    if (client) {
+      await client.query('ROLLBACK');
+      // NÃO chame client.release() aqui
+    }
+    console.error('Erro ao criar perfil:', err);
+    res.status(500).json({ message: 'Erro ao criar perfil.' });
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+});
+
+app.put('/api/perfis/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nome, categoria_familiar,
+    ver_receitas = true, ver_despesas = true, ver_cartoes = true, gerenciar_perfis = false, ver_imposto = false } = req.body;
+
+  try {
+    const client = await pool.connect();
+    // Atualiza perfil
+    await client.query(
+      `UPDATE perfil 
+       SET nome = $1, categoria_familiar = $2
+       WHERE id_perfil = $3`,
+      [nome, categoria_familiar, id]
+    );
+    // Atualiza permissões
+    await client.query(
+      `UPDATE permissoes SET 
+        ver_receitas = $1, ver_despesas = $2, ver_cartoes = $3, gerenciar_perfis = $4, ver_imposto = $5
+       WHERE perfil_id = $6`,
+      [
+        ver_receitas,
+        ver_despesas,
+        ver_cartoes,
+        gerenciar_perfis,
+        ver_imposto,
+        id
+      ]
+    );
+    client.release();
+    res.status(200).json({ message: 'Perfil e permissões atualizados com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao atualizar perfil:', err);
+    res.status(500).json({ message: 'Erro ao atualizar perfil.' });
+  }
+});
+
+app.delete('/api/perfis/:id', async (req, res) => {
+  const { id } = req.params;
+  const cascade = req.query.cascade === 'true';
+  let client;
+  try {
+    client = await pool.connect();
+    await client.query('BEGIN');
+    if (cascade) {
+      await client.query('DELETE FROM receita WHERE perfil_id = $1', [id]);
+      await client.query('DELETE FROM contas WHERE perfil_id = $1', [id]);
+      await client.query('DELETE FROM orcamento WHERE perfil_id = $1', [id]);
+      await client.query('DELETE FROM historico_alteracoes WHERE perfil_id = $1', [id]);
+      // Adicione aqui outras tabelas relacionadas, se necessário
+    }
+    await client.query('DELETE FROM permissoes WHERE perfil_id = $1', [id]);
+    const result = await client.query('DELETE FROM perfil WHERE id_perfil = $1', [id]);
+    await client.query('COMMIT');
+    if (result.rowCount === 0) {
+      res.status(404).json({ message: 'Perfil não encontrado.' });
+    } else {
+      res.status(200).json({ message: 'Perfil excluído com sucesso.' });
+    }
+  } catch (err) {
+    if (client) await client.query('ROLLBACK');
+    if (err.code === '23503') {
+      res.status(400).json({ message: 'Este perfil possui informações relacionadas. Exclua-as ou use a opção de exclusão total.' });
+    } else {
+      res.status(500).json({ message: 'Erro ao excluir perfil.' });
+    }
+  } finally {
+    if (client) client.release();
+  }
+});
+
+// Rotas para Cartões de Crédito
+app.get('/api/cartoes/:usuarioId/:perfilId', async (req, res) => {
+  const { usuarioId, perfilId } = req.params;
+  try {
+    const client = await pool.connect();
+    
+    // Verificar se o perfil existe e tem permissão
+    const perfilCheck = await client.query(
+      'SELECT is_principal FROM perfil WHERE id_perfil = $1 AND usuario_id = $2',
+      [perfilId, usuarioId]
+    );
+    
+    if (perfilCheck.rows.length === 0) {
+      client.release();
+      return res.status(403).json({ message: 'Perfil não encontrado ou sem permissão.' });
+    }
+
+    const result = await client.query(
+      `SELECT c.*, p.nome AS nome_perfil, p.is_principal FROM cartao_credito c 
+       LEFT JOIN perfil p ON c.perfil_id = p.id_perfil 
+       WHERE c.usuario_id = $1 AND ${getDataVisibilityQuery(perfilId, 'c')} ORDER BY c.id_cartao DESC`,
+      [usuarioId]
+    );
+    client.release();
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar cartões:', err);
+    res.status(500).json({ message: 'Erro ao buscar cartões.' });
+  }
+});
+
+app.post('/api/cartoes', async (req, res) => {
+  const { usuario_id, perfil_id, nome, limite, dia_vencimento, bandeira, gastos } = req.body;
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'INSERT INTO cartao_credito (usuario_id, perfil_id, nome, limite, dia_vencimento, bandeira, gastos) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [usuario_id, perfil_id, nome, limite, dia_vencimento, bandeira, gastos || 0]
+    );
+    client.release();
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao criar cartão:', err);
+    res.status(500).json({ message: 'Erro ao criar cartão.' });
+  }
+});
+
+app.put('/api/cartoes/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nome, limite, dia_vencimento, bandeira, gastos } = req.body;
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'UPDATE cartao_credito SET nome = $1, limite = $2, dia_vencimento = $3, bandeira = $4, gastos = $5 WHERE id_cartao = $6 RETURNING *',
+      [nome, limite, dia_vencimento, bandeira, gastos, id]
+    );
+    client.release();
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao atualizar cartão:', err);
+    res.status(500).json({ message: 'Erro ao atualizar cartão.' });
+  }
+});
+
+app.delete('/api/cartoes/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const client = await pool.connect();
+    await client.query('DELETE FROM cartao_credito WHERE id_cartao = $1', [id]);
+    client.release();
+    res.status(200).json({ message: 'Cartão excluído com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao excluir cartão:', err);
+    res.status(500).json({ message: 'Erro ao excluir cartão.' });
+  }
+});
+
+// ENDPOINTS DE FATURAS DE CARTÃO DE CRÉDITO
+
+// Criar fatura fechada (fechamento automático)
+app.post('/api/faturas-cartao', async (req, res) => {
+  const { id_cartao, mes_ano, valor_fechado, data_fechamento } = req.body;
+  if (!id_cartao || !mes_ano || !valor_fechado || !data_fechamento) {
+    return res.status(400).json({ message: 'Dados obrigatórios faltando.' });
+  }
+  try {
+    const client = await pool.connect();
+    // Verifica se já existe fatura para esse cartão e mês
+    const existe = await client.query(
+      'SELECT * FROM fatura_cartao WHERE id_cartao = $1 AND mes_ano = $2',
+      [id_cartao, mes_ano]
+    );
+    if (existe.rows.length > 0) {
+      client.release();
+      return res.status(409).json({ message: 'Fatura já existe para este cartão e mês.' });
+    }
+    const result = await client.query(
+      'INSERT INTO fatura_cartao (id_cartao, mes_ano, valor_fechado, data_fechamento) VALUES ($1, $2, $3, $4) RETURNING *',
+      [id_cartao, mes_ano, valor_fechado, data_fechamento]
+    );
+    client.release();
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao criar fatura:', err);
+    res.status(500).json({ message: 'Erro ao criar fatura.' });
+  }
+});
+
+// Listar faturas por perfil (todas faturas dos cartões do perfil)
+app.get('/api/faturas-cartao/perfil/:usuarioId/:perfilId', async (req, res) => {
+  const { usuarioId, perfilId } = req.params;
+  try {
+    const client = await pool.connect();
+    
+    // Verificar se o perfil existe e tem permissão
+    const perfilCheck = await client.query(
+      'SELECT is_principal FROM perfil WHERE id_perfil = $1 AND usuario_id = $2',
+      [perfilId, usuarioId]
+    );
+    
+    if (perfilCheck.rows.length === 0) {
+      client.release();
+      return res.status(403).json({ message: 'Perfil não encontrado ou sem permissão.' });
+    }
+
+    const result = await client.query(
+      `SELECT f.*, c.nome as nome_cartao, c.bandeira FROM fatura_cartao f
+       JOIN cartao_credito c ON f.id_cartao = c.id_cartao
+       WHERE c.usuario_id = $1 AND ${getDataVisibilityQuery(perfilId, 'c')}
+       ORDER BY f.data_fechamento DESC`,
+      [usuarioId]
+    );
+    client.release();
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar faturas:', err);
+    res.status(500).json({ message: 'Erro ao buscar faturas.' });
+  }
+});
+
+// Listar faturas por cartão
+app.get('/api/faturas-cartao/cartao/:idCartao', async (req, res) => {
+  const { idCartao } = req.params;
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'SELECT * FROM fatura_cartao WHERE id_cartao = $1 ORDER BY data_fechamento DESC',
+      [idCartao]
+    );
+    client.release();
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar faturas do cartão:', err);
+    res.status(500).json({ message: 'Erro ao buscar faturas do cartão.' });
+  }
+});
+
+// Pagar fatura (total ou parcial)
+app.put('/api/faturas-cartao/:idFatura/pagar', async (req, res) => {
+  const { idFatura } = req.params;
+  const { valor_pago } = req.body;
+  if (valor_pago === undefined) {
+    return res.status(400).json({ message: 'Valor pago é obrigatório.' });
+  }
+  try {
+    const client = await pool.connect();
+    // Busca a fatura
+    const faturaResult = await client.query('SELECT * FROM fatura_cartao WHERE id_fatura = $1', [idFatura]);
+    if (faturaResult.rows.length === 0) {
+      client.release();
+      return res.status(404).json({ message: 'Fatura não encontrada.' });
+    }
+    const fatura = faturaResult.rows[0];
+    let novoValorPago = parseFloat(valor_pago);
+    if (novoValorPago > fatura.valor_fechado) novoValorPago = fatura.valor_fechado;
+    const paga = novoValorPago >= fatura.valor_fechado;
+    const result = await client.query(
+      'UPDATE fatura_cartao SET valor_pago = $1, paga = $2 WHERE id_fatura = $3 RETURNING *',
+      [novoValorPago, paga, idFatura]
+    );
+    client.release();
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao pagar fatura:', err);
+    res.status(500).json({ message: 'Erro ao pagar fatura.' });
+  }
+});
+
+// Listar faturas por usuario (todas faturas dos cartões do usuario)
+app.get('/api/faturas-cartao/usuario/:usuarioId', async (req, res) => {
+  const { usuarioId } = req.params;
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      `SELECT f.*, c.nome as nome_cartao, c.bandeira FROM fatura_cartao f
+       JOIN cartao_credito c ON f.id_cartao = c.id_cartao
+       WHERE c.usuario_id = $1
+       ORDER BY f.data_fechamento DESC`,
+      [usuarioId]
+    );
+    client.release();
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar faturas por usuario:', err);
+    res.status(500).json({ message: 'Erro ao buscar faturas por usuario.' });
+  }
+});
+
+// Endpoint para validar usuário
+app.get('/api/usuario/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const client = await pool.connect();
+    const result = await client.query('SELECT * FROM usuario WHERE id_usuario = $1', [id]);
+    client.release();
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuário não encontrado.' });
+    }
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ message: 'Erro ao buscar usuário.' });
+  }
+});
+
+// Endpoint para validar perfil
+app.get('/api/perfil/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const client = await pool.connect();
+    const result = await client.query('SELECT * FROM perfil WHERE id_perfil = $1', [id]);
+    client.release();
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Perfil não encontrado.' });
+    }
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ message: 'Erro ao buscar perfil.' });
+  }
+});
+
+app.post('/api/perfil/validar-senha', async (req, res) => {
+  const { perfil_id, senha } = req.body;
+  if (!perfil_id || !senha) {
+    return res.status(400).json({ message: 'Perfil e senha são obrigatórios.' });
+  }
+  try {
+    const client = await pool.connect();
+    const result = await client.query('SELECT senha FROM perfil WHERE id_perfil = $1', [perfil_id]);
+    client.release();
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Perfil não encontrado.' });
+    }
+    const senhaHash = result.rows[0].senha;
+    const isMatch = await bcrypt.compare(senha, senhaHash);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Senha incorreta.' });
+    }
+    res.status(200).json({ message: 'Senha válida.' });
+  } catch (err) {
+    console.error('Erro ao validar senha do perfil:', err);
+    res.status(500).json({ message: 'Erro ao validar senha do perfil.' });
+  }
+});
+
+// Endpoint para salvar configurações do usuário
+app.post('/api/configuracoes/:userId', async (req, res) => {
+  const { userId } = req.params;
+  const { darkMode, zoom, notificacoes, privacidade } = req.body;
+  
+  console.log('Salvando configurações para usuário:', userId, { darkMode, zoom, notificacoes, privacidade });
+
+  try {
+    const client = await pool.connect();
+    
+    // Verificar se já existe configuração para este usuário
+    const existingConfig = await client.query(
+      'SELECT * FROM configuracoes_usuario WHERE usuario_id = $1',
+      [userId]
+    );
+
+    if (existingConfig.rows.length > 0) {
+      // Atualizar configuração existente
+      await client.query(
+        `UPDATE configuracoes_usuario 
+         SET dark_mode = $1, zoom = $2, notificacoes = $3, privacidade = $4, atualizado_em = CURRENT_TIMESTAMP
+         WHERE usuario_id = $5`,
+        [darkMode, zoom, notificacoes, privacidade, userId]
+      );
+    } else {
+      // Criar nova configuração
+      await client.query(
+        `INSERT INTO configuracoes_usuario (usuario_id, dark_mode, zoom, notificacoes, privacidade)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [userId, darkMode, zoom, notificacoes, privacidade]
+      );
+    }
+
+    client.release();
+    res.status(200).json({ message: 'Configurações salvas com sucesso' });
+
+  } catch (err) {
+    console.error('Erro ao salvar configurações:', err);
+    res.status(500).json({ message: 'Erro ao salvar configurações' });
+  }
+});
+
+// Endpoint para buscar configurações do usuário
+app.get('/api/configuracoes/:userId', async (req, res) => {
+  const { userId } = req.params;
+  
+  console.log('Buscando configurações para usuário:', userId);
+
+  try {
+    const client = await pool.connect();
+    
+    const result = await client.query(
+      'SELECT * FROM configuracoes_usuario WHERE usuario_id = $1',
+      [userId]
+    );
+
+    client.release();
+
+    if (result.rows.length > 0) {
+      const config = result.rows[0];
+      res.status(200).json({
+        darkMode: config.dark_mode,
+        zoom: config.zoom,
+        notificacoes: config.notificacoes,
+        privacidade: config.privacidade
+      });
+    } else {
+      // Retornar configurações padrão se não existir
+      res.status(200).json({
+        darkMode: false,
+        zoom: 100,
+        notificacoes: true,
+        privacidade: false
+      });
+    }
+
+  } catch (err) {
+    console.error('Erro ao buscar configurações:', err);
+    res.status(500).json({ message: 'Erro ao buscar configurações' });
+  }
+});
+
+// Endpoint para criar a tabela de configurações se não existir
+app.get('/create-config-table', async (req, res) => {
+  try {
+    const client = await pool.connect();
+    
+    const createTableSQL = `
+      CREATE TABLE IF NOT EXISTS configuracoes_usuario (
+        id_configuracao SERIAL PRIMARY KEY,
+        usuario_id INT NOT NULL UNIQUE,
+        dark_mode BOOLEAN DEFAULT FALSE,
+        zoom INT DEFAULT 100,
+        notificacoes BOOLEAN DEFAULT TRUE,
+        privacidade BOOLEAN DEFAULT FALSE,
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (usuario_id) REFERENCES usuario(id_usuario) ON DELETE CASCADE
+      );
+    `;
+    
+    await client.query(createTableSQL);
+    client.release();
+    
+    res.status(200).json({ message: 'Tabela de configurações criada com sucesso!' });
+  } catch (err) {
+    console.error('Erro ao criar tabela de configurações:', err);
+    res.status(500).json({ message: 'Erro ao criar tabela de configurações' });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Servidor backend rodando em http://localhost:${port}`);
+});
+
+// Captura de exceções não tratadas
+process.on('uncaughtException', (err) => {
+  console.error('Erro não capturado (uncaughtException):', err);
+  // Opcional: Terminar o processo de forma graciosa após logar o erro
+  // process.exit(1);
+});
+
+// Captura de rejeições de promessas não tratadas
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Rejeição de promessa não tratada (unhandledRejection):', reason);
+  // Opcional: Terminar o processo de forma graciosa após logar o erro
+  // process.exit(1);
+});

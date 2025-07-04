@@ -10,29 +10,49 @@ import GerenciarPerfis from './components/GerenciarPerfis/GerenciarPerfis';
 import CartoesCredito from './components/CartoesCredito/CartoesCredito';
 import Configuracoes from './components/Configuracoes/Configuracoes';
 import ImpostoRenda from './components/ImpostoRenda/ImpostoRenda';
+import CriarPrimeiroPerfil from './components/CriarPrimeiroPerfil/CriarPrimeiroPerfil';
+import SelecionarPerfil from './components/SelecionarPerfil/SelecionarPerfil';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+  const [precisaSelecionarPerfil, setPrecisaSelecionarPerfil] = useState(false);
 
   useEffect(() => {
     // Carregar usuário e configurações ao iniciar
-    const loadUserData = () => {
+    const loadUserData = async () => {
       try {
         const userData = JSON.parse(localStorage.getItem('currentUser'));
         if (userData) {
+          // Verifica se o usuário ainda existe no backend
+          const res = await fetch(`http://localhost:3001/api/usuario/${userData.id_usuario}`);
+          if (!res.ok) {
+            handleLogout();
+            setLoading(false);
+            return;
+          }
           setCurrentUser(userData);
-          setProfile(JSON.parse(localStorage.getItem(`profile_${userData.id}`)));
-          
+          const profileData = JSON.parse(localStorage.getItem(`profile_${userData.id_usuario}`));
+          if (profileData) {
+            // Verifica se o perfil ainda existe no backend
+            const resPerfil = await fetch(`http://localhost:3001/api/perfil/${profileData.id_perfil}`);
+            if (!resPerfil.ok) {
+              handleLogout();
+              setLoading(false);
+              return;
+            }
+            setProfile(profileData);
+          }
           // Carregar configurações específicas do usuário
-          const userConfig = JSON.parse(localStorage.getItem(`config_${userData.id}`)) || {};
+          const userConfig = JSON.parse(localStorage.getItem(`config_${userData.id_usuario}`)) || {};
           setDarkMode(userConfig.darkMode || false);
           document.documentElement.setAttribute('data-theme', userConfig.darkMode ? 'dark' : 'light');
         }
       } catch (error) {
         console.error('Erro ao carregar dados do usuário:', error);
+        handleLogout();
       } finally {
         setLoading(false);
       }
@@ -41,17 +61,44 @@ function App() {
     loadUserData();
   }, []);
 
-  const handleLogin = (userData) => {
+  const handleLogin = async (user, userProfile) => {
     try {
-      setCurrentUser(userData);
-      setProfile(JSON.parse(localStorage.getItem(`profile_${userData.id}`)));
-      
-      // Carregar configurações do usuário ao fazer login
-      const userConfig = JSON.parse(localStorage.getItem(`config_${userData.id}`)) || {};
-      setDarkMode(userConfig.darkMode || false);
-      document.documentElement.setAttribute('data-theme', userConfig.darkMode ? 'dark' : 'light');
+      // Buscar perfis do usuário
+      const profilesResponse = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${user.id_usuario}`);
+      const profilesData = await profilesResponse.json();
+      if (!profilesResponse.ok) {
+        throw new Error(profilesData.message || 'Erro ao buscar perfis do usuário');
+      }
+      if (profilesData.profiles && profilesData.profiles.length > 0) {
+        const primeiroPerfil = profilesData.profiles[0];
+        console.log('Usando primeiro perfil:', primeiroPerfil);
+        
+        setCurrentUser(user);
+        setProfile(primeiroPerfil);
+        
+        // Carregar configurações do usuário do backend
+        try {
+          const configResponse = await fetch(`http://localhost:3001/api/configuracoes/${user.id_usuario}`);
+          if (configResponse.ok) {
+            const configData = await configResponse.json();
+            setDarkMode(configData.darkMode || false);
+            document.documentElement.setAttribute('data-theme', configData.darkMode ? 'dark' : 'light');
+          } else {
+            setDarkMode(false);
+            document.documentElement.setAttribute('data-theme', 'light');
+          }
+        } catch (error) {
+          console.error('Erro ao carregar configurações:', error);
+          setDarkMode(false);
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } else {
+        // Se não há perfis, redirecionar para criar o primeiro perfil
+        console.log('Usuário não tem perfis, redirecionando para criar primeiro perfil');
+        window.location.href = `/criar-primeiro-perfil?userId=${user.id_usuario}`;
+      }
     } catch (error) {
-      console.error('Erro ao fazer login:', error);
+      console.error('Erro detalhado no handleLogin:', error);
     }
   };
 
@@ -61,7 +108,7 @@ function App() {
       setProfile(null);
       setDarkMode(false);
       document.documentElement.setAttribute('data-theme', 'light');
-      localStorage.removeItem('currentUser');
+      console.log('Logout realizado com sucesso');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }
@@ -71,16 +118,14 @@ function App() {
     try {
       setDarkMode(isDark);
       document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-      
-      // Salvar configuração de tema específica do usuário
-      if (currentUser?.id) {
-        const userConfig = JSON.parse(localStorage.getItem(`config_${currentUser.id}`)) || {};
-        userConfig.darkMode = isDark;
-        localStorage.setItem(`config_${currentUser.id}`, JSON.stringify(userConfig));
-      }
     } catch (error) {
       console.error('Erro ao alterar tema:', error);
     }
+  };
+
+  const handlePerfilSelecionado = (perfil) => {
+    setProfile(perfil);
+    setPrecisaSelecionarPerfil(false);
   };
 
   if (loading) {
@@ -112,10 +157,36 @@ function App() {
             } 
           />
           <Route 
+            path="/criar-primeiro-perfil" 
+            element={
+              !currentUser ? (
+                <CriarPrimeiroPerfil />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
+            } 
+          />
+          <Route 
             path="/dashboard" 
             element={
-              currentUser ? (
+              currentUser && profile ? (
                 <Dashboard 
+                  onLogout={handleLogout}
+                  setUsuario={setCurrentUser}
+                  setPerfil={setProfile}
+                  usuario={currentUser}
+                  perfil={profile}
+                />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            } 
+          />
+          <Route
+            path="/receitas"
+            element={
+              currentUser ? (
+                <Receitas 
                   usuario={currentUser}
                   perfil={profile}
                   onLogout={handleLogout}
@@ -123,56 +194,36 @@ function App() {
               ) : (
                 <Navigate to="/login" replace />
               )
-            } 
+            }
           />
-          {profile?.permissoes.verReceitas && (
-            <Route
-              path="/receitas"
-              element={
-                currentUser ? (
-                  <Receitas 
-                    usuario={currentUser}
-                    perfil={profile}
-                    onLogout={handleLogout}
-                  />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
-          )}
-          {profile?.permissoes.verDespesas && (
-            <Route
-              path="/despesas"
-              element={
-                currentUser ? (
-                  <Despesas 
-                    usuario={currentUser}
-                    perfil={profile}
-                    onLogout={handleLogout}
-                  />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
-          )}
-          {profile?.permissoes.gerenciarPerfis && (
-            <Route
-              path="/gerenciar-perfis"
-              element={
-                currentUser ? (
-                  <GerenciarPerfis
-                    usuario={currentUser}
-                    perfil={profile}
-                    onPerfilAtualizado={setProfile}
-                  />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
-          )}
+          <Route
+            path="/despesas"
+            element={
+              currentUser ? (
+                <Despesas 
+                  usuario={currentUser}
+                  perfil={profile}
+                  onLogout={handleLogout}
+                />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/gerenciar-perfis"
+            element={
+              currentUser ? (
+                <GerenciarPerfis
+                  usuario={currentUser}
+                  perfil={profile}
+                  onPerfilAtualizado={setProfile}
+                />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
           <Route
             path="/cartoes"
             element={
@@ -203,29 +254,32 @@ function App() {
             path="/configuracoes"
             element={
               currentUser ? (
-                <Configuracoes 
+                <Configuracoes
                   usuario={currentUser}
                   perfil={profile}
-                  onLogout={handleLogout}
                   darkMode={darkMode}
                   onThemeChange={handleThemeChange}
+                  onLogout={handleLogout}
                 />
               ) : (
                 <Navigate to="/login" replace />
               )
             }
           />
-          <Route 
-            path="/" 
+          <Route
+            path="/selecionar-perfil"
             element={
               currentUser ? (
-                <Navigate to="/dashboard" replace />
+                <SelecionarPerfil usuario={currentUser} onPerfilSelecionado={handlePerfilSelecionado} />
               ) : (
                 <Navigate to="/login" replace />
               )
-            } 
+            }
           />
+          <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
+        {/* Redirecionamento automático para seleção de perfil se necessário */}
+        {precisaSelecionarPerfil && <Navigate to="/selecionar-perfil" replace />}
       </div>
     </Router>
   );

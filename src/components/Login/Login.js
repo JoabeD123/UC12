@@ -9,56 +9,66 @@ function Login({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const atualizarPermissoes = (perfilId) => {
-    const perfis = JSON.parse(localStorage.getItem('perfis')) || [];
-    const perfilIndex = perfis.findIndex(p => p.id === perfilId);
-    
-    if (perfilIndex !== -1) {
-      perfis[perfilIndex].permissoes = {
-        ...perfis[perfilIndex].permissoes,
-        editarReceitas: true,
-        editarDespesas: true,
-        verImpostoRenda: true
-      };
-      localStorage.setItem('perfis', JSON.stringify(perfis));
-      return perfis[perfilIndex];
-    }
-    return null;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErro(null);
     setLoading(true);
 
     try {
-      // Simular autenticação
-      const userData = {
-        id: 1,
-        nome: 'Usuário Teste',
-        email: email
-      };
-
-      // Salvar dados do usuário
-      localStorage.setItem('currentUser', JSON.stringify(userData));
+      console.log('Iniciando login com:', { email, senha });
       
-      // Criar perfil padrão se não existir
-      const profile = {
-        id: 1,
-        nome: 'Perfil Padrão',
-        permissoes: {
-          verReceitas: true,
-          verDespesas: true,
-          gerenciarPerfis: true
-        }
-      };
-      localStorage.setItem(`profile_${userData.id}`, JSON.stringify(profile));
+      const response = await fetch('http://localhost:3001/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, senha }),
+      });
 
-      // Chamar callback de login com os dados do usuário
-      onLogin(userData);
+      const data = await response.json();
+      console.log('Resposta do servidor:', data);
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Erro ao fazer login');
+      }
+
+      // Se chegou aqui, o login foi bem sucedido
+      console.log('Login bem sucedido, chamando onLogin com:', { 
+        userId: data.userId, 
+        nomeFamilia: data.nomeFamilia 
+      });
+
+      const userLogged = {
+        id_usuario: data.userId,
+        nome_familia: data.nomeFamilia
+      };
+
+      // Buscar perfis e permissões do usuário
+      const profilesResponse = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${data.userId}`);
+      const profilesData = await profilesResponse.json();
+
+      if (!profilesResponse.ok) {
+        throw new Error(profilesData.message || 'Erro ao buscar perfis do usuário');
+      }
+
+      // Se houver perfis, usar o primeiro como perfil atual
+      if (profilesData.profiles && profilesData.profiles.length > 0) {
+        const primeiroPerfil = profilesData.profiles[0];
+        console.log('Usando primeiro perfil:', primeiroPerfil);
+        
+        // Salva os dados no localStorage
+        localStorage.setItem('currentUser', JSON.stringify(userLogged));
+        localStorage.setItem(`profile_${data.userId}`, JSON.stringify(primeiroPerfil));
+        
+        // Chama a função onLogin com os dados do usuário e perfil
+        onLogin(userLogged, primeiroPerfil);
+      } else {
+        throw new Error('Nenhum perfil encontrado para este usuário');
+      }
+
     } catch (error) {
-      console.error('Erro ao fazer login:', error);
-      setErro('Erro ao fazer login. Tente novamente.');
+      console.error('Erro detalhado ao fazer login:', error);
+      setErro(error.message || 'Erro ao fazer login. Tente novamente.');
     } finally {
       setLoading(false);
     }

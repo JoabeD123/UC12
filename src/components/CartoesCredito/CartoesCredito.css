@@ -72,6 +72,34 @@
   box-sizing: border-box;
 }
 
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0;
+  margin-bottom: 1rem;
+}
+
+.logo-icon {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  background-color: var(--primary-bg);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.logo-icon:hover {
+  transform: scale(1.1);
+  background-color: var(--primary-color);
+  color: white;
+}
+
 .menu {
   display: flex;
   flex-direction: column;
@@ -104,8 +132,25 @@
   flex: 1;
   padding: 2rem;
   background-color: var(--light-grey);
-  height: 100%;
-  overflow-y: auto;
+  height: 100vh;
+  overflow-y: scroll;
+  box-sizing: border-box;
+}
+
+.cartoes-credito::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.cartoes-credito::-webkit-scrollbar-track {
+  background: var(--light-grey);
+  border-radius: 4px;
+}
+.cartoes-credito::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 4px;
+}
+.cartoes-credito::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-hover);
 }
 
 .cartoes-header {
@@ -317,6 +362,13 @@
   display: flex;
   gap: 1rem;
   margin-top: 1.5rem;
+  flex-wrap: nowrap;
+}
+
+.form-buttons > button {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .btn-primary,
@@ -364,9 +416,27 @@
 .chart-wrapper {
   background-color: var(--card-bg);
   border-radius: 15px;
-  padding: 1.5rem;
+  padding: 2.76rem;
   box-shadow: var(--card-shadow);
   border: 1px solid var(--border-color);
+  min-width: 700px;
+  min-height: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-chart-wrapper {
+  background-color: var(--card-bg);
+  border-radius: 15px;
+  padding: 2.76rem;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border-color);
+  min-width: 700px;
+  min-height: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (max-width: 768px) {
@@ -400,6 +470,12 @@
 
   .form-buttons {
     flex-direction: column;
+    flex-wrap: nowrap;
+  }
+  .form-buttons > button {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
   }
 }
 

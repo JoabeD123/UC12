@@ -3,62 +3,42 @@ import { useNavigate } from 'react-router-dom';
 import './Registro.css';
 
 function Registro() {
-  const [nome, setNome] = useState('');
+  const [nome, setNome] = useState(''); // Corresponde a nome_familia no backend
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setErro('');
+    setErro(null);
+    setLoading(true);
 
     try {
-      const usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
-      
-      // Verificar se o email já está em uso
-      if (usuarios.some(u => u.email === email)) {
-        setErro('Este email já está cadastrado');
-        return;
+      const response = await fetch('http://localhost:3001/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nome_familia: nome, email, senha }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Se a resposta não for OK (ex: 409, 400, 500)
+        throw new Error(data.message || 'Erro ao criar conta');
       }
 
-      // Criar novo usuário
-      const novoUsuario = {
-        id: Date.now(),
-        nome,
-        email,
-        senha
-      };
-
-      // Criar perfil principal para o usuário
-      const perfil = {
-        id: Date.now(),
-        usuarioId: novoUsuario.id,
-        nome: 'Principal',
-        tipo: 'Principal',
-        permissoes: {
-          verReceitas: true,
-          verDespesas: true,
-          editarReceitas: true,
-          editarDespesas: true,
-          gerenciarPerfis: true,
-          verImpostoRenda: true
-        }
-      };
-
-      // Salvar usuário e perfil
-      usuarios.push(novoUsuario);
-      localStorage.setItem('usuarios', JSON.stringify(usuarios));
-
-      const perfis = JSON.parse(localStorage.getItem('perfis')) || [];
-      perfis.push(perfil);
-      localStorage.setItem('perfis', JSON.stringify(perfis));
-
-      // Redirecionar para login
-      navigate('/');
+      // Redirecionar para a tela de criação do primeiro perfil após registro bem-sucedido
+      navigate('/criar-primeiro-perfil', { state: { userId: data.userId } });
+      
     } catch (error) {
-      setErro('Erro ao criar conta. Tente novamente.');
-      console.error('Erro no registro:', error);
+      console.error('Erro ao registrar:', error.message);
+      setErro(error.message || 'Erro ao criar conta. Tente novamente.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -69,7 +49,7 @@ function Registro() {
         {erro && <div className="erro-mensagem">{erro}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Nome:</label>
+            <label>Nome da Família:</label>
             <input
               type="text"
               value={nome}
@@ -95,8 +75,8 @@ function Registro() {
               required
             />
           </div>
-          <button type="submit" className="btn-primary">
-            Criar Conta
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? 'Criando...' : 'Criar Conta'}
           </button>
         </form>
         <button onClick={() => navigate('/')} className="btn-link">

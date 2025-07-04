@@ -1,0 +1,197 @@
+.selecionar-perfil-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--light-grey);
+  padding: 0;
+}
+
+.selecionar-perfil-box {
+  background-color: var(--card-bg);
+  border-radius: 0.5rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 800px;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.selecionar-perfil-box h2 {
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.erro-mensagem {
+  background-color: var(--danger-color);
+  color: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.perfis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.perfil-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background-color: var(--light-grey);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.perfil-card:hover {
+  background-color: var(--hover-color);
+  transform: translateY(-2px);
+}
+
+.perfil-card.selecionado {
+  border-color: var(--primary-color);
+  background-color: var(--primary-bg);
+}
+
+.perfil-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.perfil-info {
+  flex: 1;
+}
+
+.perfil-info h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.perfil-tipo {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  background-color: var(--tag-bg);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 0.25rem;
+}
+
+.senha-container {
+  margin: 1.5rem 0;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  transition: border-color 0.15s ease-in-out;
+}
+
+.form-group input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.botoes-container {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.btn-confirmar,
+.btn-voltar {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  min-width: 120px;
+}
+
+.btn-confirmar {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-confirmar:hover:not(:disabled) {
+  background-color: #17a673;
+}
+
+.btn-voltar {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.btn-voltar:hover:not(:disabled) {
+  background-color: #2e59d9;
+}
+
+.btn-confirmar:disabled,
+.btn-voltar:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .selecionar-perfil-container {
+    padding: 1rem;
+  }
+
+  .selecionar-perfil-box {
+    padding: 1.5rem;
+  }
+
+  .perfis-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .botoes-container {
+    flex-direction: column;
+  }
+
+  .btn-confirmar,
+  .btn-voltar {
+    width: 100%;
+  }
+} 

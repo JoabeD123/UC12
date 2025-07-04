@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bar } from 'react-chartjs-2';
 import {
@@ -10,8 +10,9 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
-import { FaChartBar, FaChartPie, FaUsers, FaCog, FaCreditCard, FaInfoCircle } from 'react-icons/fa';
 import './ImpostoRenda.css';
+import Sidebar from '../Sidebar/Sidebar';
+import { FaInfoCircle } from 'react-icons/fa';
 
 // Registrar os componentes do Chart.js
 ChartJS.register(
@@ -23,7 +24,7 @@ ChartJS.register(
   Legend
 );
 
-const ImpostoRenda = () => {
+const ImpostoRenda = ({ usuario, perfil }) => {
   const navigate = useNavigate();
   const [rendaInfo, setRendaInfo] = useState({
     rendaFixa: '',
@@ -43,6 +44,37 @@ const ImpostoRenda = () => {
     { limite: 4664.68, aliquota: 0.225, deducao: 662.77 },
     { limite: Infinity, aliquota: 0.275, deducao: 896.00 }
   ];
+
+  useEffect(() => {
+    const carregarReceitas = async () => {
+      if (!usuario?.id_usuario || !perfil?.id_perfil) return;
+      try {
+        const response = await fetch(`http://localhost:3001/api/receitas/${usuario.id_usuario}/${perfil.id_perfil}`);
+        if (!response.ok) throw new Error('Erro ao carregar receitas');
+        const receitas = await response.json();
+        let somaFixa = 0;
+        let somaVariavel = 0;
+        receitas.forEach(r => {
+          const valor = Number(r.valor_receita);
+          if (r.fixa) {
+            somaFixa += valor;
+          } else {
+            somaVariavel += valor;
+          }
+        });
+        // Formatar para moeda brasileira
+        const formatar = v => v > 0 ? `R$ ${v.toFixed(2).replace('.', ',')}` : '';
+        setRendaInfo(prev => ({
+          ...prev,
+          rendaFixa: formatar(somaFixa),
+          rendaVariavel: formatar(somaVariavel)
+        }));
+      } catch (e) {
+        setErro('Erro ao buscar receitas para cálculo automático.');
+      }
+    };
+    carregarReceitas();
+  }, [usuario, perfil]);
 
   // Calcular imposto total
   const calcularImposto = () => {
@@ -219,30 +251,7 @@ const ImpostoRenda = () => {
 
   return (
     <div className="layout-container">
-      <div className="sidebar">
-        <div className="menu">
-          <div className="menu-item" onClick={() => navigate('/dashboard')}>
-            <FaChartBar />
-            <span>Dashboard</span>
-          </div>
-          <div className="menu-item" onClick={() => navigate('/cartoes')}>
-            <FaCreditCard />
-            <span>Cartões</span>
-          </div>
-          <div className="menu-item active" onClick={() => navigate('/imposto-renda')}>
-            <FaChartPie />
-            <span>Imposto de Renda</span>
-          </div>
-          <div className="menu-item" onClick={() => navigate('/gerenciar-perfis')}>
-            <FaUsers />
-            <span>Gerenciar Perfis</span>
-          </div>
-          <div className="menu-item" onClick={() => navigate('/configuracoes')}>
-            <FaCog />
-            <span>Configurações</span>
-          </div>
-        </div>
-      </div>
+      <Sidebar perfil={perfil} />
 
       <div className="imposto-renda">
         <div className="imposto-page-header">
