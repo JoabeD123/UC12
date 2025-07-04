@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaRegChartBar, FaMoneyBillWave, FaWallet, FaCreditCard, FaPiggyBank, FaUsers, FaCog, FaChartLine } from 'react-icons/fa';
+import { FaRegChartBar, FaMoneyBillWave, FaWallet, FaCreditCard, FaPiggyBank, FaUsers, FaCog, FaChartLine, FaFileInvoiceDollar } from 'react-icons/fa';
 import './Sidebar.css';
 
 function Sidebar({ perfil }) {
@@ -43,7 +43,7 @@ function Sidebar({ perfil }) {
         )}
         {perfil?.permissoes?.ver_imposto && (
           <div className={`menu-item${location.pathname === '/imposto-renda' ? ' active' : ''}`} onClick={() => navigate('/imposto-renda')}>
-            <span role="img" aria-label="Imposto">💰</span>
+            <FaFileInvoiceDollar />
             <span>Imposto de Renda</span>
           </div>
         )}

@@ -53,9 +53,14 @@
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
   color: var(--text-color, #333);
   box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 44px;
+  max-height: 44px;
 }
 
 .menu-item:hover {
@@ -66,6 +71,19 @@
 .menu-item.active {
   background-color: var(--primary-color, #6c5ce7);
   color: white;
+}
+
+.menu-item span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-item svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
 }
 
 @media (max-width: 768px) {
