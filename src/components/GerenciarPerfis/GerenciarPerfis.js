@@ -264,8 +264,8 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
             <div className="perfis-grid">
               {perfis.map(perfil => (
                 <div key={perfil.id_perfil} className="perfil-card">
-                  <div className="perfil-header" style={{display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1.5rem'}}>
-                    <div style={{flex: '1 1 40%', minWidth: 0}}>
+                  <div className="perfil-header" style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1.5rem'}}>
+                    <div style={{width: '100%'}}>
                       <h4>{perfil.nome}</h4>
                       <div className="perfil-tipo" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem'}}>
                         {perfil.is_principal ? (
@@ -281,7 +281,7 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
                         )}
                       </div>
                     </div>
-                    <div style={{flex: '2 1 60%', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
+                    <div style={{width: '100%'}}>
                       <p className="perfil-descricao">{perfil.categoria_familiar}</p>
                       <div className="perfil-permissoes">
                         <h5>Permissões:</h5>
