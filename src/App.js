@@ -13,6 +13,7 @@ import ImpostoRenda from './components/ImpostoRenda/ImpostoRenda';
 import CriarPrimeiroPerfil from './components/CriarPrimeiroPerfil/CriarPrimeiroPerfil';
 import SelecionarPerfil from './components/SelecionarPerfil/SelecionarPerfil';
 import RelatorioDesempenho from './components/RelatorioDesempenho/RelatorioDesempenho';
+import RelatorioPersonalizado from './components/RelatorioPersonalizado/RelatorioPersonalizado';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -272,6 +273,20 @@ function App() {
             element={
               currentUser && profile ? (
                 <RelatorioDesempenho
+                  usuario={currentUser}
+                  perfil={profile}
+                  onLogout={handleLogout}
+                />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/relatorio-personalizado"
+            element={
+              currentUser && profile ? (
+                <RelatorioPersonalizado
                   usuario={currentUser}
                   perfil={profile}
                   onLogout={handleLogout}

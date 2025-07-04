@@ -104,10 +104,11 @@
 .relatorio-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--border-color);
+  position: relative;
 }
 
 .relatorio-header h1 {
@@ -125,6 +126,10 @@
 }
 
 .btn-voltar {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -138,6 +143,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   text-decoration: none;
+  z-index: 2;
 }
 
 .btn-voltar:hover {
@@ -310,6 +316,20 @@
 }
 
 @media (max-width: 768px) {
+  .relatorio-header {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding-bottom: 0.5rem;
+  }
+  .btn-voltar {
+    position: static;
+    transform: none;
+    margin-bottom: 1rem;
+    width: 100%;
+    justify-content: center;
+  }
+
   .relatorio-desempenho {
     padding: 1rem;
   }

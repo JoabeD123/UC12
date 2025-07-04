@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaRegChartBar, FaMoneyBillWave, FaWallet, FaCreditCard, FaPiggyBank, FaUsers, FaCog } from 'react-icons/fa';
+import { FaRegChartBar, FaMoneyBillWave, FaWallet, FaCreditCard, FaPiggyBank, FaUsers, FaCog, FaChartLine } from 'react-icons/fa';
 import './Sidebar.css';
 
 function Sidebar({ perfil }) {
@@ -47,6 +47,10 @@ function Sidebar({ perfil }) {
             <span>Imposto de Renda</span>
           </div>
         )}
+        <div className={`menu-item${location.pathname === '/relatorio-personalizado' ? ' active' : ''}`} onClick={() => navigate('/relatorio-personalizado')}>
+          <FaChartLine />
+          <span>Relatório Personalizado</span>
+        </div>
         {perfil?.permissoes?.gerenciar_perfis && (
           <div className={`menu-item${location.pathname === '/gerenciar-perfis' ? ' active' : ''}`} onClick={() => navigate('/gerenciar-perfis')}>
             <FaUsers />

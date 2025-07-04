@@ -13,7 +13,7 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import './RelatorioDesempenho.css';
-import Sidebar from '../Sidebar/Sidebar';
+// import Sidebar from '../Sidebar/Sidebar';
 import { IoArrowBack } from 'react-icons/io5';
 
 // Registrar os componentes necessários do Chart.js
@@ -198,12 +198,9 @@ function RelatorioDesempenho({ usuario, perfil, onLogout }) {
 
   if (loading) {
     return (
-      <div className="layout-container">
-        <Sidebar perfil={perfil} />
-        <div className="relatorio-desempenho">
-          <div className="loading-container">
-            <div className="loading">Carregando dados de desempenho...</div>
-          </div>
+      <div className="relatorio-desempenho">
+        <div className="loading-container">
+          <div className="loading">Carregando dados de desempenho...</div>
         </div>
       </div>
     );
@@ -211,66 +208,56 @@ function RelatorioDesempenho({ usuario, perfil, onLogout }) {
 
   if (error) {
     return (
-      <div className="layout-container">
-        <Sidebar perfil={perfil} />
-        <div className="relatorio-desempenho">
-          <div className="error-container">
-            <div className="error">{error}</div>
-            <button onClick={carregarDadosAnuais} className="btn-retry">Tentar Novamente</button>
-          </div>
+      <div className="relatorio-desempenho">
+        <div className="error-container">
+          <div className="error">{error}</div>
+          <button onClick={carregarDadosAnuais} className="btn-retry">Tentar Novamente</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="layout-container">
-      <Sidebar perfil={perfil} />
-      <div className="relatorio-desempenho">
-        <div className="relatorio-header">
-          <button onClick={handleVoltar} className="btn-voltar">
-            <IoArrowBack /> Voltar ao Dashboard
-          </button>
-          <h1>Meu Desempenho Financeiro</h1>
-          <p className="ano-atual">{anoAtual}</p>
-        </div>
-
-        <div className="relatorio-content">
-          <div className="chart-container">
-            <h2>Evolução Financeira Anual</h2>
-            <p className="chart-description">
-              Acompanhe sua evolução financeira ao longo do ano através de receitas, despesas e saldo mensal.
-            </p>
-            <div className="chart-wrapper">
-              <Line data={chartData} options={chartOptions} />
-            </div>
+    <div className="relatorio-desempenho">
+      <div className="relatorio-header">
+        <button onClick={handleVoltar} className="btn-voltar">
+          <IoArrowBack /> Voltar ao Dashboard
+        </button>
+        <h1>Meu Desempenho Financeiro</h1>
+        <p className="ano-atual">{anoAtual}</p>
+      </div>
+      <div className="relatorio-content">
+        <div className="chart-container">
+          <h2>Evolução Financeira Anual</h2>
+          <p className="chart-description">
+            Acompanhe sua evolução financeira ao longo do ano através de receitas, despesas e saldo mensal.
+          </p>
+          <div className="chart-wrapper">
+            <Line data={chartData} options={chartOptions} />
           </div>
-
-          <div className="resumo-mensal">
-            <h3>Resumo Mensal</h3>
-            <div className="resumo-grid">
-              {dadosMensais.map((dados, index) => (
-                <div key={index} className="resumo-item">
-                  <h4>{dados.nomeMes}</h4>
-                  <div className="resumo-valores">
-                    <div className="valor-item">
-                      <span className="label">Receitas:</span>
-                      <span className="valor positivo">R$ {dados.receitas.toFixed(2)}</span>
-                    </div>
-                    <div className="valor-item">
-                      <span className="label">Despesas:</span>
-                      <span className="valor negativo">R$ {dados.despesas.toFixed(2)}</span>
-                    </div>
-                    <div className="valor-item">
-                      <span className="label">Saldo:</span>
-                      <span className={`valor ${dados.saldo >= 0 ? 'positivo' : 'negativo'}`}>
-                        R$ {dados.saldo.toFixed(2)}
-                      </span>
-                    </div>
+        </div>
+        <div className="resumo-mensal">
+          <h3>Resumo Mensal</h3>
+          <div className="resumo-grid">
+            {dadosMensais.map((dados, index) => (
+              <div key={index} className="resumo-item">
+                <h4>{dados.nomeMes}</h4>
+                <div className="resumo-valores">
+                  <div className="valor-item">
+                    <span className="label">Receitas:</span>
+                    <span className="valor positivo">R$ {dados.receitas.toFixed(2)}</span>
+                  </div>
+                  <div className="valor-item">
+                    <span className="label">Despesas:</span>
+                    <span className="valor negativo">R$ {dados.despesas.toFixed(2)}</span>
+                  </div>
+                  <div className="valor-item">
+                    <span className="label">Saldo:</span>
+                    <span className={`valor ${dados.saldo >= 0 ? 'positivo' : 'negativo'}`}>R$ {dados.saldo.toFixed(2)}</span>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
