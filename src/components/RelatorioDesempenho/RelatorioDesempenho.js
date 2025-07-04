@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Chart as ChartJS,
@@ -34,22 +34,14 @@ function RelatorioDesempenho({ usuario, perfil, onLogout }) {
   const [dadosMensais, setDadosMensais] = useState([]);
   const navigate = useNavigate();
 
-  const meses = [
+  const meses = useMemo(() => [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-  ];
+  ], []);
 
   const anoAtual = new Date().getFullYear();
 
-  useEffect(() => {
-    if (!usuario || !perfil) {
-      onLogout();
-      return;
-    }
-    carregarDadosAnuais();
-  }, [usuario, perfil]);
-
-  const carregarDadosAnuais = async () => {
+  const carregarDadosAnuais = useCallback(async () => {
     try {
       setLoading(true);
       const dadosMensaisTemp = [];
@@ -105,7 +97,15 @@ function RelatorioDesempenho({ usuario, perfil, onLogout }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [usuario, perfil, anoAtual, meses]);
+
+  useEffect(() => {
+    if (!usuario || !perfil) {
+      onLogout();
+      return;
+    }
+    carregarDadosAnuais();
+  }, [usuario, perfil, carregarDadosAnuais, onLogout]);
 
   const chartData = {
     labels: dadosMensais.map(d => d.nomeMes),
