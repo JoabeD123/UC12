@@ -4,12 +4,19 @@ import { FaEdit } from 'react-icons/fa';
 import './Receitas.css';
 import Sidebar from '../Sidebar/Sidebar';
 
+// Função utilitária para obter a data do próximo mês
+const obterDataProximoMes = () => {
+  const hoje = new Date();
+  const proximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, hoje.getDate());
+  return proximoMes.toISOString().split('T')[0];
+};
+
 function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const [receitas, setReceitas] = useState([]);
   const [novaReceita, setNovaReceita] = useState({
     nome_receita: '',
     valor_receita: '',
-    data_recebimento: '',
+    data_recebimento: obterDataProximoMes(),
     descricao: '',
     categoria_id: '',
     fixa: false
@@ -108,7 +115,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
       setNovaReceita({
         nome_receita: '',
         valor_receita: '',
-        data_recebimento: '',
+        data_recebimento: obterDataProximoMes(),
         descricao: '',
         categoria_id: '',
         fixa: false
@@ -195,7 +202,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
 
       <div className="receitas">
         <div className="receitas-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-          <h2>Receitas</h2>
+          <h2>Receitas Mensais</h2>
           <div className="filtro-perfil">
             <label style={{ marginRight: 8 }}>Filtrar por perfil:</label>
             <select value={perfilFiltro} onChange={e => setPerfilFiltro(e.target.value)}>
@@ -312,7 +319,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                   setNovaReceita({
                     nome_receita: '',
                     valor_receita: '',
-                    data_recebimento: '',
+                    data_recebimento: obterDataProximoMes(),
                     descricao: '',
                     categoria_id: '',
                     fixa: false

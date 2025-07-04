@@ -381,15 +381,9 @@ const CartoesCredito = ({ perfil }) => {
                   <p><strong>Limite:</strong> R$ {Number(cartao.limite ?? 0).toFixed(2)}</p>
                   <p><strong>Vencimento:</strong> Dia {cartao.dia_vencimento}</p>
                   <p><strong>Bandeira:</strong> {cartao.bandeira}</p>
+                  <p><strong>Gastos Atuais:</strong> R$ {Number(gastos[cartao.id_cartao] ?? cartao.gastos ?? 0).toFixed(2)}</p>
                   <div className="gastos-input">
-                    <label>Gastos Atuais:</label>
-                    <input
-                      type="number"
-                      value={gastos[cartao.id_cartao] ?? cartao.gastos ?? 0}
-                      readOnly
-                      min="0"
-                      max={Number(cartao.limite ?? 0)}
-                    />
+                    <label>Adicionar/Remover Gasto:</label>
                     <div className="gasto-unificado">
                       <input
                         type="number"

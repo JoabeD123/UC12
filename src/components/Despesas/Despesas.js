@@ -3,13 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import './Despesas.css';
 import Sidebar from '../Sidebar/Sidebar';
 
+// Função utilitária para obter a data do próximo mês
+const obterDataProximoMes = () => {
+  const hoje = new Date();
+  const proximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, hoje.getDate());
+  return proximoMes.toISOString().split('T')[0];
+};
+
 function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const [despesas, setDespesas] = useState([]);
   const [novaDespesa, setNovaDespesa] = useState({
     nome_conta: '',
     valor_conta: '',
-    data_entrega: new Date().toISOString().split('T')[0],
-    data_vencimento: new Date().toISOString().split('T')[0],
+    data_entrega: obterDataProximoMes(),
+    data_vencimento: obterDataProximoMes(),
     descricao: '',
     categoria_id: '',
     tipo_conta_id: 1,
@@ -112,8 +119,8 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
       setNovaDespesa({
         nome_conta: '',
         valor_conta: '',
-        data_entrega: new Date().toISOString().split('T')[0],
-        data_vencimento: new Date().toISOString().split('T')[0],
+        data_entrega: obterDataProximoMes(),
+        data_vencimento: obterDataProximoMes(),
         descricao: '',
         categoria_id: '',
         tipo_conta_id: 1,
@@ -208,7 +215,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
 
       <div className="despesas">
         <div className="despesas-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-          <h2>Despesas</h2>
+          <h2>Despesas Mensais</h2>
           <div className="filtro-perfil">
             <label style={{ marginRight: 8 }}>Filtrar por perfil:</label>
             <select value={perfilFiltro} onChange={e => setPerfilFiltro(e.target.value)}>
@@ -356,9 +363,6 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
                         <p><strong>Data de Entrega:</strong> {new Date(despesa.data_entrega).toLocaleDateString()}</p>
                         {despesa.nome_categoria && <p><strong>Categoria:</strong> {despesa.nome_categoria}</p>}
                         {despesa.descricao && <p><strong>Descrição:</strong> {despesa.descricao}</p>}
-                        <p><strong>Tipo:</strong> {despesa.nome_tipo_conta}</p>
-                        <p><strong>Recorrência:</strong> {despesa.nome_recorrencia}</p>
-                        <p><strong>Status:</strong> {despesa.nome_status_pagamento}</p>
                       </div>
                       <div className="despesa-actions">
                         <button onClick={() => handleExcluir(despesa.id_conta)} className="btn-delete">
