@@ -217,6 +217,20 @@
     cursor: pointer;
     text-decoration: none;
     align-self: flex-end; /* Alinha no final do card */
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.meu-desempenho:hover {
+    background-color: var(--light-grey);
+    transform: translateY(-2px);
 }
 
 /* Charts */

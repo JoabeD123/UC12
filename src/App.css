@@ -1,3 +1,93 @@
+/* Variáveis CSS para temas */
+:root {
+  --primary-color: #1cc88a;
+  --secondary-color: #4e73df;
+  --success-color: #1cc88a;
+  --danger-color: #e74a3b;
+  --warning-color: #f6c23e;
+  --info-color: #36b9cc;
+  --light-color: #f8f9fc;
+  --dark-color: #5a5c69;
+  --card-bg: #ffffff;
+  --sidebar-bg: #4e73df;
+  --sidebar-hover: #1565C0;
+  --text-primary: #5a5c69;
+  --text-secondary: #858796;
+  --border-color: #e3e6f0;
+  --light-grey: #f8f9fc;
+  --primary-purple: #1976D2;
+  --secondary-blue: #007bff;
+  --white: #ffffff;
+  --medium-grey: #e9ecef;
+  --dark-grey: #343a40;
+  --text-dark: #333333;
+  --text-light: #f8f9fa;
+  --card-shadow: rgba(0, 0, 0, 0.08);
+  --success-green: #28a745;
+  --danger-red: #dc3545;
+  --input-border: #dee2e6;
+  --input-focus-shadow: rgba(25, 118, 210, 0.25);
+  --error-bg: #f8d7da;
+  --error-color: #721c24;
+  --primary-hover: #1565C0;
+  --text-muted: #6c757d;
+  --tag-bg: #e3f2fd;
+  --primary-bg: #e3f2fd;
+  --secondary-hover: #5a6268;
+  --table-header-bg-light: #f0f2f5;
+  --sidebar-active-bg: #eceff1;
+  --sidebar-text-dark: #495057;
+  --chart-legend-color-light: #6c757d;
+  --chart-grid-color-light: #e0e0e0;
+  --sidebar-active-bar-color: #1976D2;
+  --button-secondary-bg: var(--medium-grey);
+  --button-secondary-text: var(--text-dark);
+  --button-secondary-hover: #d0d3d6;
+  --disabled-color: #cccccc;
+  --bg-color: var(--light-grey);
+  --text-color: var(--text-dark);
+  --input-bg: var(--white);
+  --shadow-color: var(--card-shadow);
+}
+
+[data-theme='light'] {
+  --bg-color: var(--light-grey);
+  --text-color: var(--text-dark);
+  --card-bg: var(--white);
+  --border-color: var(--input-border);
+  --input-bg: var(--white);
+  --shadow-color: var(--card-shadow);
+  --primary-color: var(--primary-purple);
+  --primary-shadow: var(--input-focus-shadow);
+  --error-bg-theme: var(--error-bg);
+  --error-color-theme: var(--error-color);
+  --table-header-bg: var(--table-header-bg-light);
+  --button-secondary-bg: var(--medium-grey);
+  --button-secondary-text: var(--text-dark);
+  --button-secondary-hover: #d0d3d6;
+  --tag-background-light: #e0e7ff;
+  --tag-color-light: var(--primary-purple);
+}
+
+[data-theme='dark'] {
+  --bg-color: #212529;
+  --text-color: var(--text-light);
+  --card-bg: #495057;
+  --border-color: #6c757d;
+  --input-bg: #495057;
+  --shadow-color: rgba(0, 0, 0, 0.2);
+  --primary-color: var(--primary-purple);
+  --primary-shadow: rgba(106, 13, 173, 0.4);
+  --error-bg-theme: #721c24;
+  --error-color-theme: #f8d7da;
+  --table-header-bg: #343a40;
+  --button-secondary-bg: #6c757d;
+  --button-secondary-text: var(--text-light);
+  --button-secondary-hover: #5a6268;
+  --tag-background-dark: #6a0dad;
+  --tag-color-dark: var(--text-light);
+}
+
 /* Reset CSS */
 * {
   box-sizing: border-box;

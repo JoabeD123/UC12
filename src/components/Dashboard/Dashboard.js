@@ -452,12 +452,14 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
                 </div>
               </div>
               <p className="amount">R$ {dadosFinanceiros.saldo.toFixed(2).replace('.', ',')}</p>
-              <button 
-                onClick={() => handleNavigation('/desempenho')} 
-                className="meu-desempenho"
-              >
-                Meu Desempenho <IoArrowForward />
-              </button>
+              {perfil && (perfil.id_perfil === 1 || perfil.is_principal) && (
+                <button 
+                  onClick={() => handleNavigation('/desempenho')} 
+                  className="meu-desempenho"
+                >
+                  Meu Desempenho <IoArrowForward />
+                </button>
+              )}
             </div>
 
             <div className="card">

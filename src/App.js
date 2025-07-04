@@ -12,6 +12,7 @@ import Configuracoes from './components/Configuracoes/Configuracoes';
 import ImpostoRenda from './components/ImpostoRenda/ImpostoRenda';
 import CriarPrimeiroPerfil from './components/CriarPrimeiroPerfil/CriarPrimeiroPerfil';
 import SelecionarPerfil from './components/SelecionarPerfil/SelecionarPerfil';
+import RelatorioDesempenho from './components/RelatorioDesempenho/RelatorioDesempenho';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -259,6 +260,20 @@ function App() {
                   perfil={profile}
                   darkMode={darkMode}
                   onThemeChange={handleThemeChange}
+                  onLogout={handleLogout}
+                />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/desempenho"
+            element={
+              currentUser && profile ? (
+                <RelatorioDesempenho
+                  usuario={currentUser}
+                  perfil={profile}
                   onLogout={handleLogout}
                 />
               ) : (
