@@ -133,8 +133,8 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: var(--button-secondary-bg);
-  color: var(--button-secondary-text);
+  background-color: var(--secondary-color);
+  color: white;
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
@@ -147,7 +147,7 @@
 }
 
 .btn-voltar:hover {
-  background-color: var(--button-secondary-hover);
+  background-color: #3a5fd1;
   transform: translateY(-2px);
 }
 

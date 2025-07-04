@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,7 +13,7 @@ import {
 import { Line } from 'react-chartjs-2';
 import './RelatorioPersonalizado.css';
 import Sidebar from '../Sidebar/Sidebar';
-import { IoArrowBack } from 'react-icons/io5';
+
 
 // Registrar os componentes necessários do Chart.js
 ChartJS.register(
@@ -34,7 +33,6 @@ function RelatorioPersonalizado({ usuario, perfil, onLogout }) {
   const [dadosMensais, setDadosMensais] = useState([]);
   const [mesesSelecionados, setMesesSelecionados] = useState([]);
   const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
-  const navigate = useNavigate();
 
   const meses = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -52,7 +50,7 @@ function RelatorioPersonalizado({ usuario, perfil, onLogout }) {
       onLogout();
       return;
     }
-  }, [usuario, perfil]);
+  }, [usuario, perfil, onLogout]);
 
   const handleMesChange = (mesIndex) => {
     setMesesSelecionados(prev => {
@@ -215,10 +213,6 @@ function RelatorioPersonalizado({ usuario, perfil, onLogout }) {
     }
   };
 
-  const handleVoltar = () => {
-    navigate('/dashboard');
-  };
-
   const calcularTotais = () => {
     return dadosMensais.reduce((totais, dados) => {
       totais.receitas += dados.receitas;
@@ -235,9 +229,6 @@ function RelatorioPersonalizado({ usuario, perfil, onLogout }) {
       <Sidebar perfil={perfil} />
       <div className="relatorio-personalizado">
         <div className="relatorio-header">
-          <button onClick={handleVoltar} className="btn-voltar">
-            <IoArrowBack /> Voltar ao Dashboard
-          </button>
           <h1>Relatório Personalizado</h1>
           <p className="subtitulo">Selecione os meses e ano para gerar seu relatório</p>
         </div>

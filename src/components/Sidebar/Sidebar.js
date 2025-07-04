@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaRegChartBar, FaMoneyBillWave, FaWallet, FaCreditCard, FaPiggyBank, FaUsers, FaCog, FaChartLine, FaFileInvoiceDollar } from 'react-icons/fa';
+import { FaRegChartBar, FaMoneyBillWave, FaWallet, FaCreditCard, FaUsers, FaCog, FaChartLine, FaFileInvoiceDollar } from 'react-icons/fa';
 import './Sidebar.css';
 
 function Sidebar({ perfil }) {
