@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -33,6 +33,7 @@ function RelatorioDesempenho({ usuario, perfil, onLogout }) {
   const [error, setError] = useState(null);
   const [dadosMensais, setDadosMensais] = useState([]);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const meses = useMemo(() => [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -220,9 +221,11 @@ function RelatorioDesempenho({ usuario, perfil, onLogout }) {
   return (
     <div className="relatorio-desempenho">
       <div className="relatorio-header">
-        <button onClick={handleVoltar} className="btn-voltar">
-          <IoArrowBack /> Voltar ao Dashboard
-        </button>
+        {location.pathname !== '/selecionar-perfil' && (
+          <button onClick={handleVoltar} className="btn-voltar">
+            <IoArrowBack /> Voltar ao Dashboard
+          </button>
+        )}
         <h1>Meu Desempenho Financeiro</h1>
         <p className="ano-atual">{anoAtual}</p>
       </div>

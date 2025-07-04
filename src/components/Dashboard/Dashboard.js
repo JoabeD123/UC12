@@ -30,6 +30,7 @@ ChartJS.register(
 function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [usuarioAtualizado, setUsuarioAtualizado] = useState(usuario);
   const [dadosFinanceiros, setDadosFinanceiros] = useState({
     receitas: 0,
     despesas: 0,
@@ -45,6 +46,18 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
   const [anoSelecionado] = useState(new Date().getFullYear());
   const [abaFatura, setAbaFatura] = useState('abertas'); // 'abertas' ou 'fechadas'
   const navigate = useNavigate();
+
+  const carregarUsuarioAtualizado = useCallback(async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/usuario/${usuario.id_usuario}`);
+      if (response.ok) {
+        const dadosUsuario = await response.json();
+        setUsuarioAtualizado(dadosUsuario);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados do usuário:', error);
+    }
+  }, [usuario.id_usuario]);
 
   const carregarDadosFinanceiros = useCallback(async () => {
     try {
@@ -96,8 +109,9 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
     }
     setLoading(true);
     setCartoesLoading(true);
+    carregarUsuarioAtualizado();
     carregarDadosFinanceiros();
-  }, [usuario, perfil, onLogout, carregarDadosFinanceiros]);
+  }, [usuario, perfil, onLogout, carregarDadosFinanceiros, carregarUsuarioAtualizado]);
 
   useEffect(() => {
     const fetchCartoes = async () => {
@@ -436,10 +450,10 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
                 ))}
               </select>
               <div className="user-profile-icon">
-                {usuario?.nome_familia ? usuario.nome_familia.charAt(0).toUpperCase() : 'U'}
+                {usuarioAtualizado?.nome_familia ? usuarioAtualizado.nome_familia.charAt(0).toUpperCase() : 'F'}
               </div>
-              <span className="user-name">{usuario?.nome_familia || 'Usuário'}</span>
-              <span className="joranda">Jornada</span>
+              <span className="user-name">{usuarioAtualizado?.nome_familia || 'Família'}</span>
+              <span className="joranda">{perfil?.nome || 'Perfil'}</span>
             </div>
           </div>
 
