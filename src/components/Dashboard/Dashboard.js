@@ -40,10 +40,10 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
   const [cartoes, setCartoes] = useState([]);
   const [gastosCartoes, setGastosCartoes] = useState(0);
   const [mesSelecionado, setMesSelecionado] = useState(new Date().getMonth());
+  const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
   const [cartaoAviso, setCartaoAviso] = useState(null);
   const [faturasFechadas, setFaturasFechadas] = useState([]);
   const [cartoesLoading, setCartoesLoading] = useState(true);
-  const [anoSelecionado] = useState(new Date().getFullYear());
   const [abaFatura, setAbaFatura] = useState('abertas'); // 'abertas' ou 'fechadas'
   const navigate = useNavigate();
 
@@ -111,7 +111,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
     setCartoesLoading(true);
     carregarUsuarioAtualizado();
     carregarDadosFinanceiros();
-  }, [usuario, perfil, onLogout, carregarDadosFinanceiros, carregarUsuarioAtualizado]);
+  }, [usuario, perfil, onLogout, carregarDadosFinanceiros, carregarUsuarioAtualizado, mesSelecionado, anoSelecionado]);
 
   useEffect(() => {
     const fetchCartoes = async () => {
@@ -135,7 +135,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
       }
     };
     fetchCartoes();
-  }, [usuario, perfil, mesSelecionado]);
+  }, [usuario, perfil, mesSelecionado, anoSelecionado]);
 
   // Quando ambos carregarem, libera o loading principal
   useEffect(() => {
@@ -438,17 +438,30 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
           <div className="content-header">
             <h1>Dashboard</h1>
             <div className="user-profile-header">
-              <select
-                className="month-selector"
-                value={mesSelecionado}
-                onChange={e => setMesSelecionado(Number(e.target.value))}
-              >
-                {meses.map((mes, index) => (
-                  <option key={index} value={index}>
-                    {mes}
-                  </option>
-                ))}
-              </select>
+              <div className="filtros-container">
+                <select
+                  className="month-selector"
+                  value={mesSelecionado}
+                  onChange={e => setMesSelecionado(Number(e.target.value))}
+                >
+                  {meses.map((mes, index) => (
+                    <option key={index} value={index}>
+                      {mes}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="year-selector"
+                  value={anoSelecionado}
+                  onChange={e => setAnoSelecionado(Number(e.target.value))}
+                >
+                  {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i).map(ano => (
+                    <option key={ano} value={ano}>
+                      {ano}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="user-profile-icon">
                 {usuarioAtualizado?.nome_familia ? usuarioAtualizado.nome_familia.charAt(0).toUpperCase() : 'F'}
               </div>

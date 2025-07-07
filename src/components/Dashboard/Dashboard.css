@@ -119,7 +119,14 @@
     vertical-align: middle;
 }
 
-.month-selector {
+.filtros-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.month-selector,
+.year-selector {
   padding: 8px 12px;
   border-radius: 8px; /* Mais arredondado */
   border: 1px solid var(--border-color);
@@ -128,6 +135,19 @@
   font-size: 16px;
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
   box-shadow: 0 1px 2px var(--shadow-color); /* Sombra sutil */
+  cursor: pointer;
+}
+
+.month-selector:hover,
+.year-selector:hover {
+  border-color: var(--primary-color);
+}
+
+.month-selector:focus,
+.year-selector:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
 }
 
 /* Cards */
@@ -661,6 +681,17 @@
 
   .chart-container {
     min-height: 400px;
+  }
+
+  .filtros-container {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .month-selector,
+  .year-selector {
+    font-size: 14px;
+    padding: 6px 10px;
   }
 }
 
