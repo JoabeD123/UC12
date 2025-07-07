@@ -9,8 +9,7 @@ const Configuracoes = ({ usuario, perfil, darkMode, onThemeChange, onLogout }) =
   const [config, setConfig] = useState({
     darkMode: false,
     zoom: 100,
-    notificacoes: true,
-    privacidade: false
+    notificacoes: true
   });
   const [loading, setLoading] = useState(true);
 
@@ -159,24 +158,6 @@ const Configuracoes = ({ usuario, perfil, darkMode, onThemeChange, onLogout }) =
                   type="checkbox"
                   checked={config.notificacoes}
                   onChange={(e) => handleConfigChange('notificacoes', e.target.checked)}
-                />
-                <span className="slider"></span>
-              </label>
-            </div>
-          </div>
-
-          <div className="config-section">
-            <h3>Privacidade</h3>
-            <div className="config-item">
-              <div className="config-label">
-                <span>Modo Privado</span>
-                <p className="config-description">Ocultar informações sensíveis</p>
-              </div>
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  checked={config.privacidade}
-                  onChange={(e) => handleConfigChange('privacidade', e.target.checked)}
                 />
                 <span className="slider"></span>
               </label>
