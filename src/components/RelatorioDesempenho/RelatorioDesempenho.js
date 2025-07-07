@@ -221,13 +221,16 @@ function RelatorioDesempenho({ usuario, perfil, onLogout }) {
   return (
     <div className="relatorio-desempenho">
       <div className="relatorio-header">
-        {location.pathname !== '/selecionar-perfil' && (
-          <button onClick={handleVoltar} className="btn-voltar">
+        <div className="relatorio-header-left">
+          <button onClick={handleVoltar} className="btn-voltar-relatorio">
             <IoArrowBack /> Voltar ao Dashboard
           </button>
-        )}
-        <h1>Meu Desempenho Financeiro</h1>
-        <p className="ano-atual">{anoAtual}</p>
+        </div>
+        <div className="relatorio-header-center">
+          <h1>Meu Desempenho Financeiro</h1>
+          <p className="ano-atual">{anoAtual}</p>
+        </div>
+        <div className="relatorio-header-right"></div>
       </div>
       <div className="relatorio-content">
         <div className="chart-container">

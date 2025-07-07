@@ -105,10 +105,34 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 80px;
   margin-bottom: 2rem;
-  padding-bottom: 1rem;
   border-bottom: 1px solid var(--border-color);
   position: relative;
+  padding: 1rem 0;
+}
+
+.relatorio-header-left,
+.relatorio-header-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.relatorio-header-left {
+  justify-content: flex-start;
+}
+
+.relatorio-header-right {
+  justify-content: flex-end;
+}
+
+.relatorio-header-center {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .relatorio-header h1 {
@@ -125,11 +149,11 @@
   font-weight: 500;
 }
 
-.btn-voltar {
+.btn-voltar-relatorio {
   position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 1rem;
+  left: 1rem;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -146,9 +170,8 @@
   z-index: 2;
 }
 
-.btn-voltar:hover {
+.btn-voltar-relatorio:hover {
   background-color: #3a5fd1;
-  transform: translateY(-2px);
 }
 
 .relatorio-content {
@@ -318,26 +341,30 @@
 @media (max-width: 768px) {
   .relatorio-header {
     flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    padding-bottom: 0.5rem;
+    align-items: stretch;
+    min-height: auto;
+    padding: 0.5rem 0;
   }
-  .btn-voltar {
-    position: static;
-    transform: none;
-    margin-bottom: 1rem;
-    width: 100%;
+  .relatorio-header-left,
+  .relatorio-header-right {
     justify-content: center;
+    margin-bottom: 0.5rem;
+  }
+  .relatorio-header-center {
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-voltar-relatorio {
+    position: static;
+    width: 100%;
+    margin: 0 0 1rem 0;
+    justify-content: center;
+    top: auto;
+    left: auto;
   }
 
   .relatorio-desempenho {
     padding: 1rem;
-  }
-
-  .relatorio-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
   }
 
   .relatorio-header h1 {
@@ -355,11 +382,6 @@
 
   .resumo-grid {
     grid-template-columns: 1fr;
-  }
-
-  .btn-voltar {
-    width: 100%;
-    justify-content: center;
   }
 }
 
