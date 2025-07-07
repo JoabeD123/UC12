@@ -600,28 +600,10 @@ app.put('/api/perfis/:id/hierarquia', async (req, res) => {
     const usuarioId = perfilCheck.rows[0].usuario_id;
     const isCurrentlyPrincipal = perfilCheck.rows[0].is_principal;
 
-    // Verificar se é o primeiro perfil (mais antigo) do usuário
-    const firstProfileCheck = await client.query(
-      'SELECT id_perfil FROM perfil WHERE usuario_id = $1 ORDER BY criado_em ASC LIMIT 1',
-      [usuarioId]
-    );
+    // Permitir total flexibilidade na gestão de perfis principais
 
-    const isFirstProfile = firstProfileCheck.rows[0].id_perfil === parseInt(id);
-
-    // Não permitir rebaixar o primeiro perfil
-    if (isFirstProfile && !is_principal) {
-      await client.query('ROLLBACK');
-      client.release();
-      return res.status(400).json({ message: 'O primeiro perfil criado deve sempre permanecer como principal.' });
-    }
-
-    // Se está promovendo para principal, rebaixar outros perfis do mesmo usuário (exceto o primeiro)
-    if (is_principal && !isCurrentlyPrincipal) {
-      await client.query(
-        'UPDATE perfil SET is_principal = false WHERE usuario_id = $1 AND id_perfil != $2',
-        [usuarioId, id]
-      );
-    }
+    // Permitir múltiplos perfis principais - não rebaixar nenhum perfil existente
+    // Apenas atualizar o status do perfil atual
 
     // Atualizar o perfil
     await client.query(
