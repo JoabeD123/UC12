@@ -9,7 +9,7 @@ function Sidebar({ perfil }) {
 
   return (
     <div className="sidebar">
-      <div className="logo">
+      <div className="logo" style={{cursor: 'pointer'}} onClick={() => navigate('/dashboard')} title="Ir para Dashboard">
         <div className="logo-icon">
           <img 
             src="/logo.png" 
