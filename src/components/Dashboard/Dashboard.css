@@ -767,3 +767,32 @@
 .modal-aviso-vencimento .modal-content button:hover {
   background: #5a32a3;
 } 
+
+/* Estilos para foco visual - Navegação por teclado */
+.credit-card-tab:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+  border-radius: 4px;
+  background-color: var(--hover-color);
+}
+
+.credit-card-tab[role="tab"]:focus {
+  position: relative;
+}
+
+.credit-card-tab[role="tab"]:focus::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: var(--primary-color);
+  border-radius: 2px 2px 0 0;
+}
+
+/* Melhorar contraste do foco */
+.credit-card-tab:focus {
+  color: var(--primary-color);
+  font-weight: 600;
+} 

@@ -266,6 +266,17 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
     }
   };
 
+  const handleKeyDown = (e, action) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (action === 'abertas') {
+        setAbaFatura('abertas');
+      } else if (action === 'fechadas') {
+        setAbaFatura('fechadas');
+      }
+    }
+  };
+
   if (loading) {
     return <div className="loading">Carregando...</div>;
   }
@@ -551,8 +562,28 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
           <div className="credit-card-section">
             <h2>Cartões de crédito</h2>
             <div className="credit-card-tabs">
-              <div className={`credit-card-tab${abaFatura === 'abertas' ? ' active' : ''}`} onClick={() => setAbaFatura('abertas')}>Faturas abertas</div>
-              <div className={`credit-card-tab${abaFatura === 'fechadas' ? ' active' : ''}`} onClick={() => setAbaFatura('fechadas')}>Faturas fechadas</div>
+              <div 
+                className={`credit-card-tab${abaFatura === 'abertas' ? ' active' : ''}`} 
+                onClick={() => setAbaFatura('abertas')}
+                onKeyDown={(e) => handleKeyDown(e, 'abertas')}
+                tabIndex={0}
+                role="tab"
+                aria-label="Faturas abertas"
+                aria-selected={abaFatura === 'abertas'}
+              >
+                Faturas abertas
+              </div>
+              <div 
+                className={`credit-card-tab${abaFatura === 'fechadas' ? ' active' : ''}`} 
+                onClick={() => setAbaFatura('fechadas')}
+                onKeyDown={(e) => handleKeyDown(e, 'fechadas')}
+                tabIndex={0}
+                role="tab"
+                aria-label="Faturas fechadas"
+                aria-selected={abaFatura === 'fechadas'}
+              >
+                Faturas fechadas
+              </div>
             </div>
             {abaFatura === 'abertas' ? (
               <div className="credit-card-list">

@@ -249,6 +249,12 @@ const ImpostoRenda = ({ usuario, perfil }) => {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      setShowInfoPopup(false);
+    }
+  };
+
   return (
     <div className="layout-container">
       <Sidebar perfil={perfil} />
@@ -413,14 +419,30 @@ const ImpostoRenda = ({ usuario, perfil }) => {
       </div>
 
       {showInfoPopup && (
-        <div className={`info-popup-overlay ${showInfoPopup ? 'show' : ''}`} onClick={() => setShowInfoPopup(false)}>
-          <div className="info-popup-content" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className={`info-popup-overlay ${showInfoPopup ? 'show' : ''}`} 
+          onClick={() => setShowInfoPopup(false)}
+          onKeyDown={handleKeyDown}
+          tabIndex={0}
+          role="dialog"
+          aria-label="Informações importantes sobre o cálculo de imposto"
+          aria-modal="true"
+        >
+          <div 
+            className="info-popup-content" 
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
             <h3>Informações Importantes</h3>
             <p>• A calculadora utiliza as tabelas do IR 2024</p>
             <p>• Valores são calculados com base na renda mensal</p>
             <p>• O 13º salário é opcional no cálculo</p>
             <p>• Resultados são aproximados e podem variar</p>
-            <button className="btn-close-popup" onClick={() => setShowInfoPopup(false)}>
+            <button 
+              className="btn-close-popup" 
+              onClick={() => setShowInfoPopup(false)}
+              aria-label="Fechar informações"
+            >
               X
             </button>
           </div>

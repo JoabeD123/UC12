@@ -111,3 +111,51 @@
     font-size: 0.95rem;
   }
 } 
+
+/* Estilos para foco visual - Navegação por teclado */
+.logo:focus,
+.menu-item:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.menu-item:focus {
+  background-color: var(--hover-color);
+  color: var(--primary-color);
+}
+
+/* Remove outline padrão do navegador */
+.logo:focus,
+.menu-item:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Estilos para elementos interativos */
+.logo,
+.menu-item {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logo:hover,
+.menu-item:hover {
+  background-color: var(--hover-color);
+}
+
+/* Acessibilidade - indicadores visuais */
+.menu-item[role="menuitem"] {
+  position: relative;
+}
+
+.menu-item[role="menuitem"]:focus::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: var(--primary-color);
+  border-radius: 0 2px 2px 0;
+} 
