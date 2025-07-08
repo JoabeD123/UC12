@@ -8,8 +8,7 @@ const Configuracoes = ({ usuario, perfil, darkMode, onThemeChange, onLogout }) =
   const navigate = useNavigate();
   const [config, setConfig] = useState({
     darkMode: false,
-    zoom: 100,
-    notificacoes: true
+    zoom: 100
   });
   const [loading, setLoading] = useState(true);
 
@@ -143,24 +142,6 @@ const Configuracoes = ({ usuario, perfil, darkMode, onThemeChange, onLogout }) =
                   +
                 </button>
               </div>
-            </div>
-          </div>
-
-          <div className="config-section">
-            <h3>Notificações</h3>
-            <div className="config-item">
-              <div className="config-label">
-                <span>Notificações do Sistema</span>
-                <p className="config-description">Receber alertas e notificações importantes</p>
-              </div>
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  checked={config.notificacoes}
-                  onChange={(e) => handleConfigChange('notificacoes', e.target.checked)}
-                />
-                <span className="slider"></span>
-              </label>
             </div>
           </div>
 
