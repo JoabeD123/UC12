@@ -474,9 +474,11 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
             <div className="card saldo-atual">
               <div className="card-header">
                 <span className="card-title">Saldo atual</span>
-                <div className="card-icon-wrapper default">
-                  <FaUniversity />
-                </div>
+                <button style={{border: 'none', background: 'none', cursor: 'pointer', padding: 0}} onClick={() => handleNavigation('/desempenho')} title="Ir para Relatório de Desempenho">
+                  <div className="card-icon-wrapper default">
+                    <FaUniversity />
+                  </div>
+                </button>
               </div>
               <p className="amount">R$ {dadosFinanceiros.saldo.toFixed(2).replace('.', ',')}</p>
               {perfil && (perfil.id_perfil === 1 || perfil.is_principal) && (
@@ -492,9 +494,11 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
             <div className="card">
               <div className="card-header">
                 <span className="card-title">Receitas</span>
-                <div className="card-icon-wrapper green">
-                  <FaArrowUp />
-                </div>
+                <button style={{border: 'none', background: 'none', cursor: 'pointer', padding: 0}} onClick={() => handleNavigation('/receitas')} title="Ir para Receitas">
+                  <div className="card-icon-wrapper green">
+                    <FaArrowUp />
+                  </div>
+                </button>
               </div>
               <p className="amount positive">R$ {dadosFinanceiros.receitas.toFixed(2).replace('.', ',')}</p>
             </div>
@@ -502,9 +506,11 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
             <div className="card">
               <div className="card-header">
                 <span className="card-title">Despesas</span>
-                <div className="card-icon-wrapper red">
-                  <FaArrowDown />
-                </div>
+                <button style={{border: 'none', background: 'none', cursor: 'pointer', padding: 0}} onClick={() => handleNavigation('/despesas')} title="Ir para Despesas">
+                  <div className="card-icon-wrapper red">
+                    <FaArrowDown />
+                  </div>
+                </button>
               </div>
               <p className="amount negative">R$ {dadosFinanceiros.despesas.toFixed(2).replace('.', ',')}</p>
             </div>
@@ -512,9 +518,11 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
             <div className="card">
               <div className="card-header">
                 <span className="card-title">Cartão de crédito</span>
-                <div className="card-icon-wrapper blue">
-                  <FaCreditCard />
-                </div>
+                <button style={{border: 'none', background: 'none', cursor: 'pointer', padding: 0}} onClick={() => handleNavigation('/cartoes')} title="Ir para Cartões de Crédito">
+                  <div className="card-icon-wrapper blue">
+                    <FaCreditCard />
+                  </div>
+                </button>
               </div>
               <p className="amount">R$ {gastosCartoes.toFixed(2).replace('.', ',')}</p>
             </div>
@@ -530,7 +538,6 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
                 <div className="doughnut-center-text">R$ {dadosFinanceiros.despesas.toFixed(2).replace('.', ',')}</div>
                 <div className="doughnut-center-subtext">Total</div>
               </div>
-              <button className="ver-mais-btn">VER MAIS</button>
             </div>
 
             <div className="chart-container">
@@ -538,7 +545,6 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
               <div className="chart-wrapper">
                 <Bar data={comparacaoChartData} options={barChartOptions} />
               </div>
-              <button className="ver-mais-btn">VER MAIS</button>
             </div>
           </div>
 

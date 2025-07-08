@@ -195,21 +195,31 @@
     color: var(--primary-purple);
 }
 
-.card-icon-wrapper {
+.card-icon-wrapper, .card-icon-wrapper button {
     width: 40px;
     height: 40px;
-    border-radius: 50%;
     display: flex;
-    justify-content: center;
     align-items: center;
-    font-size: 1.2rem;
-    color: var(--white);
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    color: #fff;
+    border: none;
+    background: none;
+    padding: 0;
+    outline: none;
+    transition: box-shadow 0.2s;
 }
 
-.card-icon-wrapper.blue { background-color: var(--icon-bg-blue); }
 .card-icon-wrapper.green { background-color: var(--icon-bg-green); }
 .card-icon-wrapper.red { background-color: var(--icon-bg-red); }
+.card-icon-wrapper.blue { background-color: var(--icon-bg-blue); }
 .card-icon-wrapper.default { background-color: var(--icon-bg-default); color: var(--text-dark); }
+
+.card-icon-wrapper:focus, .card-icon-wrapper:hover {
+    box-shadow: 0 0 0 2px var(--primary-color, #1976D2);
+    outline: none;
+}
 
 .amount {
   font-size: 28px; /* Aumentado o tamanho da fonte */
