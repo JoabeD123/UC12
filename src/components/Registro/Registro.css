@@ -157,21 +157,29 @@
 .btn-link {
   display: block;
   width: 100%;
-  padding: 0.8rem; /* Ajustado o padding */
+  padding: 0.8rem;
   background: none;
   border: none;
-  color: var(--primary-purple); /* Cor roxa */
+  color: var(--primary-purple);
   text-align: center;
-  text-decoration: none; /* Remover underline */
-  margin-top: 1.5rem; /* Aumentado a margem superior */
+  text-decoration: none;
+  margin-top: 1.5rem;
   font-weight: 500;
   cursor: pointer;
-  transition: color 0.3s ease;
+  border-radius: 8px;
+  transition: 
+    color 0.2s,
+    background 0.2s,
+    box-shadow 0.2s,
+    transform 0.15s;
 }
 
 .btn-link:hover {
-  text-decoration: underline; /* Adiciona underline no hover */
-  color: var(--primary-hover);
+  color: #222;
+  background: #f5f6fa;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.07);
+  text-decoration: underline;
+  transform: translateY(-2px) scale(1.03);
 }
 
 .erro-mensagem {
