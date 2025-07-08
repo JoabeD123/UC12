@@ -61,7 +61,7 @@ code {
   --hover-color: #f5f5f5;
   --shadow-color: rgba(0, 0, 0, 0.1);
   --primary-color: #1976D2;
-  --secondary-color: #6c757d;
+  --secondary-color: #495057; /* Melhorada para contraste WCAG */
   --success-color: #28a745;
   --danger-color: #dc3545;
   --card-bg: #ffffff;
@@ -79,7 +79,7 @@ code {
   --hover-color: #1e1e1e;
   --shadow-color: rgba(0, 0, 0, 0.3);
   --primary-color: #1976D2;
-  --secondary-color: #6c757d;
+  --secondary-color: #a0a0a0; /* Melhorada para contraste WCAG no tema escuro */
   --success-color: #198754;
   --danger-color: #dc3545;
   --card-bg: #1e1e1e;
