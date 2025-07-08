@@ -83,9 +83,32 @@
   transition: color 0.3s ease;
 }
 
-.form-group {
-  margin-bottom: 1.5rem; /* Aumentado a margem inferior */
+.email-sugestoes {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-top: 2px;
+  list-style: none;
+  padding: 0;
+  z-index: 10;
+  width: 100%;
+  max-width: 350px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
+.email-sugestoes li {
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #333;
+  background: #fff;
+  transition: background 0.2s;
+}
+.email-sugestoes li.ativa,
+.email-sugestoes li:hover {
+  background: #e3f2fd;
+  color: #1976D2;
+}
+.form-group { position: relative; }
 
 .form-group label {
   display: block;

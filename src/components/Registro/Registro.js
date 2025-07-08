@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Registro.css';
 
@@ -8,12 +8,39 @@ function Registro() {
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailSugestoes, setEmailSugestoes] = useState([]);
+  const [sugestaoAtiva, setSugestaoAtiva] = useState(-1);
+  const emailInputRef = useRef(null);
   const navigate = useNavigate();
+
+  const dominiosPopulares = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com'];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErro(null);
     setLoading(true);
+
+    // Validação básica no frontend
+    if (!nome || !email || !senha) {
+      setErro('Preencha todos os campos obrigatórios.');
+      setLoading(false);
+      return;
+    }
+    if (senha.length < 8) {
+      setErro('A senha deve ter pelo menos 8 caracteres.');
+      setLoading(false);
+      return;
+    }
+    if (!/[0-9]/.test(senha)) {
+      setErro('A senha deve conter pelo menos 1 número.');
+      setLoading(false);
+      return;
+    }
+    if (!(/[A-Z]/.test(senha) || /[^a-zA-Z0-9]/.test(senha))) {
+      setErro('A senha deve conter pelo menos 1 letra maiúscula ou 1 caractere especial.');
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch('http://localhost:3001/api/register', {
@@ -24,21 +51,92 @@ function Registro() {
         body: JSON.stringify({ nome_familia: nome, email, senha }),
       });
 
-      const data = await response.json();
+      let data = {};
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        // Se não for possível fazer o parse do JSON
+        setErro('Erro inesperado. Tente novamente mais tarde.');
+        setLoading(false);
+        return;
+      }
 
       if (!response.ok) {
-        // Se a resposta não for OK (ex: 409, 400, 500)
-        throw new Error(data.message || 'Erro ao criar conta');
+        // Erros conhecidos do backend
+        if (response.status === 409) {
+          setErro('Este email já está cadastrado.');
+        } else if (response.status === 400) {
+          setErro(data.message || 'Preencha todos os campos obrigatórios.');
+        } else {
+          setErro(data.message || 'Erro ao criar conta. Tente novamente.');
+        }
+        setLoading(false);
+        return;
       }
 
       // Redirecionar para a tela de criação do primeiro perfil após registro bem-sucedido
       navigate('/criar-primeiro-perfil', { state: { userId: data.userId } });
       
     } catch (error) {
-      console.error('Erro ao registrar:', error.message);
-      setErro(error.message || 'Erro ao criar conta. Tente novamente.');
+      if (error.name === 'TypeError') {
+        setErro('Não foi possível conectar ao servidor. Verifique sua conexão.');
+      } else {
+        setErro(error.message || 'Erro ao criar conta. Tente novamente.');
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Sugestão de domínios ao digitar
+  const handleEmailChange = (e) => {
+    const valor = e.target.value;
+    setEmail(valor);
+    setSugestaoAtiva(-1);
+    const atIndex = valor.indexOf('@');
+    if (atIndex > -1) {
+      const prefixo = valor.slice(0, atIndex + 1);
+      const textoDominio = valor.slice(atIndex + 1).toLowerCase();
+      if (textoDominio.length === 0) {
+        setEmailSugestoes(dominiosPopulares.map(dom => prefixo + dom));
+      } else {
+        setEmailSugestoes(
+          dominiosPopulares
+            .filter(dom => dom.startsWith(textoDominio))
+            .map(dom => prefixo + dom)
+        );
+      }
+    } else {
+      setEmailSugestoes([]);
+    }
+  };
+
+  const handleSugestaoClick = (sugestao) => {
+    setEmail(sugestao);
+    setEmailSugestoes([]);
+    setSugestaoAtiva(-1);
+    // Foca no próximo campo (senha)
+    setTimeout(() => {
+      if (emailInputRef.current) {
+        emailInputRef.current.blur();
+      }
+    }, 100);
+  };
+
+  const handleEmailKeyDown = (e) => {
+    if (emailSugestoes.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      setSugestaoAtiva((prev) => (prev + 1) % emailSugestoes.length);
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      setSugestaoAtiva((prev) => (prev - 1 + emailSugestoes.length) % emailSugestoes.length);
+      e.preventDefault();
+    } else if (e.key === 'Enter' && sugestaoAtiva >= 0) {
+      handleSugestaoClick(emailSugestoes[sugestaoAtiva]);
+      e.preventDefault();
+    } else if (e.key === 'Escape') {
+      setEmailSugestoes([]);
+      setSugestaoAtiva(-1);
     }
   };
 
@@ -62,9 +160,25 @@ function Registro() {
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
+              onKeyDown={handleEmailKeyDown}
+              ref={emailInputRef}
               required
+              autoComplete="off"
             />
+            {emailSugestoes.length > 0 && (
+              <ul className="email-sugestoes">
+                {emailSugestoes.map((sugestao, idx) => (
+                  <li
+                    key={sugestao}
+                    className={sugestaoAtiva === idx ? 'ativa' : ''}
+                    onMouseDown={() => handleSugestaoClick(sugestao)}
+                  >
+                    {sugestao}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <div className="form-group">
             <label>Senha:</label>
