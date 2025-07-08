@@ -530,7 +530,6 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
                 <div className="doughnut-center-text">R$ {dadosFinanceiros.despesas.toFixed(2).replace('.', ',')}</div>
                 <div className="doughnut-center-subtext">Total</div>
               </div>
-              <button className="ver-mais-btn">VER MAIS</button>
             </div>
 
             <div className="chart-container">
@@ -538,7 +537,6 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
               <div className="chart-wrapper">
                 <Bar data={comparacaoChartData} options={barChartOptions} />
               </div>
-              <button className="ver-mais-btn">VER MAIS</button>
             </div>
           </div>
 
