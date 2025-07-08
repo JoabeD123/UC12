@@ -186,8 +186,8 @@
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
-  border-color: var(--danger-color);
-  box-shadow: 0 0 0 3px rgba(231, 74, 59, 0.1);
+  border-color: var(--focus-color, var(--danger-color));
+  box-shadow: 0 0 0 3px var(--focus-shadow, rgba(231, 74, 59, 0.1));
   outline: none;
 }
 

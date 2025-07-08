@@ -53,6 +53,7 @@ code {
   }
 }
 
+/* Sistema de Foco Visível - WCAG 2.1 */
 :root {
   /* Variáveis para o tema claro (padrão) */
   --bg-color: #ffffff;
@@ -69,6 +70,8 @@ code {
   --input-border: #ced4da;
   --sidebar-bg: #f8f9fa;
   --sidebar-hover: #e9ecef;
+  --focus-color: #1976D2;
+  --focus-shadow: rgba(25, 118, 210, 0.25);
 }
 
 /* Variáveis para o tema escuro */
@@ -87,6 +90,8 @@ code {
   --input-border: #404040;
   --sidebar-bg: #1a1a1a;
   --sidebar-hover: #2d2d2d;
+  --focus-color: #64B5F6;
+  --focus-shadow: rgba(100, 181, 246, 0.3);
 }
 
 /* Estilos base que se aplicam a todo o site */
@@ -94,6 +99,53 @@ body {
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Sistema de Foco Visível - Elementos Interativos */
+button:focus,
+input:focus,
+select:focus,
+textarea:focus,
+a:focus,
+[tabindex]:focus,
+[role="button"]:focus,
+[role="menuitem"]:focus,
+[role="tab"]:focus,
+[role="link"]:focus {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Foco específico para inputs e selects */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--focus-color);
+  box-shadow: 0 0 0 3px var(--focus-shadow);
+}
+
+/* Foco específico para botões */
+button:focus {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--focus-shadow);
+}
+
+/* Foco específico para links */
+a:focus {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
+  text-decoration: underline;
+}
+
+/* Foco para elementos com role específico */
+[role="menuitem"]:focus,
+[role="tab"]:focus {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
+  background-color: var(--hover-color);
 }
 
 /* Estilos para cards e containers */
@@ -115,12 +167,6 @@ input, select, textarea {
   padding: 8px;
   border-radius: 4px;
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-}
-
-input:focus, select:focus, textarea:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
 }
 
 /* Estilos para botões */

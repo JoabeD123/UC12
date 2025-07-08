@@ -115,20 +115,20 @@
 /* Estilos para foco visual - Navegação por teclado */
 .logo:focus,
 .menu-item:focus {
-  outline: 2px solid var(--primary-color);
+  outline: 2px solid var(--focus-color);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 .menu-item:focus {
   background-color: var(--hover-color);
-  color: var(--primary-color);
+  color: var(--focus-color);
 }
 
 /* Remove outline padrão do navegador */
 .logo:focus,
 .menu-item:focus {
-  outline: 2px solid var(--primary-color);
+  outline: 2px solid var(--focus-color);
   outline-offset: 2px;
 }
 
@@ -156,6 +156,6 @@
   top: 0;
   bottom: 0;
   width: 3px;
-  background-color: var(--primary-color);
+  background-color: var(--focus-color);
   border-radius: 0 2px 2px 0;
 } 

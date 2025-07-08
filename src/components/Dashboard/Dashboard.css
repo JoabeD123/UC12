@@ -146,8 +146,8 @@
 .month-selector:focus,
 .year-selector:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+  border-color: var(--focus-color);
+  box-shadow: 0 0 0 3px var(--focus-shadow);
 }
 
 /* Cards */
@@ -217,8 +217,9 @@
 .card-icon-wrapper.default { background-color: var(--icon-bg-default); color: var(--text-color); }
 
 .card-icon-wrapper:focus, .card-icon-wrapper:hover {
-    box-shadow: 0 0 0 2px var(--primary-color, #1976D2);
-    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-shadow);
+    outline: 2px solid var(--focus-color);
+    outline-offset: 2px;
 }
 
 .amount {
@@ -770,7 +771,7 @@
 
 /* Estilos para foco visual - Navegação por teclado */
 .credit-card-tab:focus {
-  outline: 2px solid var(--primary-color);
+  outline: 2px solid var(--focus-color);
   outline-offset: 2px;
   border-radius: 4px;
   background-color: var(--hover-color);
@@ -787,12 +788,12 @@
   left: 0;
   right: 0;
   height: 3px;
-  background-color: var(--primary-color);
+  background-color: var(--focus-color);
   border-radius: 2px 2px 0 0;
 }
 
 /* Melhorar contraste do foco */
 .credit-card-tab:focus {
-  color: var(--primary-color);
+  color: var(--focus-color);
   font-weight: 600;
 } 

@@ -83,8 +83,8 @@
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px var(--shadow-color);
+  border-color: var(--focus-color, var(--primary-color));
+  box-shadow: 0 0 0 3px var(--focus-shadow, var(--shadow-color));
   outline: none;
 }
 

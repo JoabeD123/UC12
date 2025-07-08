@@ -1268,3 +1268,47 @@ input:focus, select:focus {
     margin: 2px;
   }
 }
+
+/* Sistema de Foco Visível Global - WCAG 2.1 */
+*:focus {
+  outline: 2px solid var(--focus-color, #1976D2);
+  outline-offset: 2px;
+}
+
+/* Exceções para elementos que já têm foco personalizado */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--focus-color, #1976D2);
+  box-shadow: 0 0 0 3px var(--focus-shadow, rgba(25, 118, 210, 0.25));
+}
+
+/* Foco para elementos com roles específicos */
+[role="button"]:focus,
+[role="menuitem"]:focus,
+[role="tab"]:focus,
+[role="link"]:focus {
+  outline: 2px solid var(--focus-color, #1976D2);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Foco para elementos com tabindex */
+[tabindex]:focus {
+  outline: 2px solid var(--focus-color, #1976D2);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Melhorar contraste do foco no tema escuro */
+[data-theme="dark"] *:focus {
+  outline-color: var(--focus-color, #64B5F6);
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+  border-color: var(--focus-color, #64B5F6);
+  box-shadow: 0 0 0 3px var(--focus-shadow, rgba(100, 181, 246, 0.3));
+}
