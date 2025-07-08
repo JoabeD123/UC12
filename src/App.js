@@ -26,32 +26,12 @@ function App() {
     // Carregar usuário e configurações ao iniciar
     const loadUserData = async () => {
       try {
-        const userData = JSON.parse(localStorage.getItem('currentUser'));
-        if (userData) {
-          // Verifica se o usuário ainda existe no backend
-          const res = await fetch(`http://localhost:3001/api/usuario/${userData.id_usuario}`);
-          if (!res.ok) {
-            handleLogout();
-            setLoading(false);
-            return;
-          }
-          setCurrentUser(userData);
-          const profileData = JSON.parse(localStorage.getItem(`profile_${userData.id_usuario}`));
-          if (profileData) {
-            // Verifica se o perfil ainda existe no backend
-            const resPerfil = await fetch(`http://localhost:3001/api/perfil/${profileData.id_perfil}`);
-            if (!resPerfil.ok) {
-              handleLogout();
-              setLoading(false);
-              return;
-            }
-            setProfile(profileData);
-          }
-          // Carregar configurações específicas do usuário
-          const userConfig = JSON.parse(localStorage.getItem(`config_${userData.id_usuario}`)) || {};
-          setDarkMode(userConfig.darkMode || false);
-          document.documentElement.setAttribute('data-theme', userConfig.darkMode ? 'dark' : 'light');
-        }
+        // REMOVIDO: localStorage.getItem('currentUser')
+        // O usuário só será setado após login bem-sucedido
+        setCurrentUser(null);
+        setProfile(null);
+        setDarkMode(false);
+        document.documentElement.setAttribute('data-theme', 'light');
       } catch (error) {
         console.error('Erro ao carregar dados do usuário:', error);
         handleLogout();
@@ -59,13 +39,12 @@ function App() {
         setLoading(false);
       }
     };
-
     loadUserData();
   }, []);
 
   const handleLogin = async (user, userProfile) => {
     try {
-      // Buscar perfis do usuário
+      // Buscar perfis do usuário SEM usar localStorage
       const profilesResponse = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${user.id_usuario}`);
       const profilesData = await profilesResponse.json();
       if (!profilesResponse.ok) {
@@ -73,11 +52,8 @@ function App() {
       }
       if (profilesData.profiles && profilesData.profiles.length > 0) {
         const primeiroPerfil = profilesData.profiles[0];
-        console.log('Usando primeiro perfil:', primeiroPerfil);
-        
         setCurrentUser(user);
         setProfile(primeiroPerfil);
-        
         // Carregar configurações do usuário do backend
         try {
           const configResponse = await fetch(`http://localhost:3001/api/configuracoes/${user.id_usuario}`);
@@ -90,13 +66,10 @@ function App() {
             document.documentElement.setAttribute('data-theme', 'light');
           }
         } catch (error) {
-          console.error('Erro ao carregar configurações:', error);
           setDarkMode(false);
           document.documentElement.setAttribute('data-theme', 'light');
         }
       } else {
-        // Se não há perfis, redirecionar para criar o primeiro perfil
-        console.log('Usuário não tem perfis, redirecionando para criar primeiro perfil');
         window.location.href = `/criar-primeiro-perfil?userId=${user.id_usuario}`;
       }
     } catch (error) {
@@ -110,7 +83,7 @@ function App() {
       setProfile(null);
       setDarkMode(false);
       document.documentElement.setAttribute('data-theme', 'light');
-      console.log('Logout realizado com sucesso');
+      // REMOVIDO: localStorage.clear() ou removeItem
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }
@@ -162,7 +135,7 @@ function App() {
             path="/criar-primeiro-perfil" 
             element={
               !currentUser ? (
-                <CriarPrimeiroPerfil />
+                <CriarPrimeiroPerfil onLogin={handleLogin} />
               ) : (
                 <Navigate to="/dashboard" replace />
               )

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './CriarPrimeiroPerfil.css';
 
-function CriarPrimeiroPerfil() {
+function CriarPrimeiroPerfil({ onLogin }) {
   const navigate = useNavigate();
   const location = useLocation();
   const userId = location.state?.userId;
@@ -66,18 +66,15 @@ function CriarPrimeiroPerfil() {
       // Se houver perfis, usar o primeiro como perfil atual
       if (profilesData.profiles && profilesData.profiles.length > 0) {
         const primeiroPerfil = profilesData.profiles[0];
-        
-        // Salva os dados no localStorage
-        const userLogged = {
-          id_usuario: userId,
-          nome_familia: data.nome_familia
-        };
-        
-        localStorage.setItem('currentUser', JSON.stringify(userLogged));
-        localStorage.setItem(`profile_${userId}`, JSON.stringify(primeiroPerfil));
-        
-        // Recarrega a página para atualizar o estado global
-        window.location.href = '/dashboard';
+        // Buscar dados do usuário para passar ao onLogin
+        const userResponse = await fetch(`http://localhost:3001/api/usuario/${userId}`);
+        const userData = await userResponse.json();
+        if (!userResponse.ok) throw new Error(userData.message || 'Erro ao buscar usuário.');
+        // Chamar onLogin para atualizar o estado global e redirecionar
+        if (onLogin) {
+          await onLogin(userData, primeiroPerfil);
+        }
+        navigate('/dashboard', { replace: true });
       } else {
         throw new Error('Nenhum perfil encontrado para este usuário');
       }
