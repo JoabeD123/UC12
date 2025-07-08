@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit, FaExclamationTriangle } from 'react-icons/fa';
 import './Receitas.css';
 import Sidebar from '../Sidebar/Sidebar';
 
@@ -193,7 +193,17 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   }
 
   if (error) {
-    return <div className="error">{error}</div>;
+    return (
+      <div className="layout-container">
+        <Sidebar perfil={perfil} />
+        <div className="receitas">
+          <div className="error" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <FaExclamationTriangle aria-label="Erro" />
+            {error}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

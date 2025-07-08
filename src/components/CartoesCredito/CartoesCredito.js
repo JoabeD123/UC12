@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './CartoesCredito.css';
 import Sidebar from '../Sidebar/Sidebar';
 import { Bar, Doughnut } from 'react-chartjs-2';
+import { FaExclamationTriangle } from 'react-icons/fa';
 
 const API_URL = 'http://localhost:3001/api/cartoes';
 
@@ -313,7 +314,12 @@ const CartoesCredito = ({ perfil }) => {
           </button>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && (
+          <div className="error-message" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <FaExclamationTriangle aria-label="Erro" />
+            {error}
+          </div>
+        )}
 
         {mostrarFormulario && (
           <div className="novo-cartao-form">

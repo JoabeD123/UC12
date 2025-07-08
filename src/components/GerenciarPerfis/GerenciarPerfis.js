@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './GerenciarPerfis.css';
 import Sidebar from '../Sidebar/Sidebar';
-import { FaSave, FaPlus, FaTimes, FaEdit, FaTrash, FaCrown, FaUser } from 'react-icons/fa';
+import { FaSave, FaPlus, FaTimes, FaEdit, FaTrash, FaCrown, FaUser, FaExclamationTriangle } from 'react-icons/fa';
 
 const GerenciarPerfis = ({ usuario, perfil }) => {
   const [perfis, setPerfis] = useState([]);
@@ -181,7 +181,12 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
           <h2>Gerenciar Perfis de Acesso</h2>
         </div>
 
-        {erro && <div className="error-message">{erro}</div>}
+        {erro && (
+          <div className="error-message" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <FaExclamationTriangle aria-label="Erro" />
+            {erro}
+          </div>
+        )}
 
         <div className="perfis-content">
           <div className="novo-perfil-form">

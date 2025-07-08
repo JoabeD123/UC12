@@ -13,7 +13,7 @@ import {
 import { Doughnut, Bar } from 'react-chartjs-2';
 import './Dashboard.css';
 import Sidebar from '../Sidebar/Sidebar';
-import { FaUniversity, FaArrowUp, FaArrowDown, FaCreditCard } from 'react-icons/fa';
+import { FaUniversity, FaArrowUp, FaArrowDown, FaCreditCard, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
 import { IoArrowForward } from 'react-icons/io5';
 
 // Registrar os componentes necessários do Chart.js
@@ -511,7 +511,10 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
                   </div>
                 </button>
               </div>
-              <p className="amount positive">R$ {dadosFinanceiros.receitas.toFixed(2).replace('.', ',')}</p>
+              <p className="amount positive">
+                <FaArrowUp style={{ marginRight: '8px', fontSize: '0.8em' }} aria-label="Receita" />
+                R$ {dadosFinanceiros.receitas.toFixed(2).replace('.', ',')}
+              </p>
             </div>
 
             <div className="card">
@@ -523,7 +526,10 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
                   </div>
                 </button>
               </div>
-              <p className="amount negative">R$ {dadosFinanceiros.despesas.toFixed(2).replace('.', ',')}</p>
+              <p className="amount negative">
+                <FaArrowDown style={{ marginRight: '8px', fontSize: '0.8em' }} aria-label="Despesa" />
+                R$ {dadosFinanceiros.despesas.toFixed(2).replace('.', ',')}
+              </p>
             </div>
 
             <div className="card">
@@ -621,8 +627,18 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
                         </div>
                       </div>
                       <span className="card-amount negative">R$ {Number(fatura.valor_fechado ?? 0).toFixed(2).replace('.', ',')}</span>
-                      <span style={{ color: fatura.paga ? 'green' : 'red', fontWeight: 600, marginLeft: 10 }}>
-                        {fatura.paga ? 'Paga' : `Pendente (Pago: R$ ${Number(fatura.valor_pago ?? 0).toFixed(2).replace('.', ',')})`}
+                      <span style={{ color: fatura.paga ? 'green' : 'red', fontWeight: 600, marginLeft: 10, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        {fatura.paga ? (
+                          <>
+                            <FaCheckCircle aria-label="Fatura paga" />
+                            Paga
+                          </>
+                        ) : (
+                          <>
+                            <FaExclamationTriangle aria-label="Fatura pendente" />
+                            Pendente (Pago: R$ {Number(fatura.valor_pago ?? 0).toFixed(2).replace('.', ',')})
+                          </>
+                        )}
                       </span>
                     </div>
                   ))

@@ -12,7 +12,7 @@ import {
 } from 'chart.js';
 import './ImpostoRenda.css';
 import Sidebar from '../Sidebar/Sidebar';
-import { FaInfoCircle } from 'react-icons/fa';
+import { FaInfoCircle, FaExclamationTriangle } from 'react-icons/fa';
 
 // Registrar os componentes do Chart.js
 ChartJS.register(
@@ -276,7 +276,12 @@ const ImpostoRenda = ({ usuario, perfil }) => {
           </div>
         </div>
 
-        {erro && <div className="error-message">{erro}</div>}
+        {erro && (
+          <div className="error-message" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <FaExclamationTriangle aria-label="Erro" />
+            {erro}
+          </div>
+        )}
 
         <div className="imposto-main-content">
           <div className="imposto-content">

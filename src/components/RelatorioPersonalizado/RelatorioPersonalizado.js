@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FaExclamationTriangle } from 'react-icons/fa';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -273,7 +275,8 @@ function RelatorioPersonalizado({ usuario, perfil, onLogout }) {
             </button>
 
             {error && (
-              <div className="error-message">
+              <div className="error-message" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <FaExclamationTriangle aria-label="Erro" />
                 {error}
               </div>
             )}

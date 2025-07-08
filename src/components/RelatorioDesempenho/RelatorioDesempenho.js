@@ -15,6 +15,7 @@ import { Line } from 'react-chartjs-2';
 import './RelatorioDesempenho.css';
 // import Sidebar from '../Sidebar/Sidebar';
 import { IoArrowBack } from 'react-icons/io5';
+import { FaExclamationTriangle } from 'react-icons/fa';
 
 // Registrar os componentes necessários do Chart.js
 ChartJS.register(
@@ -209,10 +210,16 @@ function RelatorioDesempenho({ usuario, perfil, onLogout }) {
 
   if (error) {
     return (
-      <div className="relatorio-desempenho">
-        <div className="error-container">
-          <div className="error">{error}</div>
-          <button onClick={carregarDadosAnuais} className="btn-retry">Tentar Novamente</button>
+      <div className="layout-container">
+        {/* <Sidebar perfil={perfil} /> */}
+        <div className="relatorio-desempenho">
+          <div className="error-container">
+            <div className="error" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <FaExclamationTriangle aria-label="Erro" />
+              {error}
+            </div>
+            <button onClick={carregarDadosAnuais} className="btn-retry">Tentar Novamente</button>
+          </div>
         </div>
       </div>
     );
