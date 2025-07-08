@@ -1218,16 +1218,29 @@ app.post('/api/cartoes', async (req, res) => {
 app.put('/api/cartoes/:id', async (req, res) => {
   const { id } = req.params;
   const { nome, limite, dia_vencimento, bandeira, gastos } = req.body;
+  
+  console.log('🔄 PUT /api/cartoes/:id - Atualizando cartão:', { id, nome, limite, dia_vencimento, bandeira, gastos });
+  
   try {
     const client = await pool.connect();
+    console.log('📊 Executando query de atualização para cartão ID:', id);
+    
     const result = await client.query(
       'UPDATE cartao_credito SET nome = $1, limite = $2, dia_vencimento = $3, bandeira = $4, gastos = $5 WHERE id_cartao = $6 RETURNING *',
       [nome, limite, dia_vencimento, bandeira, gastos, id]
     );
+    
+    console.log('✅ Cartão atualizado com sucesso:', result.rows[0]);
     client.release();
     res.status(200).json(result.rows[0]);
   } catch (err) {
-    console.error('Erro ao atualizar cartão:', err);
+    console.error('❌ Erro ao atualizar cartão:', err);
+    console.error('📋 Detalhes do erro:', {
+      message: err.message,
+      code: err.code,
+      detail: err.detail,
+      hint: err.hint
+    });
     res.status(500).json({ message: 'Erro ao atualizar cartão.' });
   }
 });

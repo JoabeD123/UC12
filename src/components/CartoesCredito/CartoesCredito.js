@@ -8,6 +8,9 @@ const API_URL = 'http://localhost:3001/api/cartoes';
 
 const CartoesCredito = ({ perfil }) => {
   const navigate = useNavigate();
+  
+  console.log('🎯 CartoesCredito renderizado com props:', { perfil });
+  
   const [cartoes, setCartoes] = useState([]);
   const [novoCartao, setNovoCartao] = useState({
     nome: '',
@@ -94,12 +97,25 @@ const CartoesCredito = ({ perfil }) => {
     setMostrarFormulario(true);
   };
 
-  const handleSalvarEdicao = async () => {
+  const handleSalvarEdicao = async (e) => {
+    e.preventDefault(); // Prevenir comportamento padrão do formulário
+    console.log('✏️ handleSalvarEdicao iniciado:', { editandoCartao, novoCartao, perfil });
+    
     if (!novoCartao.nome || !novoCartao.limite || !novoCartao.diaVencimento) {
       setError('Por favor, preencha todos os campos');
       return;
     }
+    
     try {
+      console.log('📤 Enviando requisição PUT para:', `${API_URL}/${editandoCartao.id_cartao}`);
+      console.log('📦 Dados enviados:', {
+        nome: novoCartao.nome,
+        limite: parseFloat(novoCartao.limite),
+        dia_vencimento: parseInt(novoCartao.diaVencimento),
+        bandeira: novoCartao.bandeira,
+        gastos: gastos[editandoCartao.id_cartao] || 0
+      });
+      
       const response = await fetch(`${API_URL}/${editandoCartao.id_cartao}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -111,14 +127,28 @@ const CartoesCredito = ({ perfil }) => {
           gastos: gastos[editandoCartao.id_cartao] || 0
         })
       });
+      
+      console.log('📥 Resposta do servidor:', { status: response.status, ok: response.ok });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ Erro do servidor:', errorData);
+        throw new Error(`Erro ${response.status}: ${errorData.message || 'Erro desconhecido'}`);
+      }
+      
       const atualizado = await response.json();
+      console.log('✅ Cartão atualizado com sucesso:', atualizado);
+      
       setCartoes(prev => prev.map(c => c.id_cartao === atualizado.id_cartao ? atualizado : c));
       setEditandoCartao(null);
       setNovoCartao({ nome: '', limite: '', diaVencimento: '', bandeira: 'visa' });
       setError('');
       setMostrarFormulario(false);
-    } catch {
-      setError('Erro ao editar cartão');
+      
+      console.log('🎉 Edição finalizada com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao editar cartão:', error);
+      setError(`Erro ao editar cartão: ${error.message}`);
     }
   };
 

@@ -26,10 +26,57 @@ function App() {
     // Carregar usuário e configurações ao iniciar
     const loadUserData = async () => {
       try {
-        // REMOVIDO: localStorage.getItem('currentUser')
-        // O usuário só será setado após login bem-sucedido
-        setCurrentUser(null);
-        setProfile(null);
+        // Tentar recuperar sessão do sessionStorage
+        const savedUser = sessionStorage.getItem('currentUser');
+        const savedProfile = sessionStorage.getItem('currentProfile');
+        
+        if (savedUser && savedProfile) {
+          console.log('🔄 Recuperando sessão do sessionStorage');
+          const user = JSON.parse(savedUser);
+          const profile = JSON.parse(savedProfile);
+          
+          // Verificar se a sessão ainda é válida no backend
+          try {
+            const userCheck = await fetch(`http://localhost:3001/api/usuario/${user.id_usuario}`);
+            const profileCheck = await fetch(`http://localhost:3001/api/perfil/${profile.id_perfil}`);
+            
+            if (userCheck.ok && profileCheck.ok) {
+              console.log('✅ Sessão válida, restaurando estado');
+              setCurrentUser(user);
+              setProfile(profile);
+              
+              // Carregar configurações
+              try {
+                const configResponse = await fetch(`http://localhost:3001/api/configuracoes/${user.id_usuario}`);
+                if (configResponse.ok) {
+                  const configData = await configResponse.json();
+                  setDarkMode(configData.darkMode || false);
+                  document.documentElement.setAttribute('data-theme', configData.darkMode ? 'dark' : 'light');
+                }
+              } catch (error) {
+                setDarkMode(false);
+                document.documentElement.setAttribute('data-theme', 'light');
+              }
+            } else {
+              console.log('❌ Sessão inválida, limpando sessionStorage');
+              sessionStorage.removeItem('currentUser');
+              sessionStorage.removeItem('currentProfile');
+              setCurrentUser(null);
+              setProfile(null);
+            }
+          } catch (error) {
+            console.log('❌ Erro ao verificar sessão:', error);
+            sessionStorage.removeItem('currentUser');
+            sessionStorage.removeItem('currentProfile');
+            setCurrentUser(null);
+            setProfile(null);
+          }
+        } else {
+          console.log('📝 Nenhuma sessão encontrada');
+          setCurrentUser(null);
+          setProfile(null);
+        }
+        
         setDarkMode(false);
         document.documentElement.setAttribute('data-theme', 'light');
       } catch (error) {
@@ -44,6 +91,7 @@ function App() {
 
   const handleLogin = async (user, userProfile) => {
     try {
+      console.log('🔐 handleLogin chamado com:', { user, userProfile });
       // Buscar perfis do usuário SEM usar localStorage
       const profilesResponse = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${user.id_usuario}`);
       const profilesData = await profilesResponse.json();
@@ -52,8 +100,15 @@ function App() {
       }
       if (profilesData.profiles && profilesData.profiles.length > 0) {
         const primeiroPerfil = profilesData.profiles[0];
+        console.log('👤 Definindo currentUser e profile:', { user, primeiroPerfil });
         setCurrentUser(user);
         setProfile(primeiroPerfil);
+        
+        // Salvar sessão no sessionStorage
+        sessionStorage.setItem('currentUser', JSON.stringify(user));
+        sessionStorage.setItem('currentProfile', JSON.stringify(primeiroPerfil));
+        console.log('💾 Sessão salva no sessionStorage');
+        
         // Carregar configurações do usuário do backend
         try {
           const configResponse = await fetch(`http://localhost:3001/api/configuracoes/${user.id_usuario}`);
@@ -73,17 +128,21 @@ function App() {
         window.location.href = `/criar-primeiro-perfil?userId=${user.id_usuario}`;
       }
     } catch (error) {
-      console.error('Erro detalhado no handleLogin:', error);
+      console.error('❌ Erro detalhado no handleLogin:', error);
     }
   };
 
   const handleLogout = () => {
+    console.log('🚪 handleLogout chamado - limpando estado global');
     try {
       setCurrentUser(null);
       setProfile(null);
       setDarkMode(false);
       document.documentElement.setAttribute('data-theme', 'light');
-      // REMOVIDO: localStorage.clear() ou removeItem
+      // Limpar sessionStorage
+      sessionStorage.removeItem('currentUser');
+      sessionStorage.removeItem('currentProfile');
+      console.log('🗑️ SessionStorage limpo');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }
@@ -208,7 +267,10 @@ function App() {
                   perfil={profile}
                 />
               ) : (
-                <Navigate to="/login" replace />
+                (() => {
+                  console.log('🚫 Redirecionando para login - currentUser é null:', { currentUser, profile });
+                  return <Navigate to="/login" replace />;
+                })()
               )
             }
           />
