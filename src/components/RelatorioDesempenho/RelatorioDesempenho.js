@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -34,7 +34,9 @@ function RelatorioDesempenho({ usuario, perfil, onLogout }) {
   const [error, setError] = useState(null);
   const [dadosMensais, setDadosMensais] = useState([]);
   const navigate = useNavigate();
-  // const location = useLocation(); // Remover a linha acima, pois 'location' não é utilizada.
+  const location = useLocation();
+  const anoInicial = location.state?.anoSelecionado || new Date().getFullYear();
+  const [anoSelecionado, setAnoSelecionado] = useState(anoInicial);
 
   const meses = useMemo(() => [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -48,12 +50,12 @@ function RelatorioDesempenho({ usuario, perfil, onLogout }) {
       setLoading(true);
       const dadosMensaisTemp = [];
 
-      // Carregar dados de cada mês do ano atual
+      // Carregar dados de cada mês do ano selecionado
       for (let mes = 1; mes <= 12; mes++) {
         try {
           // Carregar despesas do mês
           const despesasResponse = await fetch(
-            `http://localhost:3001/api/despesas/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mes}&ano=${anoAtual}`
+            `http://localhost:3001/api/despesas/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mes}&ano=${anoSelecionado}`
           );
           
           let totalDespesas = 0;
@@ -64,7 +66,7 @@ function RelatorioDesempenho({ usuario, perfil, onLogout }) {
 
           // Carregar receitas do mês
           const receitasResponse = await fetch(
-            `http://localhost:3001/api/receitas/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mes}&ano=${anoAtual}`
+            `http://localhost:3001/api/receitas/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mes}&ano=${anoSelecionado}`
           );
           
           let totalReceitas = 0;
@@ -99,7 +101,7 @@ function RelatorioDesempenho({ usuario, perfil, onLogout }) {
     } finally {
       setLoading(false);
     }
-  }, [usuario, perfil, anoAtual, meses]);
+  }, [usuario, perfil, anoSelecionado, meses]);
 
   useEffect(() => {
     if (!usuario || !perfil) {
@@ -235,7 +237,7 @@ function RelatorioDesempenho({ usuario, perfil, onLogout }) {
         </div>
         <div className="relatorio-header-center">
           <h1>Meu Desempenho Financeiro</h1>
-          <p className="ano-atual">{anoAtual}</p>
+          <p className="ano-atual">{anoSelecionado}</p>
         </div>
         <div className="relatorio-header-right"></div>
       </div>

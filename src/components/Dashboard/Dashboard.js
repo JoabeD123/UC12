@@ -239,7 +239,11 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
   }, [usuario, perfil]);
 
   const handleNavigation = (path) => {
-    navigate(path);
+    if (path === '/desempenho') {
+      navigate(path, { state: { anoSelecionado } });
+    } else {
+      navigate(path);
+    }
   };
 
   // Função para pagar fatura (zerar gastos)
