@@ -4,8 +4,9 @@ import './CartoesCredito.css';
 import Sidebar from '../Sidebar/Sidebar';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import { FaExclamationTriangle } from 'react-icons/fa';
+import { API_BASE_URL } from '../../config';
 
-const API_URL = 'http://localhost:3001/api/cartoes';
+const API_URL = `${API_BASE_URL}/cartoes`;
 
 const CartoesCredito = ({ perfil }) => {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ const CartoesCredito = ({ perfil }) => {
       })
       .catch(() => setCartoes([]));
     // Buscar perfis do usuário para o filtro
-    fetch(`http://localhost:3001/api/user/profiles-and-permissions/${perfil.usuario_id}`)
+    fetch(`${API_BASE_URL}/user/profiles-and-permissions/${perfil.usuario_id}`)
       .then(res => res.json())
       .then(data => setPerfis(data.profiles || []));
   }, [perfil]);

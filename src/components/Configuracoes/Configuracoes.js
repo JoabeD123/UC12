@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './Configuracoes.css';
 import Sidebar from '../Sidebar/Sidebar';
 import { FaSun, FaMoon, FaSignOutAlt } from 'react-icons/fa';
+import { API_BASE_URL } from '../../config';
 
 const Configuracoes = ({ usuario, perfil, darkMode, onThemeChange, onLogout }) => {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ const Configuracoes = ({ usuario, perfil, darkMode, onThemeChange, onLogout }) =
       }
 
       try {
-        const response = await fetch(`http://localhost:3001/api/configuracoes/${usuario.id_usuario}`);
+        const response = await fetch(`${API_BASE_URL}/configuracoes/${usuario.id_usuario}`);
         if (response.ok) {
           const configData = await response.json();
           setConfig(configData);
@@ -44,7 +45,7 @@ const Configuracoes = ({ usuario, perfil, darkMode, onThemeChange, onLogout }) =
     if (!usuario?.id_usuario) return;
 
     try {
-      const response = await fetch(`http://localhost:3001/api/configuracoes/${usuario.id_usuario}`, {
+      const response = await fetch(`${API_BASE_URL}/configuracoes/${usuario.id_usuario}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

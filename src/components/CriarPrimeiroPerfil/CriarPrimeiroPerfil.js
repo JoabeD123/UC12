@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './CriarPrimeiroPerfil.css';
+import { API_BASE_URL } from '../../config';
 
 function CriarPrimeiroPerfil({ onLogin }) {
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ function CriarPrimeiroPerfil({ onLogin }) {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/perfil/primeiro', {
+      const response = await fetch(`${API_BASE_URL}/perfil/primeiro`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,7 +57,7 @@ function CriarPrimeiroPerfil({ onLogin }) {
       }
 
       // Buscar perfis e permissões do usuário
-      const profilesResponse = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${userId}`);
+      const profilesResponse = await fetch(`${API_BASE_URL}/user/profiles-and-permissions/${userId}`);
       const profilesData = await profilesResponse.json();
 
       if (!profilesResponse.ok) {
@@ -67,7 +68,7 @@ function CriarPrimeiroPerfil({ onLogin }) {
       if (profilesData.profiles && profilesData.profiles.length > 0) {
         const primeiroPerfil = profilesData.profiles[0];
         // Buscar dados do usuário para passar ao onLogin
-        const userResponse = await fetch(`http://localhost:3001/api/usuario/${userId}`);
+        const userResponse = await fetch(`${API_BASE_URL}/usuario/${userId}`);
         const userData = await userResponse.json();
         if (!userResponse.ok) throw new Error(userData.message || 'Erro ao buscar usuário.');
         // Chamar onLogin para atualizar o estado global e redirecionar

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaLock, FaUser } from 'react-icons/fa';
 import './SelecionarPerfil.css';
+import { API_BASE_URL } from '../../config';
 
 const SelecionarPerfil = ({ usuario, onPerfilSelecionado }) => {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ const SelecionarPerfil = ({ usuario, onPerfilSelecionado }) => {
   useEffect(() => {
     const carregarPerfis = async () => {
       try {
-        const response = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${usuario.id_usuario}`);
+        const response = await fetch(`${API_BASE_URL}/user/profiles-and-permissions/${usuario.id_usuario}`);
         const data = await response.json();
 
         if (!response.ok) {
@@ -52,7 +53,7 @@ const SelecionarPerfil = ({ usuario, onPerfilSelecionado }) => {
     setErro('');
 
     try {
-      const response = await fetch('http://localhost:3001/api/perfil/validar-senha', {
+      const response = await fetch(`${API_BASE_URL}/perfil/validar-senha`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

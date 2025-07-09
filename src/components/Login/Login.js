@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
+import { API_BASE_URL } from '../../config';
 
 function Login({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -74,7 +75,7 @@ function Login({ onLogin }) {
     try {
       console.log('Iniciando login com:', { email, senha });
       
-      const response = await fetch('http://localhost:3001/api/login', {
+      const response = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,7 +102,7 @@ function Login({ onLogin }) {
       };
 
       // Buscar perfis e permissões do usuário
-      const profilesResponse = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${data.userId}`);
+      const profilesResponse = await fetch(`${API_BASE_URL}/user/profiles-and-permissions/${data.userId}`);
       const profilesData = await profilesResponse.json();
 
       if (!profilesResponse.ok) {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './GerenciarPerfis.css';
 import Sidebar from '../Sidebar/Sidebar';
 import { FaSave, FaPlus, FaTimes, FaEdit, FaTrash, FaCrown, FaUser, FaExclamationTriangle } from 'react-icons/fa';
+import { API_BASE_URL } from '../../config';
 
 const GerenciarPerfis = ({ usuario, perfil }) => {
   const [perfis, setPerfis] = useState([]);
@@ -24,7 +25,7 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
     if (!usuario?.id_usuario) return;
     const fetchPerfis = async () => {
       try {
-        const res = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${usuario.id_usuario}`);
+        const res = await fetch(`${API_BASE_URL}/user/profiles-and-permissions/${usuario.id_usuario}`);
         const data = await res.json();
         if (res.ok) {
           setPerfis(data.profiles);
@@ -56,7 +57,7 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
     try {
       if (perfilEditando) {
         // Editar perfil (não permite editar senha por aqui)
-        const res = await fetch(`http://localhost:3001/api/perfis/${perfilEditando.id_perfil}`, {
+        const res = await fetch(`${API_BASE_URL}/perfis/${perfilEditando.id_perfil}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -72,7 +73,7 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
         if (!res.ok) throw new Error('Erro ao editar perfil');
       } else {
         // Criar perfil
-        const res = await fetch('http://localhost:3001/api/perfis', {
+        const res = await fetch(`${API_BASE_URL}/perfis`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -92,7 +93,7 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
       setNovoPerfil({ nome: '', categoria_familiar: '', senha: '', ver_receitas: true, ver_despesas: true, ver_cartoes: true, gerenciar_perfis: false, ver_imposto: false });
       setPerfilEditando(null);
       // Atualizar lista
-      const res = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${usuario.id_usuario}`);
+      const res = await fetch(`${API_BASE_URL}/user/profiles-and-permissions/${usuario.id_usuario}`);
       const data = await res.json();
       setPerfis(data.profiles);
     } catch (err) {
@@ -122,7 +123,7 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
   const confirmDelete = async (cascade) => {
     if (!perfilParaExcluir) return;
     try {
-      const res = await fetch(`http://localhost:3001/api/perfis/${perfilParaExcluir}?cascade=${cascade}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE_URL}/perfis/${perfilParaExcluir}?cascade=${cascade}`, { method: 'DELETE' });
       if (!res.ok) {
         const data = await res.json();
         setErro(data.message || 'Erro ao excluir perfil.');
@@ -145,7 +146,7 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
 
   const handleHierarchyChange = async (perfilId, isPrincipal) => {
     try {
-      const res = await fetch(`http://localhost:3001/api/perfis/${perfilId}/hierarquia`, {
+      const res = await fetch(`${API_BASE_URL}/perfis/${perfilId}/hierarquia`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_principal: isPrincipal })
@@ -156,7 +157,7 @@ const GerenciarPerfis = ({ usuario, perfil }) => {
         setErro(data.message || 'Erro ao alterar hierarquia do perfil.');
       } else {
         // Atualizar lista de perfis
-        const profilesRes = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${usuario.id_usuario}`);
+        const profilesRes = await fetch(`${API_BASE_URL}/user/profiles-and-permissions/${usuario.id_usuario}`);
         const profilesData = await profilesRes.json();
         setPerfis(profilesData.profiles);
         setErro('');

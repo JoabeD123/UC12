@@ -15,6 +15,7 @@ import './Dashboard.css';
 import Sidebar from '../Sidebar/Sidebar';
 import { FaUniversity, FaArrowUp, FaArrowDown, FaCreditCard, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
 import { IoArrowForward } from 'react-icons/io5';
+import { API_BASE_URL } from '../../config';
 
 // Registrar os componentes necessários do Chart.js
 ChartJS.register(
@@ -49,7 +50,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
 
   const carregarUsuarioAtualizado = useCallback(async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/usuario/${usuario.id_usuario}`);
+      const response = await fetch(`${API_BASE_URL}/usuario/${usuario.id_usuario}`);
       if (response.ok) {
         const dadosUsuario = await response.json();
         setUsuarioAtualizado(dadosUsuario);
@@ -62,12 +63,12 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
   const carregarDadosFinanceiros = useCallback(async () => {
     try {
       // Carregar receitas
-      const receitasResponse = await fetch(`http://localhost:3001/api/receitas/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mesSelecionado+1}&ano=${anoSelecionado}`);
+      const receitasResponse = await fetch(`${API_BASE_URL}/receitas/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mesSelecionado+1}&ano=${anoSelecionado}`);
       if (!receitasResponse.ok) throw new Error('Erro ao carregar receitas');
       const receitas = await receitasResponse.json();
 
       // Carregar despesas
-      const despesasResponse = await fetch(`http://localhost:3001/api/despesas/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mesSelecionado+1}&ano=${anoSelecionado}`);
+      const despesasResponse = await fetch(`${API_BASE_URL}/despesas/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mesSelecionado+1}&ano=${anoSelecionado}`);
       if (!despesasResponse.ok) throw new Error('Erro ao carregar despesas');
       const despesas = await despesasResponse.json();
 
@@ -120,7 +121,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
         return;
       }
       try {
-        const res = await fetch(`http://localhost:3001/api/cartoes/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mesSelecionado+1}`);
+        const res = await fetch(`${API_BASE_URL}/cartoes/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mesSelecionado+1}`);
         if (!res.ok) throw new Error('Erro ao buscar cartões de crédito');
         const data = await res.json();
         setCartoes(data);
@@ -183,7 +184,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
           const jaFechada = faturasFechadas.some(f => f.id_cartao === cartao.id_cartao && f.mes_ano === `${anoHoje}-${String(mesHoje).padStart(2, '0')}`);
           if (!jaFechada) {
             // Cria fatura fechada usando o novo endpoint
-            await fetch('http://localhost:3001/api/faturas-cartao', {
+            await fetch(`${API_BASE_URL}/faturas-cartao`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -194,7 +195,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
               })
             });
             // Zera o valor gasto do cartão
-            await fetch(`http://localhost:3001/api/cartoes/${cartao.id_cartao}`, {
+            await fetch(`${API_BASE_URL}/cartoes/${cartao.id_cartao}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -212,7 +213,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
       // Se houve fechamento, atualize as faturas fechadas
       if (houveFechamento) {
         try {
-          const res = await fetch(`http://localhost:3001/api/faturas-cartao/perfil/${usuario.id_usuario}/${perfil.id_perfil}`);
+          const res = await fetch(`${API_BASE_URL}/faturas-cartao/perfil/${usuario.id_usuario}/${perfil.id_perfil}`);
           if (res.ok) {
             const data = await res.json();
             setFaturasFechadas(data);
@@ -228,7 +229,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
     if (!usuario?.id_usuario || !perfil?.id_perfil) return;
     const fetchFaturasFechadas = async () => {
       try {
-        const res = await fetch(`http://localhost:3001/api/faturas-cartao/perfil/${usuario.id_usuario}/${perfil.id_perfil}`);
+        const res = await fetch(`${API_BASE_URL}/faturas-cartao/perfil/${usuario.id_usuario}/${perfil.id_perfil}`);
         if (res.ok) {
           const data = await res.json();
           setFaturasFechadas(data);
@@ -249,7 +250,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
   // Função para pagar fatura (zerar gastos)
   const handlePagarFatura = async (cartao) => {
     try {
-      const res = await fetch(`http://localhost:3001/api/cartoes/${cartao.id_cartao}`, {
+      const res = await fetch(`${API_BASE_URL}/cartoes/${cartao.id_cartao}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

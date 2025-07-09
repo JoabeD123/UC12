@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaExclamationTriangle } from 'react-icons/fa';
 import './Despesas.css';
 import Sidebar from '../Sidebar/Sidebar';
+import { API_BASE_URL } from '../../config';
 
 // Função utilitária para obter a data do próximo mês
 const obterDataProximoMes = () => {
@@ -37,7 +38,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
 
   const carregarDespesas = useCallback(async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/despesas/${usuario.id_usuario}/${perfil.id_perfil}`);
+      const response = await fetch(`${API_BASE_URL}/despesas/${usuario.id_usuario}/${perfil.id_perfil}`);
       if (!response.ok) throw new Error('Erro ao carregar despesas');
       const data = await response.json();
       setDespesas(data);
@@ -51,7 +52,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
 
   const carregarCategorias = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/categorias?tipo=despesa');
+      const response = await fetch(`${API_BASE_URL}/categorias?tipo=despesa`);
       if (!response.ok) throw new Error('Erro ao carregar categorias de despesa');
       const data = await response.json();
       setCategorias(data);
@@ -66,7 +67,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
       carregarDespesas();
       carregarCategorias();
       // Buscar perfis do usuário para o filtro
-      fetch(`http://localhost:3001/api/user/profiles-and-permissions/${usuario.id_usuario}`)
+      fetch(`${API_BASE_URL}/user/profiles-and-permissions/${usuario.id_usuario}`)
         .then(res => res.json())
         .then(data => setPerfis(data.profiles || []));
     }
@@ -81,7 +82,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     try {
       if (editandoDespesa) {
         // Edição de despesa existente
-        const response = await fetch(`http://localhost:3001/api/despesas/${editandoDespesa.id_conta}`, {
+        const response = await fetch(`${API_BASE_URL}/despesas/${editandoDespesa.id_conta}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -95,7 +96,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
         setEditandoDespesa(null);
       } else {
         // Adição normal
-        const response = await fetch('http://localhost:3001/api/despesas', {
+        const response = await fetch(`${API_BASE_URL}/despesas`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -142,7 +143,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     }
 
     try {
-      const response = await fetch(`http://localhost:3001/api/despesas/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/despesas/${id}`, {
         method: 'DELETE',
       });
 
@@ -160,7 +161,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     if (!novaCategoria.trim()) return;
 
     try {
-      const response = await fetch('http://localhost:3001/api/categorias', {
+      const response = await fetch(`${API_BASE_URL}/categorias`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

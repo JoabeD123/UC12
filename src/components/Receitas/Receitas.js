@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaEdit, FaExclamationTriangle } from 'react-icons/fa';
 import './Receitas.css';
 import Sidebar from '../Sidebar/Sidebar';
+import { API_BASE_URL } from '../../config';
 
 // Função utilitária para obter a data do próximo mês
 const obterDataProximoMes = () => {
@@ -34,7 +35,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const carregarReceitas = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3001/api/receitas/${usuario.id_usuario}/${perfil.id_perfil}`);
+      const response = await fetch(`${API_BASE_URL}/receitas/${usuario.id_usuario}/${perfil.id_perfil}`);
       if (!response.ok) throw new Error('Erro ao carregar receitas');
       const data = await response.json();
       setReceitas(data);
@@ -48,7 +49,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
 
   const carregarCategorias = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/categorias?tipo=receita');
+      const response = await fetch(`${API_BASE_URL}/categorias?tipo=receita`);
       if (!response.ok) throw new Error('Erro ao carregar categorias de receita');
       const data = await response.json();
       setCategorias(data);
@@ -67,7 +68,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     carregarReceitas();
     carregarCategorias();
     // Buscar perfis do usuário para o filtro
-    fetch(`http://localhost:3001/api/user/profiles-and-permissions/${usuario.id_usuario}`)
+    fetch(`${API_BASE_URL}/user/profiles-and-permissions/${usuario.id_usuario}`)
       .then(res => res.json())
       .then(data => setPerfis(data.profiles || []));
   }, [usuario, perfil, onLogout, carregarReceitas, carregarCategorias]);
@@ -78,7 +79,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     try {
       if (editandoReceita) {
         // Edição
-        const response = await fetch(`http://localhost:3001/api/receitas/${editandoReceita.id_receita}`, {
+        const response = await fetch(`${API_BASE_URL}/receitas/${editandoReceita.id_receita}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -93,7 +94,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
         setEditandoReceita(null);
       } else {
         // Adição
-        const response = await fetch('http://localhost:3001/api/receitas', {
+        const response = await fetch(`${API_BASE_URL}/receitas`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -130,7 +131,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const handleExcluir = async (id) => {
     // Exclusão imediata, sem confirmação
     try {
-      const response = await fetch(`http://localhost:3001/api/receitas/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/receitas/${id}`, {
         method: 'DELETE',
       });
       if (!response.ok) {
@@ -150,7 +151,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
     if (!novaCategoria.trim()) return;
 
     try {
-      const response = await fetch('http://localhost:3001/api/categorias', {
+      const response = await fetch(`${API_BASE_URL}/categorias`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

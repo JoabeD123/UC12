@@ -14,6 +14,7 @@ import {
 import { Line } from 'react-chartjs-2';
 import './RelatorioPersonalizado.css';
 import Sidebar from '../Sidebar/Sidebar';
+import { API_BASE_URL } from '../../config';
 
 
 // Registrar os componentes necessários do Chart.js
@@ -81,7 +82,7 @@ function RelatorioPersonalizado({ usuario, perfil, onLogout }) {
         try {
           // Carregar despesas do mês
           const despesasResponse = await fetch(
-            `http://localhost:3001/api/despesas/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mes}&ano=${anoSelecionado}`
+            `${API_BASE_URL}/despesas/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mes}&ano=${anoSelecionado}`
           );
           
           let totalDespesas = 0;
@@ -92,7 +93,7 @@ function RelatorioPersonalizado({ usuario, perfil, onLogout }) {
 
           // Carregar receitas do mês
           const receitasResponse = await fetch(
-            `http://localhost:3001/api/receitas/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mes}&ano=${anoSelecionado}`
+            `${API_BASE_URL}/receitas/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mes}&ano=${anoSelecionado}`
           );
           
           let totalReceitas = 0;

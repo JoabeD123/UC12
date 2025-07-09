@@ -16,6 +16,7 @@ import './RelatorioDesempenho.css';
 // import Sidebar from '../Sidebar/Sidebar';
 import { IoArrowBack } from 'react-icons/io5';
 import { FaExclamationTriangle } from 'react-icons/fa';
+import { API_BASE_URL } from '../../config';
 
 // Registrar os componentes necessários do Chart.js
 ChartJS.register(
@@ -36,14 +37,12 @@ function RelatorioDesempenho({ usuario, perfil, onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
   const anoInicial = location.state?.anoSelecionado || new Date().getFullYear();
-  const [anoSelecionado, setAnoSelecionado] = useState(anoInicial);
+  const [anoSelecionado] = useState(anoInicial);
 
   const meses = useMemo(() => [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
   ], []);
-
-  const anoAtual = new Date().getFullYear();
 
   const carregarDadosAnuais = useCallback(async () => {
     try {
@@ -55,7 +54,7 @@ function RelatorioDesempenho({ usuario, perfil, onLogout }) {
         try {
           // Carregar despesas do mês
           const despesasResponse = await fetch(
-            `http://localhost:3001/api/despesas/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mes}&ano=${anoSelecionado}`
+            `${API_BASE_URL}/despesas/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mes}&ano=${anoSelecionado}`
           );
           
           let totalDespesas = 0;
@@ -66,7 +65,7 @@ function RelatorioDesempenho({ usuario, perfil, onLogout }) {
 
           // Carregar receitas do mês
           const receitasResponse = await fetch(
-            `http://localhost:3001/api/receitas/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mes}&ano=${anoSelecionado}`
+            `${API_BASE_URL}/receitas/${usuario.id_usuario}/${perfil.id_perfil}?mes=${mes}&ano=${anoSelecionado}`
           );
           
           let totalReceitas = 0;

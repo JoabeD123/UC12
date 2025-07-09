@@ -14,6 +14,7 @@ import CriarPrimeiroPerfil from './components/CriarPrimeiroPerfil/CriarPrimeiroP
 import SelecionarPerfil from './components/SelecionarPerfil/SelecionarPerfil';
 import RelatorioDesempenho from './components/RelatorioDesempenho/RelatorioDesempenho';
 import RelatorioPersonalizado from './components/RelatorioPersonalizado/RelatorioPersonalizado';
+import { API_BASE_URL } from './config';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -37,8 +38,8 @@ function App() {
           
           // Verificar se a sessão ainda é válida no backend
           try {
-            const userCheck = await fetch(`http://localhost:3001/api/usuario/${user.id_usuario}`);
-            const profileCheck = await fetch(`http://localhost:3001/api/perfil/${profile.id_perfil}`);
+            const userCheck = await fetch(`${API_BASE_URL}/usuario/${user.id_usuario}`);
+            const profileCheck = await fetch(`${API_BASE_URL}/perfil/${profile.id_perfil}`);
             
             if (userCheck.ok && profileCheck.ok) {
               console.log('✅ Sessão válida, restaurando estado');
@@ -47,7 +48,7 @@ function App() {
               
               // Carregar configurações
               try {
-                const configResponse = await fetch(`http://localhost:3001/api/configuracoes/${user.id_usuario}`);
+                const configResponse = await fetch(`${API_BASE_URL}/configuracoes/${user.id_usuario}`);
                 if (configResponse.ok) {
                   const configData = await configResponse.json();
                   setDarkMode(configData.darkMode || false);
@@ -93,7 +94,7 @@ function App() {
     try {
       console.log('🔐 handleLogin chamado com:', { user, userProfile });
       // Buscar perfis do usuário SEM usar localStorage
-      const profilesResponse = await fetch(`http://localhost:3001/api/user/profiles-and-permissions/${user.id_usuario}`);
+      const profilesResponse = await fetch(`${API_BASE_URL}/user/profiles-and-permissions/${user.id_usuario}`);
       const profilesData = await profilesResponse.json();
       if (!profilesResponse.ok) {
         throw new Error(profilesData.message || 'Erro ao buscar perfis do usuário');
@@ -111,7 +112,7 @@ function App() {
         
         // Carregar configurações do usuário do backend
         try {
-          const configResponse = await fetch(`http://localhost:3001/api/configuracoes/${user.id_usuario}`);
+          const configResponse = await fetch(`${API_BASE_URL}/configuracoes/${user.id_usuario}`);
           if (configResponse.ok) {
             const configData = await configResponse.json();
             setDarkMode(configData.darkMode || false);

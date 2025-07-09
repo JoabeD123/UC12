@@ -12,6 +12,7 @@ import {
 import './ImpostoRenda.css';
 import Sidebar from '../Sidebar/Sidebar';
 import { FaInfoCircle, FaExclamationTriangle } from 'react-icons/fa';
+import { API_BASE_URL } from '../../config';
 
 // Registrar os componentes do Chart.js
 ChartJS.register(
@@ -47,7 +48,7 @@ const ImpostoRenda = ({ usuario, perfil }) => {
     const carregarReceitas = async () => {
       if (!usuario?.id_usuario || !perfil?.id_perfil) return;
       try {
-        const response = await fetch(`http://localhost:3001/api/receitas/${usuario.id_usuario}/${perfil.id_perfil}`);
+        const response = await fetch(`${API_BASE_URL}/receitas/${usuario.id_usuario}/${perfil.id_perfil}`);
         if (!response.ok) throw new Error('Erro ao carregar receitas');
         const receitas = await response.json();
         let somaFixa = 0;
