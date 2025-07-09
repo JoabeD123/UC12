@@ -52,7 +52,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
 
   const carregarCategorias = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/categorias?tipo=despesa`);
+      const response = await fetch(`${API_BASE_URL}/categorias?tipo=despesa&usuario_id=${usuario.id_usuario}`);
       if (!response.ok) throw new Error('Erro ao carregar categorias de despesa');
       const data = await response.json();
       setCategorias(data);
@@ -60,7 +60,7 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
       console.error('Erro ao carregar categorias de despesa:', error);
       setError('Erro ao carregar categorias de despesa');
     }
-  }, []);
+  }, [usuario]);
 
   useEffect(() => {
     if (usuario && perfil) {
@@ -166,7 +166,11 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ nome_categoria: novaCategoria, tipo_categoria: 'despesa' }),
+        body: JSON.stringify({ 
+          nome_categoria: novaCategoria, 
+          tipo_categoria: 'despesa',
+          usuario_id: usuario.id_usuario 
+        }),
       });
 
       if (!response.ok) {

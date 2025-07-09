@@ -100,8 +100,13 @@ app.get('/init-db', async (req, res) => {
     -- Tabela de Categorias (Ex: Moradia, Alimentação, etc.)
     CREATE TABLE IF NOT EXISTS categoria (
         id_categoria SERIAL PRIMARY KEY,
-        nome_categoria VARCHAR(100) NOT NULL UNIQUE,
-        tipo_categoria VARCHAR(20) NOT NULL -- 'receita' ou 'despesa'
+        nome_categoria VARCHAR(100) NOT NULL,
+        tipo_categoria VARCHAR(20) NOT NULL, -- 'receita' ou 'despesa'
+        usuario_id INT,
+        is_padrao BOOLEAN DEFAULT FALSE, -- Para categorias padrão do sistema
+        ordem INT DEFAULT 0, -- Para ordenação (Outros sempre por último)
+        FOREIGN KEY (usuario_id) REFERENCES usuario(id_usuario) ON DELETE CASCADE,
+        UNIQUE (nome_categoria, tipo_categoria, usuario_id) -- Permite mesmo nome para usuários diferentes
     );
 
     -- Tabelas de Lookup para Status, Tipos e Recorrências
@@ -151,31 +156,31 @@ app.get('/init-db', async (req, res) => {
     ('insercao'), ('atualizacao'), ('remocao')
     ON CONFLICT (nome_acao) DO NOTHING;
 
-    -- Inserir categorias pré-definidas
-    INSERT INTO categoria (nome_categoria, tipo_categoria) VALUES
+    -- Inserir categorias padrão do sistema (serão copiadas para cada usuário)
+    INSERT INTO categoria (nome_categoria, tipo_categoria, is_padrao, ordem) VALUES
     -- Categorias de Receitas
-    ('Salário', 'receita'),
-    ('Freelancer', 'receita'),
-    ('Investimentos', 'receita'),
-    ('Aluguel', 'receita'),
-    ('Pensão', 'receita'),
-    ('Aposentadoria', 'receita'),
-    ('Dividendos', 'receita'),
-    ('Rendimentos de Aplicações', 'receita'),
-    ('Outros (Receita)', 'receita'),
+    ('Salário', 'receita', TRUE, 1),
+    ('Freelancer', 'receita', TRUE, 2),
+    ('Investimentos', 'receita', TRUE, 3),
+    ('Aluguel', 'receita', TRUE, 4),
+    ('Pensão', 'receita', TRUE, 5),
+    ('Aposentadoria', 'receita', TRUE, 6),
+    ('Dividendos', 'receita', TRUE, 7),
+    ('Rendimentos de Aplicações', 'receita', TRUE, 8),
+    ('Outros (Receita)', 'receita', TRUE, 999),
     -- Categorias de Despesas
-    ('Moradia', 'despesa'),
-    ('Alimentação', 'despesa'),
-    ('Transporte', 'despesa'),
-    ('Saúde', 'despesa'),
-    ('Educação', 'despesa'),
-    ('Lazer', 'despesa'),
-    ('Vestuário', 'despesa'),
-    ('Contas', 'despesa'),
-    ('Impostos', 'despesa'),
-    ('Cartão de Crédito', 'despesa'),
-    ('Outros (Despesa)', 'despesa')
-    ON CONFLICT (nome_categoria) DO NOTHING;
+    ('Moradia', 'despesa', TRUE, 1),
+    ('Alimentação', 'despesa', TRUE, 2),
+    ('Transporte', 'despesa', TRUE, 3),
+    ('Saúde', 'despesa', TRUE, 4),
+    ('Educação', 'despesa', TRUE, 5),
+    ('Lazer', 'despesa', TRUE, 6),
+    ('Vestuário', 'despesa', TRUE, 7),
+    ('Contas', 'despesa', TRUE, 8),
+    ('Impostos', 'despesa', TRUE, 9),
+    ('Cartão de Crédito', 'despesa', TRUE, 10),
+    ('Outros (Despesa)', 'despesa', TRUE, 999)
+    ON CONFLICT (nome_categoria, tipo_categoria, usuario_id) DO NOTHING;
 
     -- Tabela de Contas (Despesas) - Atualizada com campos fixa e usuario_id
     CREATE TABLE IF NOT EXISTS contas (
@@ -351,6 +356,54 @@ app.get('/init-db', async (req, res) => {
     );
   `;
 
+  // Comandos para migrar categorias para o novo sistema
+  const patchCategorias = `
+    -- Adicionar colunas necessárias à tabela categoria
+    ALTER TABLE categoria ADD COLUMN IF NOT EXISTS usuario_id INT;
+    ALTER TABLE categoria ADD COLUMN IF NOT EXISTS is_padrao BOOLEAN DEFAULT FALSE;
+    ALTER TABLE categoria ADD COLUMN IF NOT EXISTS ordem INT DEFAULT 0;
+    
+    -- Remover constraint UNIQUE antiga se existir
+    DO $$ BEGIN
+      IF EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'categoria_nome_categoria_key') THEN
+        ALTER TABLE categoria DROP CONSTRAINT categoria_nome_categoria_key;
+      END IF;
+    END $$;
+    
+    -- Adicionar nova constraint UNIQUE
+    ALTER TABLE categoria ADD CONSTRAINT categoria_nome_tipo_usuario_unique 
+    UNIQUE (nome_categoria, tipo_categoria, usuario_id);
+    
+    -- Migrar categorias existentes para serem padrão do sistema
+    UPDATE categoria SET is_padrao = TRUE, ordem = CASE 
+      WHEN nome_categoria LIKE '%Outros%' THEN 999
+      ELSE 1
+    END WHERE usuario_id IS NULL;
+    
+    -- Definir ordem para categorias padrão
+    UPDATE categoria SET ordem = CASE nome_categoria
+      WHEN 'Salário' THEN 1
+      WHEN 'Freelancer' THEN 2
+      WHEN 'Investimentos' THEN 3
+      WHEN 'Aluguel' THEN 4
+      WHEN 'Pensão' THEN 5
+      WHEN 'Aposentadoria' THEN 6
+      WHEN 'Dividendos' THEN 7
+      WHEN 'Rendimentos de Aplicações' THEN 8
+      WHEN 'Moradia' THEN 1
+      WHEN 'Alimentação' THEN 2
+      WHEN 'Transporte' THEN 3
+      WHEN 'Saúde' THEN 4
+      WHEN 'Educação' THEN 5
+      WHEN 'Lazer' THEN 6
+      WHEN 'Vestuário' THEN 7
+      WHEN 'Contas' THEN 8
+      WHEN 'Impostos' THEN 9
+      WHEN 'Cartão de Crédito' THEN 10
+      ELSE ordem
+    END WHERE is_padrao = TRUE;
+  `;
+
   try {
     const client = await pool.connect();
     console.log('Conexão com o banco estabelecida para init-db.');
@@ -378,6 +431,9 @@ app.get('/init-db', async (req, res) => {
     
     await client.query(patchImpostoPermissoes); // <-- Garante permissões de imposto
     console.log('Permissões de imposto garantidas com sucesso.');
+    
+    await client.query(patchCategorias); // <-- Migra categorias para novo sistema
+    console.log('Sistema de categorias migrado com sucesso.');
     
     client.release();
     res.status(200).send('Banco de dados inicializado/reiniciado com sucesso.');
@@ -1032,16 +1088,18 @@ app.put('/api/orcamentos/:id', async (req, res) => {
 
 // Rotas para Gerenciamento de Categorias
 app.get('/api/categorias', async (req, res) => {
-  const { tipo } = req.query; // Pega o parâmetro 'tipo' da query string
+  const { tipo, usuario_id } = req.query; // Pega o parâmetro 'tipo' e 'usuario_id' da query string
   try {
     const client = await pool.connect();
-    let query = 'SELECT * FROM categoria';
-    const params = [];
+    let query = 'SELECT * FROM categoria WHERE (usuario_id = $1 OR is_padrao = TRUE)';
+    const params = [usuario_id];
 
     if (tipo) {
-      query += ' WHERE tipo_categoria = $1';
+      query += ' AND tipo_categoria = $2';
       params.push(tipo);
     }
+
+    query += ' ORDER BY ordem ASC, nome_categoria ASC';
 
     const result = await client.query(query, params);
     client.release();
@@ -1053,17 +1111,36 @@ app.get('/api/categorias', async (req, res) => {
 });
 
 app.post('/api/categorias', async (req, res) => {
-  const { nome_categoria, tipo_categoria } = req.body; // Agora espera o tipo_categoria
+  const { nome_categoria, tipo_categoria, usuario_id } = req.body;
 
-  if (!nome_categoria || !tipo_categoria) {
-    return res.status(400).json({ message: 'Nome da categoria e tipo são obrigatórios.' });
+  if (!nome_categoria || !tipo_categoria || !usuario_id) {
+    return res.status(400).json({ message: 'Nome da categoria, tipo e usuário são obrigatórios.' });
   }
 
   try {
     const client = await pool.connect();
+    
+    // Verificar se já existe uma categoria com esse nome para este usuário
+    const existingCategory = await client.query(
+      'SELECT id_categoria FROM categoria WHERE nome_categoria = $1 AND tipo_categoria = $2 AND usuario_id = $3',
+      [nome_categoria, tipo_categoria, usuario_id]
+    );
+    
+    if (existingCategory.rows.length > 0) {
+      client.release();
+      return res.status(409).json({ message: 'Já existe uma categoria com este nome para este tipo.' });
+    }
+
+    // Pegar a maior ordem atual para este usuário e tipo
+    const maxOrderResult = await client.query(
+      'SELECT COALESCE(MAX(ordem), 0) as max_ordem FROM categoria WHERE usuario_id = $1 AND tipo_categoria = $2',
+      [usuario_id, tipo_categoria]
+    );
+    const novaOrdem = maxOrderResult.rows[0].max_ordem + 1;
+
     const result = await client.query(
-      'INSERT INTO categoria (nome_categoria, tipo_categoria) VALUES ($1, $2) RETURNING *; ', // Insere o tipo
-      [nome_categoria, tipo_categoria]
+      'INSERT INTO categoria (nome_categoria, tipo_categoria, usuario_id, ordem) VALUES ($1, $2, $3, $4) RETURNING *',
+      [nome_categoria, tipo_categoria, usuario_id, novaOrdem]
     );
     client.release();
     res.status(201).json(result.rows[0]);

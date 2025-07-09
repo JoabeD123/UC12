@@ -49,7 +49,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
 
   const carregarCategorias = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/categorias?tipo=receita`);
+      const response = await fetch(`${API_BASE_URL}/categorias?tipo=receita&usuario_id=${usuario.id_usuario}`);
       if (!response.ok) throw new Error('Erro ao carregar categorias de receita');
       const data = await response.json();
       setCategorias(data);
@@ -57,7 +57,7 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
       console.error('Erro ao carregar categorias de receita:', error);
       setError('Erro ao carregar categorias de receita');
     }
-  }, []);
+  }, [usuario]);
 
   useEffect(() => {
     if (!usuario || !perfil) {
@@ -156,7 +156,11 @@ function Receitas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ nome_categoria: novaCategoria, tipo_categoria: 'receita' }),
+        body: JSON.stringify({ 
+          nome_categoria: novaCategoria, 
+          tipo_categoria: 'receita',
+          usuario_id: usuario.id_usuario 
+        }),
       });
 
       if (!response.ok) {
