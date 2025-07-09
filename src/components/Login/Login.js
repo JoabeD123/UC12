@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 
@@ -7,7 +7,64 @@ function Login({ onLogin }) {
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailSugestoes, setEmailSugestoes] = useState([]);
+  const [sugestaoAtiva, setSugestaoAtiva] = useState(-1);
+  const emailInputRef = useRef(null);
   const navigate = useNavigate();
+
+  const dominiosPopulares = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com'];
+
+  // Sugestão de domínios ao digitar
+  const handleEmailChange = (e) => {
+    const valor = e.target.value;
+    setEmail(valor);
+    setSugestaoAtiva(-1);
+    const atIndex = valor.indexOf('@');
+    if (atIndex > -1) {
+      const prefixo = valor.slice(0, atIndex + 1);
+      const textoDominio = valor.slice(atIndex + 1).toLowerCase();
+      if (textoDominio.length === 0) {
+        setEmailSugestoes(dominiosPopulares.map(dom => prefixo + dom));
+      } else {
+        setEmailSugestoes(
+          dominiosPopulares
+            .filter(dom => dom.startsWith(textoDominio))
+            .map(dom => prefixo + dom)
+        );
+      }
+    } else {
+      setEmailSugestoes([]);
+    }
+  };
+
+  const handleSugestaoClick = (sugestao) => {
+    setEmail(sugestao);
+    setEmailSugestoes([]);
+    setSugestaoAtiva(-1);
+    // Foca no próximo campo (senha)
+    setTimeout(() => {
+      if (emailInputRef.current) {
+        emailInputRef.current.blur();
+      }
+    }, 100);
+  };
+
+  const handleEmailKeyDown = (e) => {
+    if (emailSugestoes.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      setSugestaoAtiva((prev) => (prev + 1) % emailSugestoes.length);
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      setSugestaoAtiva((prev) => (prev - 1 + emailSugestoes.length) % emailSugestoes.length);
+      e.preventDefault();
+    } else if (e.key === 'Enter' && sugestaoAtiva >= 0) {
+      handleSugestaoClick(emailSugestoes[sugestaoAtiva]);
+      e.preventDefault();
+    } else if (e.key === 'Escape') {
+      setEmailSugestoes([]);
+      setSugestaoAtiva(-1);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -89,9 +146,25 @@ function Login({ onLogin }) {
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
+              onKeyDown={handleEmailKeyDown}
+              ref={emailInputRef}
               required
+              autoComplete="off"
             />
+            {emailSugestoes.length > 0 && (
+              <ul className="email-sugestoes">
+                {emailSugestoes.map((sugestao, idx) => (
+                  <li
+                    key={sugestao}
+                    className={sugestaoAtiva === idx ? 'ativa' : ''}
+                    onMouseDown={() => handleSugestaoClick(sugestao)}
+                  >
+                    {sugestao}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <div className="form-group">
             <label>Senha:</label>
