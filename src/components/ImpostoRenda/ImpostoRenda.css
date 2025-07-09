@@ -221,6 +221,18 @@
   white-space: normal;
 }
 
+.ano-calculo-info {
+  margin: 0.5rem 0;
+  color: var(--primary-color);
+  font-size: 0.9rem;
+  font-weight: 500;
+  background-color: var(--primary-bg);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border-left: 3px solid var(--primary-color);
+  display: inline-block;
+}
+
 .info-icon-button {
   background: none;
   border: none;

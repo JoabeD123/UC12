@@ -48,7 +48,11 @@ const ImpostoRenda = ({ usuario, perfil }) => {
     const carregarReceitas = async () => {
       if (!usuario?.id_usuario || !perfil?.id_perfil) return;
       try {
-        const response = await fetch(`${API_BASE_URL}/receitas/${usuario.id_usuario}/${perfil.id_perfil}`);
+        // Obter o ano anterior para cálculo do IR
+        const anoAtual = new Date().getFullYear();
+        const anoAnterior = anoAtual - 1;
+        
+        const response = await fetch(`${API_BASE_URL}/receitas/${usuario.id_usuario}/${perfil.id_perfil}?ano=${anoAnterior}`);
         if (!response.ok) throw new Error('Erro ao carregar receitas');
         const receitas = await response.json();
         let somaFixa = 0;
@@ -265,6 +269,9 @@ const ImpostoRenda = ({ usuario, perfil }) => {
             <p className="imposto-subtitle">
               Calcule seu imposto de renda com base nas novas tabelas de 2024
             </p>
+            <p className="ano-calculo-info">
+              <strong>Dados baseados nas receitas de {(new Date().getFullYear() - 1)}</strong>
+            </p>
             <button
               className="info-icon-button"
               onClick={() => setShowInfoPopup(true)}
@@ -439,6 +446,7 @@ const ImpostoRenda = ({ usuario, perfil }) => {
           >
             <h3>Informações Importantes</h3>
             <p>• A calculadora utiliza as tabelas do IR 2024</p>
+            <p>• Os dados são baseados nas receitas do ano anterior ({(new Date().getFullYear() - 1)})</p>
             <p>• Valores são calculados com base na renda mensal</p>
             <p>• O 13º salário é opcional no cálculo</p>
             <p>• Resultados são aproximados e podem variar</p>

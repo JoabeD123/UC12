@@ -158,6 +158,10 @@ app.get('/init-db', async (req, res) => {
     ('Freelancer', 'receita'),
     ('Investimentos', 'receita'),
     ('Aluguel', 'receita'),
+    ('Pensão', 'receita'),
+    ('Aposentadoria', 'receita'),
+    ('Dividendos', 'receita'),
+    ('Rendimentos de Aplicações', 'receita'),
     ('Outros (Receita)', 'receita'),
     -- Categorias de Despesas
     ('Moradia', 'despesa'),
@@ -169,6 +173,7 @@ app.get('/init-db', async (req, res) => {
     ('Vestuário', 'despesa'),
     ('Contas', 'despesa'),
     ('Impostos', 'despesa'),
+    ('Cartão de Crédito', 'despesa'),
     ('Outros (Despesa)', 'despesa')
     ON CONFLICT (nome_categoria) DO NOTHING;
 
@@ -335,6 +340,17 @@ app.get('/init-db', async (req, res) => {
     );
   `;
 
+  // Comandos para garantir permissões de imposto
+  const patchImpostoPermissoes = `
+    -- Garantir que a coluna ver_imposto existe
+    ALTER TABLE permissoes ADD COLUMN IF NOT EXISTS ver_imposto BOOLEAN DEFAULT FALSE;
+    
+    -- Atualizar permissões existentes para incluir acesso ao imposto
+    UPDATE permissoes SET ver_imposto = TRUE WHERE perfil_id IN (
+      SELECT p.id_perfil FROM perfil p WHERE p.is_principal = TRUE
+    );
+  `;
+
   try {
     const client = await pool.connect();
     console.log('Conexão com o banco estabelecida para init-db.');
@@ -359,6 +375,9 @@ app.get('/init-db', async (req, res) => {
     
     await client.query(patchHierarchy); // <-- Atualiza estrutura de hierarquia
     console.log('Estrutura de hierarquia atualizada com sucesso.');
+    
+    await client.query(patchImpostoPermissoes); // <-- Garante permissões de imposto
+    console.log('Permissões de imposto garantidas com sucesso.');
     
     client.release();
     res.status(200).send('Banco de dados inicializado/reiniciado com sucesso.');
@@ -746,9 +765,16 @@ app.get('/api/receitas/:usuarioId/:perfilId', async (req, res) => {
        WHERE r.usuario_id = $1 AND cat.tipo_categoria = 'receita' AND ${getDataVisibilityQuery(perfilId, 'r')}`;
     const params = [usuarioId];
     
-    if (mes && ano) {
-      query += ` AND ((EXTRACT(MONTH FROM r.data_recebimento) = $2 AND EXTRACT(YEAR FROM r.data_recebimento) = $3) OR r.fixa = TRUE)`;
-      params.push(mes, ano);
+    if (ano) {
+      if (mes) {
+        // Filtro por mês e ano específicos
+        query += ` AND ((EXTRACT(MONTH FROM r.data_recebimento) = $2 AND EXTRACT(YEAR FROM r.data_recebimento) = $3) OR r.fixa = TRUE)`;
+        params.push(mes, ano);
+      } else {
+        // Filtro apenas por ano (para imposto de renda)
+        query += ` AND (EXTRACT(YEAR FROM r.data_recebimento) = $2 OR r.fixa = TRUE)`;
+        params.push(ano);
+      }
     }
     query += ' ORDER BY r.data_recebimento DESC';
     
@@ -839,9 +865,16 @@ app.get('/api/despesas/:usuarioId/:perfilId', async (req, res) => {
        WHERE c.usuario_id = $1 AND cat.tipo_categoria = 'despesa' AND ${getDataVisibilityQuery(perfilId, 'c')}`;
     const params = [usuarioId];
     
-    if (mes && ano) {
-      query += ` AND ((EXTRACT(MONTH FROM c.data_vencimento) = $2 AND EXTRACT(YEAR FROM c.data_vencimento) = $3) OR c.fixa = TRUE)`;
-      params.push(mes, ano);
+    if (ano) {
+      if (mes) {
+        // Filtro por mês e ano específicos
+        query += ` AND ((EXTRACT(MONTH FROM c.data_vencimento) = $2 AND EXTRACT(YEAR FROM c.data_vencimento) = $3) OR c.fixa = TRUE)`;
+        params.push(mes, ano);
+      } else {
+        // Filtro apenas por ano
+        query += ` AND (EXTRACT(YEAR FROM c.data_vencimento) = $2 OR c.fixa = TRUE)`;
+        params.push(ano);
+      }
     }
     query += ' ORDER BY c.data_vencimento DESC';
     
