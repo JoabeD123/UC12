@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -34,7 +34,7 @@ function RelatorioDesempenho({ usuario, perfil, onLogout }) {
   const [error, setError] = useState(null);
   const [dadosMensais, setDadosMensais] = useState([]);
   const navigate = useNavigate();
-  const location = useLocation();
+  // const location = useLocation(); // Remover a linha acima, pois 'location' não é utilizada.
 
   const meses = useMemo(() => [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',

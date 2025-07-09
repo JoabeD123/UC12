@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaEdit, FaExclamationTriangle } from 'react-icons/fa';
+import { FaExclamationTriangle } from 'react-icons/fa';
 import './Despesas.css';
 import Sidebar from '../Sidebar/Sidebar';
 
@@ -180,10 +180,6 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
       console.error('Erro ao adicionar categoria de despesa:', error);
       setError(error.message || 'Erro ao adicionar categoria de despesa');
     }
-  };
-
-  const handleNavigation = (path) => {
-    navigate(path);
   };
 
   if (!usuario || !perfil) {

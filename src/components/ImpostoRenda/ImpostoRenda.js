@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -25,7 +24,6 @@ ChartJS.register(
 );
 
 const ImpostoRenda = ({ usuario, perfil }) => {
-  const navigate = useNavigate();
   const [rendaInfo, setRendaInfo] = useState({
     rendaFixa: '',
     rendaVariavel: '',
