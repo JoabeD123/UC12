@@ -183,6 +183,11 @@ const CartoesCredito = ({ perfil }) => {
     const valorAtual = parseFloat(gastos[id] ?? cartao.gastos ?? 0);
     let novoValor = valorAtual + valor;
     if (novoValor < 0) novoValor = 0;
+    // Impedir que ultrapasse o limite do cartão
+    if (novoValor > Number(cartao.limite)) {
+      setError('O gasto total não pode ultrapassar o limite do cartão!');
+      return;
+    }
     try {
       await fetch(`${API_URL}/${id}`, {
         method: 'PUT',
@@ -198,6 +203,7 @@ const CartoesCredito = ({ perfil }) => {
       setGastos(prev => ({ ...prev, [id]: novoValor }));
       setCartoes(prev => prev.map(c => c.id_cartao === id ? { ...c, gastos: novoValor } : c));
       setGastoInput(prev => ({ ...prev, [id]: '' }));
+      setError('');
     } catch {
       setError('Erro ao atualizar gasto');
     }

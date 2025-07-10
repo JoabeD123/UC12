@@ -46,6 +46,7 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
   const [faturasFechadas, setFaturasFechadas] = useState([]);
   const [cartoesLoading, setCartoesLoading] = useState(true);
   const [abaFatura, setAbaFatura] = useState('abertas'); // 'abertas' ou 'fechadas'
+  const [valorPagamentoFatura, setValorPagamentoFatura] = useState({}); // Novo: controla valor pago por fatura
   const navigate = useNavigate();
 
   const carregarUsuarioAtualizado = useCallback(async () => {
@@ -266,6 +267,36 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
       setCartoes(prev => prev.map(c => c.id_cartao === cartao.id_cartao ? { ...c, gastos: 0 } : c));
       // Atualizar o total de gastos
       setGastosCartoes(prev => prev - (parseFloat(cartao.gastos) || 0));
+    } catch (err) {
+      alert('Erro ao pagar fatura!');
+    }
+  };
+
+  // Novo: função para pagar fatura fechada
+  const handlePagarFaturaFechada = async (fatura) => {
+    const valor = parseFloat(valorPagamentoFatura[fatura.id_fatura]);
+    if (!valor || isNaN(valor) || valor <= 0) {
+      alert('Informe um valor válido para pagamento!');
+      return;
+    }
+    if (valor > fatura.valor_fechado - (fatura.valor_pago || 0)) {
+      alert('O valor pago não pode ser maior que o valor restante da fatura!');
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE_URL}/faturas-cartao/${fatura.id_fatura}/pagar`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ valor_pago: valor })
+      });
+      if (!res.ok) throw new Error('Erro ao pagar fatura');
+      // Atualizar lista de faturas fechadas em tempo real
+      const resFaturas = await fetch(`${API_BASE_URL}/faturas-cartao/perfil/${usuario.id_usuario}/${perfil.id_perfil}`);
+      if (resFaturas.ok) {
+        const data = await resFaturas.json();
+        setFaturasFechadas(data);
+      }
+      setValorPagamentoFatura(prev => ({ ...prev, [fatura.id_fatura]: '' }));
     } catch (err) {
       alert('Erro ao pagar fatura!');
     }
@@ -641,10 +672,27 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
                         ) : (
                           <>
                             <FaExclamationTriangle aria-label="Fatura pendente" />
-                            Pendente (Pago: R$ {Number(fatura.valor_pago ?? 0).toFixed(2).replace('.', ',')})
+                            Pendente (Restante: R$ {Number((fatura.valor_fechado ?? 0) - (fatura.valor_pago ?? 0)).toFixed(2).replace('.', ',')})
                           </>
                         )}
                       </span>
+                      {/* Novo: campo e botão para pagar fatura fechada se não estiver paga */}
+                      {!fatura.paga && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                          <input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            placeholder="Valor a pagar"
+                            value={valorPagamentoFatura[fatura.id_fatura] || ''}
+                            onChange={e => setValorPagamentoFatura(prev => ({ ...prev, [fatura.id_fatura]: e.target.value }))}
+                            style={{ width: 100 }}
+                          />
+                          <button className="pay-bill-btn" onClick={() => handlePagarFaturaFechada(fatura)}>
+                            Pagar fatura
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))
                 )}

@@ -1464,7 +1464,7 @@ app.put('/api/faturas-cartao/:idFatura/pagar', async (req, res) => {
       return res.status(404).json({ message: 'Fatura não encontrada.' });
     }
     const fatura = faturaResult.rows[0];
-    let novoValorPago = parseFloat(valor_pago);
+    let novoValorPago = parseFloat(valor_pago) + parseFloat(fatura.valor_pago || 0); // Soma ao valor já pago
     if (novoValorPago > fatura.valor_fechado) novoValorPago = fatura.valor_fechado;
     const paga = novoValorPago >= fatura.valor_fechado;
     const result = await client.query(
