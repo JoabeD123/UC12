@@ -49,6 +49,9 @@ const CartoesCredito = ({ perfil }) => {
       .then(data => setPerfis(data.profiles || []));
   }, [perfil]);
 
+  // Novo: cartões filtrados conforme filtro de perfil
+  const cartoesFiltrados = cartoes.filter(c => perfilFiltro === 'todos' || c.nome_perfil === perfilFiltro);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNovoCartao(prev => ({
@@ -201,18 +204,18 @@ const CartoesCredito = ({ perfil }) => {
   };
 
   const chartData = {
-    labels: cartoes.map(cartao => cartao.nome),
+    labels: cartoesFiltrados.map(cartao => cartao.nome),
     datasets: [
       {
         label: 'Limite',
-        data: cartoes.map(cartao => cartao.limite),
+        data: cartoesFiltrados.map(cartao => cartao.limite),
         backgroundColor: 'rgba(111, 66, 193, 0.5)',
         borderColor: 'rgba(111, 66, 193, 1)',
         borderWidth: 1
       },
       {
         label: 'Gastos',
-        data: cartoes.map(cartao => gastos[cartao.id_cartao] || cartao.gastos),
+        data: cartoesFiltrados.map(cartao => gastos[cartao.id_cartao] || cartao.gastos),
         backgroundColor: 'rgba(28, 200, 138, 0.5)',
         borderColor: 'rgba(28, 200, 138, 1)',
         borderWidth: 1
@@ -239,10 +242,10 @@ const CartoesCredito = ({ perfil }) => {
   };
 
   const doughnutData = {
-    labels: cartoes.map(cartao => cartao.nome),
+    labels: cartoesFiltrados.map(cartao => cartao.nome),
     datasets: [
       {
-        data: cartoes.map(cartao => gastos[cartao.id_cartao] || cartao.gastos),
+        data: cartoesFiltrados.map(cartao => gastos[cartao.id_cartao] || cartao.gastos),
         backgroundColor: [
           'rgba(111, 66, 193, 0.8)',
           'rgba(28, 200, 138, 0.8)',
@@ -399,8 +402,7 @@ const CartoesCredito = ({ perfil }) => {
         )}
 
         <div className="cartoes-grid">
-          {cartoes
-            .filter(c => perfilFiltro === 'todos' || c.nome_perfil === perfilFiltro)
+          {cartoesFiltrados
             .map(cartao => (
               <div key={cartao.id_cartao} className="cartao-card">
                 <div className="cartao-header">
@@ -451,7 +453,7 @@ const CartoesCredito = ({ perfil }) => {
             ))}
         </div>
 
-        {cartoes.length > 0 && (
+        {cartoesFiltrados.length > 0 && (
           <div className="charts-container">
             <div className="chart-wrapper">
               <Bar data={chartData} options={chartOptions} />

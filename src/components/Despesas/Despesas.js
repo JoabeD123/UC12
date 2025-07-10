@@ -12,13 +12,19 @@ const obterDataProximoMes = () => {
   return proximoMes.toISOString().split('T')[0];
 };
 
+// Função utilitária para obter a data de hoje no formato yyyy-mm-dd
+const obterDataHoje = () => {
+  const hoje = new Date();
+  return hoje.toISOString().split('T')[0];
+};
+
 function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
   const [despesas, setDespesas] = useState([]);
   const [novaDespesa, setNovaDespesa] = useState({
     nome_conta: '',
     valor_conta: '',
-    data_entrega: obterDataProximoMes(),
-    data_vencimento: obterDataProximoMes(),
+    data_entrega: obterDataHoje(), // Agora pega o dia e mês atual
+    data_vencimento: obterDataProximoMes(), // Próximo mês
     descricao: '',
     categoria_id: '',
     tipo_conta_id: 1,
@@ -121,8 +127,8 @@ function Despesas({ usuario, perfil, onLogout, onPerfilAtualizado }) {
       setNovaDespesa({
         nome_conta: '',
         valor_conta: '',
-        data_entrega: obterDataProximoMes(),
-        data_vencimento: obterDataProximoMes(),
+        data_entrega: obterDataHoje(), // Agora pega o dia e mês atual
+        data_vencimento: obterDataProximoMes(), // Próximo mês
         descricao: '',
         categoria_id: '',
         tipo_conta_id: 1,
