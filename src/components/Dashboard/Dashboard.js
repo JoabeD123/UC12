@@ -467,6 +467,16 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
     }
   };
 
+  // Filtrar faturas fechadas: mostrar apenas do mês atual ou as pendentes
+  const hoje = new Date();
+  const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
+  const anoAtual = String(hoje.getFullYear());
+  const faturasFechadasFiltradas = faturasFechadas.filter(f => {
+    const [ano, mes] = (f.mes_ano || '').split('-');
+    // Mostrar se for do mês/ano atual OU se ainda não estiver paga
+    return (ano === anoAtual && mes === mesAtual) || !f.paga;
+  });
+
   return (
     <div className="layout-container">
       {/* Pop-up de aviso de vencimento */}
@@ -649,10 +659,10 @@ function Dashboard({ onLogout, setUsuario, setPerfil, usuario, perfil }) {
               </div>
             ) : (
               <div className="credit-card-list">
-                {faturasFechadas.length === 0 ? (
+                {faturasFechadasFiltradas.length === 0 ? (
                   <div style={{ padding: '1rem', color: '#888' }}>Nenhuma fatura fechada encontrada.</div>
                 ) : (
-                  faturasFechadas.map((fatura) => (
+                  faturasFechadasFiltradas.map((fatura) => (
                     <div className="card-item" key={fatura.id_fatura}>
                       <div className="card-info">
                         <div className="card-logo">{fatura.nome_cartao ? fatura.nome_cartao.charAt(0).toUpperCase() : '?'}</div>
