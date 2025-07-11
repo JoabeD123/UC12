@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { FaLock, FaUser } from 'react-icons/fa';
 import './SelecionarPerfil.css';
 import { API_BASE_URL } from '../../config';
 
-const SelecionarPerfil = ({ usuario, onPerfilSelecionado }) => {
-  const navigate = useNavigate();
+const SelecionarPerfilLogin = ({ usuario }) => {
   const [perfis, setPerfis] = useState([]);
   const [senha, setSenha] = useState('');
   const [perfilSelecionado, setPerfilSelecionado] = useState(null);
@@ -72,12 +70,9 @@ const SelecionarPerfil = ({ usuario, onPerfilSelecionado }) => {
 
       // Atualizar o perfil no localStorage
       localStorage.setItem(`profile_${usuario.id_usuario}`, JSON.stringify(perfilSelecionado));
-      
-      // Notificar o componente pai sobre a mudança de perfil
-      onPerfilSelecionado(perfilSelecionado);
-      
+      sessionStorage.setItem('currentProfile', JSON.stringify(perfilSelecionado));
       // Redirecionar para o dashboard
-      navigate('/dashboard');
+      window.location.href = '/dashboard';
     } catch (error) {
       console.error('Erro ao validar senha:', error);
       setErro(error.message || 'Erro ao validar senha. Tente novamente.');
@@ -138,12 +133,10 @@ const SelecionarPerfil = ({ usuario, onPerfilSelecionado }) => {
           <button
             className="btn-voltar"
             onClick={() => {
-              const currentProfile = sessionStorage.getItem('currentProfile');
-              if (currentProfile) {
-                navigate('/dashboard');
-              } else {
-                navigate('/login');
-              }
+              // Limpa usuário e perfil do sessionStorage e volta para login
+              sessionStorage.removeItem('currentUser');
+              sessionStorage.removeItem('currentProfile');
+              window.location.href = '/login';
             }}
             disabled={loading}
           >
@@ -155,4 +148,4 @@ const SelecionarPerfil = ({ usuario, onPerfilSelecionado }) => {
   );
 };
 
-export default SelecionarPerfil; 
+export default SelecionarPerfilLogin; 

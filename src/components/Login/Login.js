@@ -118,17 +118,24 @@ function Login({ onLogin }) {
         throw new Error(profilesData.message || 'Erro ao buscar perfis do usuário');
       }
 
-      // Se houver perfis, usar o primeiro como perfil atual
+      // Se houver perfis
       if (profilesData.profiles && profilesData.profiles.length > 0) {
-        const primeiroPerfil = profilesData.profiles[0];
-        console.log('Usando primeiro perfil:', primeiroPerfil);
-        
-        // Salva os dados no localStorage
+        // Salva os dados do usuário no localStorage
         localStorage.setItem('currentUser', JSON.stringify(userLogged));
-        localStorage.setItem(`profile_${data.userId}`, JSON.stringify(primeiroPerfil));
-        
-        // Chama a função onLogin com os dados do usuário e perfil
-        onLogin(userLogged, primeiroPerfil);
+        // Se só tem um perfil, loga direto
+        if (profilesData.profiles.length === 1) {
+          const unicoPerfil = profilesData.profiles[0];
+          localStorage.setItem(`profile_${data.userId}`, JSON.stringify(unicoPerfil));
+          onLogin(userLogged, unicoPerfil);
+        } else {
+          // Mais de um perfil: redireciona para seleção de perfil
+          // Limpa perfil atual do localStorage
+          localStorage.removeItem(`profile_${data.userId}`);
+          // Chama onLogin só com o usuário (sem perfil)
+          onLogin(userLogged, null);
+          // Redireciona para a tela de seleção de perfil
+          navigate('/selecionar-perfil');
+        }
       } else {
         throw new Error('Nenhum perfil encontrado para este usuário');
       }

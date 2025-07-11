@@ -14,6 +14,7 @@ import CriarPrimeiroPerfil from './components/CriarPrimeiroPerfil/CriarPrimeiroP
 import SelecionarPerfil from './components/SelecionarPerfil/SelecionarPerfil';
 import RelatorioDesempenho from './components/RelatorioDesempenho/RelatorioDesempenho';
 import RelatorioPersonalizado from './components/RelatorioPersonalizado/RelatorioPersonalizado';
+import SelecionarPerfilLogin from './components/SelecionarPerfil/SelecionarPerfilLogin';
 import { API_BASE_URL } from './config';
 
 function App() {
@@ -100,16 +101,23 @@ function App() {
         throw new Error(profilesData.message || 'Erro ao buscar perfis do usuário');
       }
       if (profilesData.profiles && profilesData.profiles.length > 0) {
-        const primeiroPerfil = profilesData.profiles[0];
-        console.log('👤 Definindo currentUser e profile:', { user, primeiroPerfil });
-        setCurrentUser(user);
-        setProfile(primeiroPerfil);
-        
-        // Salvar sessão no sessionStorage
-        sessionStorage.setItem('currentUser', JSON.stringify(user));
-        sessionStorage.setItem('currentProfile', JSON.stringify(primeiroPerfil));
-        console.log('💾 Sessão salva no sessionStorage');
-        
+        if (profilesData.profiles.length === 1) {
+          // Só um perfil: loga direto
+          const primeiroPerfil = profilesData.profiles[0];
+          setCurrentUser(user);
+          setProfile(primeiroPerfil);
+          // Salvar sessão no sessionStorage
+          sessionStorage.setItem('currentUser', JSON.stringify(user));
+          sessionStorage.setItem('currentProfile', JSON.stringify(primeiroPerfil));
+          console.log('💾 Sessão salva no sessionStorage');
+        } else {
+          // Mais de um perfil: força seleção
+          setCurrentUser(user);
+          setProfile(null);
+          setPrecisaSelecionarPerfil(true);
+          sessionStorage.setItem('currentUser', JSON.stringify(user));
+          sessionStorage.removeItem('currentProfile');
+        }
         // Carregar configurações do usuário do backend
         try {
           const configResponse = await fetch(`${API_BASE_URL}/configuracoes/${user.id_usuario}`);
@@ -335,7 +343,9 @@ function App() {
           <Route
             path="/selecionar-perfil"
             element={
-              currentUser ? (
+              currentUser && !profile ? (
+                <SelecionarPerfilLogin usuario={currentUser} />
+              ) : currentUser && profile ? (
                 <SelecionarPerfil usuario={currentUser} onPerfilSelecionado={handlePerfilSelecionado} />
               ) : (
                 <Navigate to="/login" replace />
