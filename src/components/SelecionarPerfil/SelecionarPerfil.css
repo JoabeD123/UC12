@@ -183,6 +183,20 @@
   justify-content: center;
 }
 
+.btn-voltar {
+  background-color: #6c757d;
+  color: white;
+  border: 2px solid transparent;
+}
+
+.btn-voltar:hover:not(:disabled),
+.btn-voltar:active,
+.btn-voltar:focus {
+  background-color: #5a6268;
+  border-color: #5a6268;
+  outline: none;
+}
+
 @media (max-width: 768px) {
   .selecionar-perfil-container {
     padding: 1rem;

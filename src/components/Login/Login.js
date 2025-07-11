@@ -87,7 +87,16 @@ function Login({ onLogin }) {
       console.log('Resposta do servidor:', data);
 
       if (!response.ok) {
-        throw new Error(data.message || 'Erro ao fazer login');
+        // Mensagens específicas de erro
+        if (data.message === 'Email inválido.') {
+          setErro('O email informado não está cadastrado.');
+        } else if (data.message === 'Senha incorreta.') {
+          setErro('A senha informada está incorreta.');
+        } else {
+          setErro(data.message || 'Erro ao fazer login.');
+        }
+        setLoading(false);
+        return;
       }
 
       // Se chegou aqui, o login foi bem sucedido

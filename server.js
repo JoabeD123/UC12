@@ -576,7 +576,7 @@ app.post('/api/login', async (req, res) => {
     if (userResult.rows.length === 0) {
       client.release();
       console.log('Usuário não encontrado');
-      return res.status(401).json({ message: 'Credenciais inválidas.' });
+      return res.status(401).json({ message: 'Email inválido.' });
     }
 
     const user = userResult.rows[0];
@@ -585,7 +585,7 @@ app.post('/api/login', async (req, res) => {
     if (!isMatch) {
       client.release();
       console.log('Senha incorreta');
-      return res.status(401).json({ message: 'Credenciais inválidas.' });
+      return res.status(401).json({ message: 'Senha incorreta.' });
     }
 
     // Se login bem-sucedido, você pode retornar os dados do usuário (exceto a senha hasheada)
